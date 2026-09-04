@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import "../styles/tokens.css";
 import "./globals.css";
+import "../styles/vaylo.css";
 
 export const metadata: Metadata = {
   title: "Vaylo · quanto vale casa a Milano",

@@ -55,3 +55,6 @@ export type Stima = {
   semestre: string;
   fonte: string;
 };
+
+/** Un indirizzo risolto in una zona OMI. `preciso` distingue il geocoder dal dizionario. */
+export type Scelta = { zona: string; etichetta: string; descrizione: string; preciso: boolean };

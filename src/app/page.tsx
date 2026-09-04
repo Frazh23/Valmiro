@@ -1,70 +1,86 @@
-import Link from "next/link";
-import Testata from "@/components/Testata";
+import Header from "@/components/vaylo/Header";
+import HomeSearch from "@/components/vaylo/HomeSearch";
+import PropertyVisual from "@/components/vaylo/PropertyVisual";
+import Reveal from "@/components/vaylo/Reveal";
 import { ZONE, SEMESTRE, FONTE } from "@/lib/data";
 
+const PASSI = [
+  { n: "01", t: "L'indirizzo", d: "Il punto cade dentro una delle 42 zone omogenee in cui l'Agenzia delle Entrate divide Milano. È lì che si formano i prezzi." },
+  { n: "02", t: "La casa", d: "Superficie, stato, piano. Poche domande, e ognuna sposta il risultato di una cifra che ti mostriamo." },
+  { n: "03", t: "Il valore", d: "Un intervallo con il suo grado di affidabilità, come si posiziona nella zona, e quanto varrebbe ristrutturata." },
+];
+
 export default function Home() {
-  const zone = Object.entries(ZONE);
-  const prezzi = zone
-    .map(([z, o]) => ({ z, d: o.d, min: (o.civ.NORMALE || o.civ.OTTIMO)![0] }))
-    .sort((a, b) => a.min - b.min);
-  const piuBassa = prezzi[0], piuAlta = prezzi[prezzi.length - 1];
+  const zone = Object.keys(ZONE).length;
 
   return (
-    <main className="shell">
-      <Testata />
+    <div className="v-page">
+      <Header />
 
-      <section className="hero">
-        <h1 className="hero-h">Quanto vale davvero<br />la tua casa a Milano</h1>
-        <p className="hero-p">
-          Vaylo costruisce la stima sulle quotazioni ufficiali dell&apos;Agenzia delle Entrate, non su
-          una media presa da un annuncio. Ti diciamo da dove esce ogni euro, e ti diamo un
-          intervallo onesto invece di un numero secco.
-        </p>
-        <div className="hero-cta">
-          <Link href="/valuta" className="primary big">Valuta la tua casa</Link>
-          <span className="mini">Gratis · nessuna registrazione · due minuti</span>
+      <main className="v-fill">
+        <section className="v-wrap v-hero">
+          <div className="v-hero__grid">
+            <div>
+              <p className="v-eyebrow">Milano</p>
+              <h1 className="v-display v-hero__copy" style={{ marginTop: "var(--s-4)" }}>
+                Quanto vale davvero la tua casa
+              </h1>
+              <p className="v-lead v-hero__lead">
+                Scopri il valore del tuo immobile, i prezzi della zona e il suo potenziale.
+              </p>
+
+              <div className="v-hero__form">
+                <HomeSearch />
+              </div>
+
+              <div className="v-hero__proof">
+                <span>{zone} zone OMI</span><i /><span>Dati ufficiali dell&apos;Agenzia delle Entrate</span>
+                <i /><span>{SEMESTRE}</span>
+              </div>
+            </div>
+
+            <div className="v-hero__visual">
+              <PropertyVisual didascalia="Milano" nota="Luce di taglio, primo mattino" />
+            </div>
+          </div>
+        </section>
+
+        <section className="v-band">
+          <div className="v-wrap v-section">
+            <Reveal>
+              <p className="v-eyebrow" style={{ marginBottom: "var(--s-7)" }}>Come funziona</p>
+            </Reveal>
+            <div className="v-steps">
+              {PASSI.map((p, n) => (
+                <Reveal key={p.n} delay={n * 90}>
+                  <div className="v-step">
+                    <span className="v-numeral v-step__n">{p.n}</span>
+                    <h3 className="v-h3">{p.t}</h3>
+                    <p>{p.d}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="v-wrap v-section">
+          <Reveal>
+            <p className="v-statement">
+              Non una media presa da un annuncio. Una stima che ti dice <em>da dove esce ogni euro</em>.
+            </p>
+          </Reveal>
+        </section>
+      </main>
+
+      <footer className="v-footer">
+        <div className="v-wrap v-footer__in">
+          <span className="v-brand">Vayl<span>o</span></span>
+          <p className="v-micro">
+            {FONTE}. Le stime sono indicative e non costituiscono perizia.
+          </p>
         </div>
-      </section>
-
-      <section className="numeri">
-        <div className="num"><b>{zone.length}</b><span>zone OMI di Milano, con i perimetri ufficiali</span></div>
-        <div className="num"><b>{eurI(piuBassa.min)}</b><span>€/mq nella zona più economica — {piuBassa.d}</span></div>
-        <div className="num"><b>{eurI(piuAlta.min)}</b><span>€/mq nella più cara — {piuAlta.d}</span></div>
-        <div className="num"><b>{SEMESTRE.split("·")[0].trim()}</b><span>semestre delle quotazioni in uso</span></div>
-      </section>
-
-      <section className="come">
-        <h2>Come funziona</h2>
-        <div className="passi">
-          <div className="passo"><span className="n">01</span><b>Dove</b>
-            <p>Scrivi via e civico o tocchi la mappa. Il punto cade dentro una delle 42 zone
-            omogenee in cui l&apos;Agenzia delle Entrate divide Milano: è lì che si formano i prezzi.</p></div>
-          <div className="passo"><span className="n">02</span><b>L&apos;immobile</b>
-            <p>Superficie, stato, piano, ascensore, classe energetica. Poche domande, e ognuna
-            sposta il risultato in modo che puoi vedere.</p></div>
-          <div className="passo"><span className="n">03</span><b>La stima</b>
-            <p>Un intervallo con il grado di affidabilità, il prezzo a cui pubblicare l&apos;annuncio
-            se vendi o l&apos;offerta difendibile se compri, e il conto della ristrutturazione.</p></div>
-        </div>
-      </section>
-
-      <section className="perche">
-        <h2>Perché Vaylo non è il solito calcolatore</h2>
-        <ul>
-          <li><b>Dati ufficiali, non stime di stime.</b> Quotazioni e confini vengono dall&apos;Osservatorio
-            del Mercato Immobiliare. La fonte e il semestre sono scritti accanto al risultato.</li>
-          <li><b>Un intervallo, mai un numero secco.</b> E l&apos;ampiezza dell&apos;intervallo dipende da quanto
-            è larga la forbice reale della tua zona: dove il mercato è più incerto, lo diciamo.</li>
-          <li><b>Il calcolo è aperto.</b> Ogni coefficiente — piano, ascensore, classe — è mostrato in
-            euro. Se non sei d&apos;accordo con un pezzo, lo vedi.</li>
-          <li><b>Serve a vendere e a comprare.</b> Da un lato il prezzo di pubblicazione, dall&apos;altro
-            quanto offrire e con quale argomento.</li>
-        </ul>
-      </section>
-
-      <p className="foot">{FONTE}. Le stime sono indicative e non costituiscono perizia.</p>
-    </main>
+      </footer>
+    </div>
   );
 }
-
-function eurI(n: number) { return new Intl.NumberFormat("it-IT").format(n); }

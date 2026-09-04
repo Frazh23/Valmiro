@@ -1,27 +1,17 @@
+/* ==========================================================================
+   VAYLO · STILI LEGACY
+   Serve alle schermate non ancora riprogettate (/stime, /accedi, mappa).
+   Non aggiungere niente qui: il nuovo si scrive in src/styles/vaylo.css.
+   Man mano che una schermata passa al nuovo linguaggio, le sue regole
+   spariscono da questo file.
+   ========================================================================== */
+
+/* Ponte fra i nomi vecchi e i token Vaylo, cosi' il legacy non stona. */
 :root{
-  --paper:#EFF2F6;--surface:#fff;--surface-2:#F3F5F9;--surface-3:#E6EBF2;
-  --ink:#0F151C;--ink-soft:#4A5866;--ink-faint:#8494A4;
-  --line:#E2E8F0;--line-strong:#CFD9E4;
-  --accent:#0E8C74;--accent-ink:#0A6B58;--accent-soft:#E1F3EE;--accent-on:#fff;
-  --gold:#9A6A0E;--gold-soft:#FBF1DE;--rust:#B4402E;--rust-soft:#FBE9E5;
-  --r-xl:28px;--r-lg:20px;--r-md:14px;--r-pill:999px;
-  --sh-1:0 1px 2px rgba(15,21,28,.05);
-  --sh-2:0 2px 6px rgba(15,21,28,.06),0 24px 48px -32px rgba(15,21,28,.5);
-  --sh-3:0 4px 14px rgba(15,21,28,.09),0 40px 70px -40px rgba(15,21,28,.6);
+  --gold:var(--warm);--gold-soft:var(--warm-soft);
+  --rust:var(--neg);--rust-soft:color-mix(in srgb,var(--neg) 12%,transparent);
 }
-@media (prefers-color-scheme:dark){:root{
-  --paper:#080B0E;--surface:#151A20;--surface-2:#1D242C;--surface-3:#28313A;
-  --ink:#EDF2F6;--ink-soft:#AAB8C4;--ink-faint:#7A8894;
-  --line:#28313A;--line-strong:#3A4650;
-  --accent:#35C6A6;--accent-ink:#6FE0C4;--accent-soft:#0E2B26;--accent-on:#04211C;
-  --gold:#E0B460;--gold-soft:#2C2312;--rust:#F09580;--rust-soft:#2F1712;
-  --sh-1:0 1px 2px rgba(0,0,0,.5);--sh-2:0 2px 6px rgba(0,0,0,.5),0 24px 48px -32px #000;
-  --sh-3:0 4px 14px rgba(0,0,0,.6),0 40px 70px -40px #000;
-}}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{background:var(--paper);color:var(--ink);font-size:16px;line-height:1.5;letter-spacing:-.005em;
-  font-family:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+
 .shell{max-width:840px;margin:0 auto;padding:24px 16px 80px}
 .brand{font-weight:800;font-size:20px;letter-spacing:-.03em}
 .brand span{color:var(--accent)}

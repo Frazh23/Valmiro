@@ -110,3 +110,32 @@ pagina che mostra un valore: è già nel disclaimer sotto il risultato.
 
 Le stime prodotte sono indicative e non costituiscono perizia né valutazione ai sensi
 degli standard estimativi. Non toglierlo.
+
+---
+
+## Struttura del frontend
+
+Il livello visuale vive in tre posti e in nessun altro:
+
+- `src/styles/tokens.css` — colori, spazi, raggi, tipografia, ombre, durate. Unica fonte di verità.
+- `src/styles/vaylo.css` — i componenti del linguaggio Vaylo.
+- `src/components/vaylo/` — i componenti React.
+
+`src/app/globals.css` contiene gli stili delle schermate non ancora riprogettate
+(/stime, /accedi, mappa) ed è in via di smantellamento: non aggiungere nulla lì.
+
+## Documentazione
+
+- `CLAUDE.md` — le regole del progetto. La prima: la logica di business non si riscrive.
+- `docs/design-system.md` — il linguaggio visuale.
+- `docs/v0-brief.md` — il brief da incollare in v0 a ogni iterazione.
+- `docs/workflow.md` — il ciclo Claude ↔ v0 ↔ GitHub ↔ Vercel, i rami, la lista di revisione.
+
+## Comandi
+
+```bash
+npm run dev        # sviluppo
+npm run typecheck  # tsc --noEmit
+npm test           # test del motore
+npm run build      # build di produzione
+```

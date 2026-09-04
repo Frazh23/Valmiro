@@ -1,0 +1,145 @@
+/* ==========================================================================
+   VAYLO · DESIGN TOKEN
+   Unica fonte di verita' visuale. Qualunque componente — scritto a mano o
+   generato da v0 — deve leggere da qui e non introdurre valori letterali.
+   Regola: se un colore, uno spazio o una durata non esiste in questo file,
+   prima si aggiunge qui, poi lo si usa.
+   ========================================================================== */
+
+:root {
+  /* --- superfici: neutre e calde, non grigie ------------------------------ */
+  --paper:        #F6F4F1;   /* fondo pagina */
+  --paper-deep:   #EDE9E3;   /* fasce alternate */
+  --surface:      #FFFFFF;
+  --surface-2:    #F1EEE9;
+  --surface-3:    #E5E0D8;
+
+  /* --- inchiostro -------------------------------------------------------- */
+  --ink:          #14120F;
+  --ink-soft:     #55504A;
+  --ink-faint:    #8B847B;
+  --ink-ghost:    #B6AFA5;
+
+  /* --- linee ------------------------------------------------------------- */
+  --line:         #E3DED6;
+  --line-strong:  #CFC8BD;
+
+  /* --- accento: verde profondo, trattenuto. Mai fluorescente. ------------ */
+  --accent:       #1F6F5C;
+  --accent-ink:   #175647;
+  --accent-soft:  #E4EFEA;
+  --accent-on:    #FFFFFF;
+
+  /* --- segnali. Usati con parsimonia, mai decorativi. -------------------- */
+  --pos:          #1F6F5C;
+  --neg:          #A33F2C;
+  --warm:         #8A6A2F;
+  --warm-soft:    #F5EEDF;
+
+  /* --- tipografia -------------------------------------------------------- */
+  /* Nessun font remoto: la build gira anche senza rete, e su Apple lo stack
+     di sistema e' SF Pro / New York, che e' esattamente il registro voluto.
+     Per adottare un font proprietario basta ridefinire queste tre variabili. */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-editorial: ui-serif, "New York", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* scala tipografica: pochi gradini, molto distanti fra loro */
+  --t-display: clamp(2.75rem, 7.2vw, 5.25rem);
+  --t-h1:      clamp(2rem, 4.6vw, 3.25rem);
+  --t-h2:      clamp(1.5rem, 3vw, 2.125rem);
+  --t-h3:      1.25rem;
+  --t-body-lg: clamp(1.0625rem, 1.5vw, 1.25rem);
+  --t-body:    1rem;
+  --t-small:   0.875rem;
+  --t-micro:   0.75rem;
+
+  --lh-tight:  1.02;
+  --lh-snug:   1.18;
+  --lh-body:   1.6;
+
+  --track-display: -0.038em;
+  --track-h:       -0.026em;
+  --track-body:    -0.006em;
+  --track-eyebrow:  0.14em;
+
+  /* --- spaziatura: scala di 4, ma i valori grandi dominano il layout ------ */
+  --s-1: 4px;   --s-2: 8px;   --s-3: 12px;  --s-4: 16px;
+  --s-5: 24px;  --s-6: 32px;  --s-7: 48px;  --s-8: 64px;
+  --s-9: 96px;  --s-10: 128px; --s-11: 176px;
+
+  /* respiro verticale fra sezioni: generoso, e' meta' del carattere premium */
+  --section-y: clamp(72px, 11vw, 168px);
+  --gutter:    clamp(20px, 5vw, 56px);
+  --measure:   68ch;   /* larghezza massima di lettura */
+  --page:      1180px; /* larghezza massima del contenuto */
+
+  /* --- raggi ------------------------------------------------------------- */
+  --r-sm:   10px;
+  --r-md:   16px;
+  --r-lg:   24px;
+  --r-xl:   34px;
+  --r-2xl:  48px;
+  --r-pill: 999px;
+
+  /* --- ombre: diffuse e basse, mai marcate ------------------------------- */
+  --sh-1: 0 1px 2px rgba(20,18,15,.04);
+  --sh-2: 0 2px 8px rgba(20,18,15,.05), 0 20px 44px -30px rgba(20,18,15,.45);
+  --sh-3: 0 4px 16px rgba(20,18,15,.07), 0 48px 90px -50px rgba(20,18,15,.55);
+  --sh-lift: 0 12px 40px -18px rgba(20,18,15,.30);
+
+  /* --- movimento --------------------------------------------------------- */
+  --d-fast:  140ms;
+  --d-base:  260ms;
+  --d-slow:  520ms;
+  --d-reveal: 820ms;
+  --e-out:   cubic-bezier(.16,1,.3,1);      /* uscita morbida, "Apple" */
+  --e-inout: cubic-bezier(.65,0,.35,1);
+  --e-soft:  cubic-bezier(.4,0,.2,1);
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:       #0D0C0A;
+    --paper-deep:  #141310;
+    --surface:     #17150F;
+    --surface-2:   #201D17;
+    --surface-3:   #2C2820;
+
+    --ink:         #F4F0E9;
+    --ink-soft:    #B3ABA0;
+    --ink-faint:   #857D72;
+    --ink-ghost:   #5C554C;
+
+    --line:        #2A261F;
+    --line-strong: #3D382F;
+
+    --accent:      #63C4A8;
+    --accent-ink:  #8FDCC4;
+    --accent-soft: #10261F;
+    --accent-on:   #06201A;
+
+    --pos:         #63C4A8;
+    --neg:         #E08A72;
+    --warm:        #D9B46E;
+    --warm-soft:   #2A2114;
+
+    --sh-1: 0 1px 2px rgba(0,0,0,.5);
+    --sh-2: 0 2px 8px rgba(0,0,0,.5), 0 20px 44px -30px #000;
+    --sh-3: 0 4px 16px rgba(0,0,0,.6), 0 48px 90px -50px #000;
+    --sh-lift: 0 12px 40px -18px rgba(0,0,0,.75);
+  }
+}
+
+/* Chi ha chiesto meno movimento lo ottiene davvero: le animazioni non vengono
+   accorciate, vengono annullate, e i contenuti restano nel loro stato finale. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --d-fast:1ms; --d-base:1ms; --d-slow:1ms; --d-reveal:1ms; }
+  *, *::before, *::after {
+    animation-duration:1ms !important; animation-iteration-count:1 !important;
+    transition-duration:1ms !important; scroll-behavior:auto !important;
+  }
+}

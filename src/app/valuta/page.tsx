@@ -1,39 +1,59 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import Header from "@/components/vaylo/Header";
+import AddressSearch from "@/components/vaylo/AddressSearch";
+import ValuationReveal from "@/components/vaylo/ValuationReveal";
+import NumeroAnimato from "@/components/vaylo/NumeroAnimato";
+import MarketRange from "@/components/vaylo/MarketRange";
+import FactorExplanation from "@/components/vaylo/FactorExplanation";
+import RenovationSelector, { type Prospetto } from "@/components/vaylo/RenovationSelector";
+import Reveal from "@/components/vaylo/Reveal";
 import Mappa from "@/components/Mappa";
-import Ricerca, { type Scelta } from "@/components/Ricerca";
-import Testata from "@/components/Testata";
+import { eur, num } from "@/lib/formato";
+import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
+import { RISTRUTTURAZIONE, scala } from "@/lib/engine";
 import { salvaStima, salvaStimaAccount } from "@/lib/storage";
 import { useSessione } from "@/lib/sessione";
-import { ZONE, FONTE } from "@/lib/data";
-import type { Input, Stima, Stato, Tipo } from "@/lib/types";
-
-const eur = (n: number) => new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0 }).format(Math.round(n));
+import type { Input, Scelta, Stato, Stima, Tipo } from "@/lib/types";
 
 const STATI: { id: Stato; t: string; d: string }[] = [
   { id: "rist", t: "Da ristrutturare", d: "Impianti e finiture da rifare" },
   { id: "abit", t: "Abitabile", d: "Si entra così, finiture datate" },
-  { id: "otti", t: "Ottimo stato", d: "Ristrutturato negli ultimi 10 anni" },
-  { id: "nuov", t: "Nuovo", d: "Mai abitato o appena consegnato" },
+  { id: "otti", t: "Ottimo stato", d: "Ristrutturata negli ultimi dieci anni" },
+  { id: "nuov", t: "Nuova", d: "Mai abitata o appena consegnata" },
 ];
 const TIPI: { id: Tipo; t: string }[] = [
   { id: "civ", t: "Appartamento" }, { id: "sig", t: "Signorile" },
   { id: "eco", t: "Economico" }, { id: "vil", t: "Villa" },
 ];
-const PASSI = ["Dove", "Immobile", "Caratteristiche", "Prezzo esposto", "Stima"];
+const PIANI = ["terra", "rialzato", "1-2", "3-5", "6+", "ultimo"] as const;
+const CLASSI = ["A", "B", "C", "D", "E", "F", "G"] as const;
 
-export default function Valuta() {
+type Esito = { stima: Stima; prospetti: Record<string, Prospetto> };
+
+export default function Pagina() {
+  return (
+    <Suspense fallback={<div className="v-page"><Header /></div>}>
+      <Valuta />
+    </Suspense>
+  );
+}
+
+function Valuta() {
+  const params = useSearchParams();
   const { utente } = useSessione();
-  const [passo, setPasso] = useState(1);
-  const [indirizzo, setIndirizzo] = useState<string | null>(null);
+
+  const [vista, setVista] = useState<"dove" | "casa" | "calcolo" | "risultato">("dove");
+  const [indirizzo, setIndirizzo] = useState("");
   const [preciso, setPreciso] = useState(false);
   const [avviso, setAvviso] = useState<string | null>(null);
-  const [modo, setModo] = useState<"vendo" | "compro">("vendo");
-  const [prezzoEsposto, setPrezzoEsposto] = useState("");
-  const [reno, setReno] = useState("completa");
   const [primaCasa, setPrimaCasa] = useState(true);
-  const [ris, setRis] = useState<{ stima: Stima; ristrutturazione?: any } | null>(null);
+  const [scenario, setScenario] = useState("attuale");
+  const [esito, setEsito] = useState<Esito | null>(null);
+  const [salvata, setSalvata] = useState(false);
+
   const [i, setI] = useState<Input>({
     zona: "", tipo: "civ", mq: 0, balconi: 0, cantina: false, box: "nessuno",
     stato: "abit", piano: "1-2", ascensore: true, classe: "D", luce: "media",
@@ -42,203 +62,400 @@ export default function Valuta() {
   const set = (p: Partial<Input>) => setI((v) => ({ ...v, ...p }));
   const zona = i.zona ? ZONE[i.zona] : null;
 
-  function scegli(s: Scelta) {
-    set({ zona: s.zona }); setIndirizzo(s.etichetta); setPreciso(s.preciso); setAvviso(null);
+  /* L'indirizzo arriva dalla home nell'URL: la valutazione e' ricaricabile. */
+  useEffect(() => {
+    const z = params.get("zona");
+    if (z && ZONE[z]) {
+      setI((v) => ({ ...v, zona: z }));
+      setIndirizzo(params.get("ind") || ZONE[z].d);
+      setPreciso(params.get("p") === "1");
+      setVista("casa");
+    }
+  }, [params]);
+
+  function scegliIndirizzo(s: Scelta) {
+    set({ zona: s.zona }); setIndirizzo(s.etichetta); setPreciso(s.preciso);
+    setAvviso(null); setVista("casa");
   }
 
-  async function calcola(salva = true) {
-    const r = await fetch("/api/estimate", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...i, ristrutturazione: reno, primaCasa }),
-    }).then((x) => x.json());
-    if (r.errore) { setAvviso(r.errore); return; }
-    setRis(r); setPasso(5);
-    if (salva && zona) {
+  /* Tre chiamate parallele: la stima e' identica in tutte e tre, cambia solo il
+     livello di ristrutturazione. Nessuna modifica alla rotta o al motore. */
+  const calcola = useCallback(async (): Promise<Esito> => {
+    const risposte = await Promise.all(
+      RISTRUTTURAZIONE.map((r) =>
+        fetch("/api/estimate", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...i, ristrutturazione: r.id, primaCasa }),
+        }).then((x) => x.json())
+      )
+    );
+    const errore = risposte.find((r) => r.errore);
+    if (errore) throw new Error(errore.errore);
+    const prospetti: Record<string, Prospetto> = {};
+    RISTRUTTURAZIONE.forEach((r, n) => { prospetti[r.id] = risposte[n].ristrutturazione; });
+    return { stima: risposte[0].stima, prospetti };
+  }, [i, primaCasa]);
+
+  /* Cambiare "prima casa" ricalcola solo le detrazioni: aggiorniamo in silenzio,
+     senza rifare la transizione. */
+  useEffect(() => {
+    if (vista !== "risultato") return;
+    let vivo = true;
+    calcola().then((e) => vivo && setEsito(e)).catch(() => {});
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaCasa]);
+
+  function fatto(e: Esito) {
+    setEsito(e); setVista("risultato");
+    if (!salvata && zona) {
       const da = {
         indirizzo: indirizzo || `Zona ${i.zona}`, zona: i.zona, descrizioneZona: zona.d,
-        input: i, stima: r.stima, prezzoEsposto: Number(prezzoEsposto) || undefined,
+        input: i, stima: e.stima,
       };
       if (utente) salvaStimaAccount(utente.id, da); else salvaStima(da);
+      setSalvata(true);
     }
   }
 
+  /* Una sola frase di mercato, costruita sui numeri gia' calcolati. */
+  const insight = useMemo(() => {
+    if (!esito || !i.zona) return null;
+    const s = scala(i.zona, i.tipo);
+    const mediana = s.mediaN * INDICE_ISTAT;
+    const scarto = (esito.stima.euroMq - mediana) / mediana;
+    const f = ZONE[i.zona].f;
+    if (Math.abs(scarto) < 0.04)
+      return <>È <b>in linea con la mediana</b> della zona: {eur(mediana)} €/mq per un immobile in stato normale.</>;
+    return scarto > 0
+      ? <>Vale <b>il {num(scarto * 100)}% in più</b> della mediana di zona ({eur(mediana)} €/mq): sono piano, stato e caratteristiche a spingerla verso l&apos;alto della forbice {FASCIA_NOME[f]?.toLowerCase()}.</>
+      : <>Vale <b>il {num(Math.abs(scarto) * 100)}% in meno</b> della mediana di zona ({eur(mediana)} €/mq): è lo spazio che una ristrutturazione può recuperare.</>;
+  }, [esito, i.zona, i.tipo]);
+
   return (
-    <main className="shell">
-      <Testata badge={zona ? <>Zona OMI <b>{i.zona}</b> · {zona.d}</> : undefined} />
-      <div className="steps">{PASSI.map((_, n) => <i key={n} className={n < passo ? "on" : ""} />)}</div>
-      <div className="steplabel"><span>{PASSI[passo - 1]}</span><span>{passo} / 5</span></div>
+    <div className="v-page">
+      <Header />
 
-      <div className="card">
-        {passo === 1 && (<>
-          <h1>Dove si trova la casa?</h1>
-          <p className="sub">Scrivi via e civico, oppure indica il punto sulla mappa. Milano è divisa in 42 zone OMI: è lì che si formano i prezzi.</p>
-          <div className="body">
-            <Ricerca valore={indirizzo} onScegli={scegli} />
-            {zona && (
-              <div className={"conferma " + (preciso ? "ok" : "dubbia")}>
-                <b>{indirizzo}</b> → zona {i.zona}, {zona.d}
-                <small>{preciso ? "Indirizzo geocodificato: il punto cade dentro questa zona." : "Zona dedotta dal nome: se non è giusta, tocca il punto esatto sulla mappa."}</small>
+      {vista === "calcolo" && (
+        <ValuationReveal
+          indirizzo={indirizzo}
+          lavoro={calcola}
+          onFatto={fatto}
+          onErrore={(m) => { setAvviso(m); setVista("casa"); }}
+        />
+      )}
+
+      <main className="v-fill">
+        {/* ---------------------------------------------------- DOVE */}
+        {vista === "dove" && (
+          <section className="v-wrap v-section">
+            <div className="v-form">
+              <div className="v-form__head">
+                <p className="v-eyebrow">Passo uno</p>
+                <h1 className="v-h1" style={{ marginTop: "var(--s-3)" }}>Dove si trova la casa?</h1>
+                <p className="v-lead" style={{ marginTop: "var(--s-4)", maxWidth: "40ch" }}>
+                  Via e civico. Milano è divisa in 42 zone omogenee: è lì che si formano i prezzi.
+                </p>
               </div>
-            )}
-            <Mappa zona={i.zona || null} onPick={(z) => { set({ zona: z }); setIndirizzo(ZONE[z].d); setPreciso(true); }} />
-          </div>
-          <div className="nav">
-            <button className="primary" disabled={!i.zona} onClick={() => setPasso(2)}>Continua</button>
-            <div className="spacer" /><span className="mini">Nessuna registrazione</span>
-          </div>
-        </>)}
-
-        {passo === 2 && zona && (<>
-          <h1>Che immobile è, e quanto misura?</h1>
-          <p className="sub">Serve la superficie commerciale: balconi e cantina si aggiungono qui con i loro pesi.</p>
-          <div className="body">
-            <div className="field"><span className="lbl">Tipologia quotata in zona {i.zona}</span>
-              <div className="opts four">{TIPI.map((t) => {
-                const ok = zona[t.id] && Object.keys(zona[t.id]).length > 0;
-                return <button key={t.id} className="opt" aria-pressed={i.tipo === t.id} disabled={!ok} onClick={() => set({ tipo: t.id })}>
-                  <span className="t">{t.t}</span><span className="d">{ok ? "quotata" : "non quotata qui"}</span></button>;
-              })}</div>
-            </div>
-            <div className="row2">
-              <label className="field"><span className="lbl">Superficie principale</span>
-                <input type="number" value={i.mq || ""} onChange={(e) => set({ mq: Number(e.target.value) })} placeholder="93" />
-                <span className="hint">mq calpestabili</span></label>
-              <label className="field"><span className="lbl">Balconi e terrazzi</span>
-                <input type="number" value={i.balconi || ""} onChange={(e) => set({ balconi: Number(e.target.value) })} placeholder="0" />
-                <span className="hint">contano al 25%</span></label>
-            </div>
-            <label className="switch"><span>Cantina o soffitta<small>Aggiunge 2,5 mq commerciali</small></span>
-              <input type="checkbox" checked={!!i.cantina} onChange={(e) => set({ cantina: e.target.checked })} /></label>
-            <div className="field"><span className="lbl">Posto auto{zona.box ? ` · box quotato ${eur(zona.box[0])}–${eur(zona.box[1])} €/mq` : ""}</span>
-              <div className="opts three">{(["nessuno", "posto", "box"] as const).map((b) => (
-                <button key={b} className="opt" aria-pressed={i.box === b} onClick={() => set({ box: b })}>
-                  <span className="t">{b === "nessuno" ? "Nessuno" : b === "posto" ? "Posto auto" : "Box"}</span></button>))}</div>
-            </div>
-            {avviso && <span className="hint">{avviso}</span>}
-          </div>
-          <div className="nav">
-            <button className="primary" onClick={() => i.mq > 0 ? setPasso(3) : setAvviso("Inserisci la superficie")}>Continua</button>
-            <button className="ghost" onClick={() => setPasso(1)}>Indietro</button>
-          </div>
-        </>)}
-
-        {passo === 3 && (<>
-          <h1>In che stato è, e a che piano?</h1>
-          <p className="sub">Lo stato di conservazione decide dove cadi dentro la forbice OMI della zona.</p>
-          <div className="body">
-            <div className="field"><span className="lbl">Stato di conservazione</span>
-              <div className="opts two">{STATI.map((s) => (
-                <button key={s.id} className="opt" aria-pressed={i.stato === s.id} onClick={() => set({ stato: s.id })}>
-                  <span className="t">{s.t}</span><span className="d">{s.d}</span></button>))}</div>
-            </div>
-            <div className="row2">
-              <label className="field"><span className="lbl">Piano</span>
-                <select value={i.piano} onChange={(e) => set({ piano: e.target.value as any })}>
-                  {["terra", "rialzato", "1-2", "3-5", "6+", "ultimo"].map((p) => <option key={p}>{p}</option>)}</select></label>
-              <label className="field"><span className="lbl">Classe energetica</span>
-                <select value={i.classe} onChange={(e) => set({ classe: e.target.value as any })}>
-                  {["A", "B", "C", "D", "E", "F", "G"].map((c) => <option key={c}>{c}</option>)}</select></label>
-            </div>
-            <label className="switch"><span>Ascensore<small>Sopra il terzo piano pesa molto</small></span>
-              <input type="checkbox" checked={i.ascensore} onChange={(e) => set({ ascensore: e.target.checked })} /></label>
-            <div className="field"><span className="lbl">Luminosità</span>
-              <div className="seg">{(["scarsa", "media", "ottima"] as const).map((l) => (
-                <button key={l} aria-pressed={i.luce === l} onClick={() => set({ luce: l })}>{l}</button>))}</div>
-            </div>
-          </div>
-          <div className="nav">
-            <button className="primary" onClick={() => setPasso(4)}>Continua</button>
-            <button className="ghost" onClick={() => setPasso(2)}>Indietro</button>
-          </div>
-        </>)}
-
-        {passo === 4 && (<>
-          <h1>Hai già un prezzo in mente?</h1>
-          <p className="sub">Facoltativo. Il tuo prezzo se stai vendendo, quello dell&apos;annuncio se stai comprando.</p>
-          <div className="body">
-            <label className="field"><span className="lbl">Prezzo richiesto o ipotizzato</span>
-              <input type="number" value={prezzoEsposto} onChange={(e) => setPrezzoEsposto(e.target.value)} placeholder="339000" /></label>
-          </div>
-          <div className="nav">
-            <button className="primary" onClick={() => calcola()}>Calcola la stima</button>
-            <button className="ghost" onClick={() => { setPrezzoEsposto(""); calcola(); }}>Non ce l&apos;ho</button>
-            <div className="spacer" /><button className="ghost" onClick={() => setPasso(3)}>Indietro</button>
-          </div>
-        </>)}
-
-        {passo === 5 && ris && (() => {
-          const s = ris.stima, pe = Number(prezzoEsposto) || 0, vendo = modo === "vendo";
-          const d = pe ? ((pe - s.centro) / s.centro) * 100 : 0;
-          return (<>
-            <div className="seg" style={{ maxWidth: 320, marginBottom: 22 }}>
-              <button aria-pressed={vendo} onClick={() => setModo("vendo")}>Sto vendendo</button>
-              <button aria-pressed={!vendo} onClick={() => setModo("compro")}>Sto comprando</button>
-            </div>
-            <div className="lbl">Stima di mercato · {indirizzo}</div>
-            <div className="range">{eur(s.min)} <em>–</em> {eur(s.max)} €</div>
-            <div className="kpis">
-              <div className="kpi"><div className="k">Al metro quadro</div><div className="v">{eur(s.euroMq)} €</div></div>
-              <div className="kpi" style={{ background: "var(--accent-soft)" }}>
-                <div className="k">{vendo ? "Prezzo di pubblicazione" : "Offerta consigliata"}</div>
-                <div className="v">{eur(vendo ? s.pubblica : s.offerta)} €</div></div>
-              <div className="kpi"><div className="k">Zona OMI</div><div className="v">{i.zona}</div></div>
-              <div className="kpi"><div className="k">Affidabilità</div><div className="v">{s.affidabilita}</div></div>
-            </div>
-            {pe > 0 && (
-              <div className={"verdict " + (d > 5 ? "high" : d < -5 ? "low" : "")}>
-                {vendo
-                  ? d > 5 ? <><b>Il tuo prezzo è sopra la stima del {d.toFixed(0)}%.</b> Sopra i {eur(s.max)} € i tempi di vendita si allungano.</>
-                    : d < -5 ? <><b>Il tuo prezzo è sotto la stima del {Math.abs(d).toFixed(0)}%.</b> Sono circa {eur(s.centro - pe)} € lasciati sul tavolo.</>
-                    : <><b>Il tuo prezzo è in linea con la stima.</b></>
-                  : d > 5 ? <><b>Il venditore chiede il {d.toFixed(0)}% in più della stima.</b> Un&apos;offerta intorno a {eur(s.offerta)} € è difendibile con i numeri di zona.</>
-                    : d < -5 ? <><b>Il prezzo richiesto è sotto la stima del {Math.abs(d).toFixed(0)}%.</b> Verifica i verbali d&apos;assemblea prima di muoverti.</>
-                    : <><b>Il prezzo richiesto è allineato al mercato.</b></>}
-              </div>
-            )}
-            {ris.ristrutturazione && (
-              <details className="panel" open>
-                <summary>{vendo ? "E se la ristrutturassi prima di vendere?" : "E se la ristrutturassi dopo l'acquisto?"}</summary>
-                <div className="in">
-                  <div className="seg" style={{ marginBottom: 14 }}>
-                    {["base", "completa", "design"].map((r) => (
-                      <button key={r} aria-pressed={reno === r} onClick={() => { setReno(r); calcola(false); }}>{r}</button>))}
-                  </div>
-                  <div className="rowline"><span>Costo dei lavori · {eur(ris.ristrutturazione.euroMq)} €/mq</span><span className="r">{eur(ris.ristrutturazione.costo)} €</span></div>
-                  <div className="rowline"><span>Detrazione in {ris.ristrutturazione.rate} anni</span><span className="r pos">−{eur(ris.ristrutturazione.detrazione)} €</span></div>
-                  <div className="rowline"><span>Valore dopo i lavori</span><span className="r">{eur(ris.ristrutturazione.valoreDopo)} €</span></div>
-                  <div className="rowline"><span><b>Margine</b></span>
-                    <span className={"r " + (ris.ristrutturazione.margine >= 0 ? "pos" : "neg")}>
-                      {ris.ristrutturazione.margine >= 0 ? "+" : "−"}{eur(Math.abs(ris.ristrutturazione.margine))} €</span></div>
-                  <label className="switch" style={{ marginTop: 14 }}>
-                    <span>È la tua prima casa<small>Prima casa 50%, altri immobili 36%</small></span>
-                    <input type="checkbox" checked={primaCasa} onChange={(e) => { setPrimaCasa(e.target.checked); calcola(false); }} /></label>
+              <AddressSearch onScegli={scegliIndirizzo} azione="Continua" autoFocus />
+              <details className="v-more" style={{ marginTop: "var(--s-7)" }}>
+                <summary>Non trovi l&apos;indirizzo? Indica il punto sulla mappa</summary>
+                <div className="v-more__in">
+                  <Mappa
+                    zona={i.zona || null}
+                    onPick={(z) => { set({ zona: z }); setIndirizzo(ZONE[z].d); setPreciso(true); setVista("casa"); }}
+                  />
                 </div>
               </details>
-            )}
-            <details className="panel"><summary>Come è stato calcolato</summary>
-              <div className="in">
-                {s.dettaglio.map((v, n) => (
-                  <div className="rowline" key={n}><span>{v.voce}</span>
-                    <span className={"r " + (v.effetto > 0 ? "pos" : v.effetto < 0 ? "neg" : "")}>
-                      {v.effetto ? `${(v.effetto * 100).toFixed(0)}% · ` : ""}{v.euro >= 0 ? "+" : "−"}{eur(Math.abs(v.euro))} €</span></div>))}
-                <div className="rowline"><span><b>Valore centrale</b></span><span className="r">{eur(s.centro)} €</span></div>
-                <div className="rowline"><span>Incertezza</span><span className="r">± {(s.sigma * 100).toFixed(1)}%</span></div>
-              </div>
-            </details>
-            <div className="nav">
-              <Link className="ghost" href="/stime">Le mie stime</Link>
-              <button className="ghost" onClick={() => setPasso(3)}>Modifica i dati</button>
-              <div className="spacer" />
-              <button className="ghost" onClick={() => { setRis(null); setPasso(1); setIndirizzo(null); set({ zona: "", mq: 0 }); }}>Nuova stima</button>
             </div>
-            <p className="disclaimer">
-              Stima automatica indicativa su quotazioni OMI {s.semestre} della zona {i.zona}, aggiornate con l&apos;indice Istat.
-              Non costituisce perizia né valutazione ai sensi degli standard estimativi. Fonte: {s.fonte}.
-            </p>
-          </>);
-        })()}
-      </div>
-      <p className="foot">{FONTE}.</p>
-    </main>
+          </section>
+        )}
+
+        {/* ---------------------------------------------------- LA CASA */}
+        {vista === "casa" && zona && (
+          <section className="v-wrap v-section">
+            <div className="v-form">
+              <div className="v-form__head">
+                <p className="v-eyebrow">Passo due</p>
+                <h1 className="v-h1" style={{ marginTop: "var(--s-3)" }}>Raccontaci la casa</h1>
+                <div style={{ marginTop: "var(--s-5)" }}>
+                  <span className="v-locus">
+                    <span><b>{indirizzo}</b> · zona {i.zona}, {zona.d}</span>
+                    <button onClick={() => setVista("dove")}>Cambia</button>
+                  </span>
+                </div>
+                {!preciso && (
+                  <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
+                    Zona dedotta dal nome. Se non è quella giusta, cambia indirizzo e indica il punto sulla mappa.
+                  </p>
+                )}
+              </div>
+
+              <div className="v-fields">
+                <div className="v-field">
+                  <span className="v-field__lbl">Superficie</span>
+                  <input className="v-input" type="number" inputMode="numeric" placeholder="93"
+                         value={i.mq || ""} onChange={(e) => set({ mq: Number(e.target.value) })} />
+                  <span className="v-field__hint">Metri quadri calpestabili. Balconi e cantina si aggiungono più sotto.</span>
+                </div>
+
+                <div className="v-field">
+                  <span className="v-field__lbl">In che stato è</span>
+                  <div className="v-choices">
+                    {STATI.map((s) => (
+                      <button key={s.id} className="v-choice" aria-pressed={i.stato === s.id}
+                              onClick={() => set({ stato: s.id })}>
+                        <b>{s.t}</b><small>{s.d}</small>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="v-row2">
+                  <label className="v-field">
+                    <span className="v-field__lbl">Piano</span>
+                    <select className="v-select" value={i.piano}
+                            onChange={(e) => set({ piano: e.target.value as Input["piano"] })}>
+                      {PIANI.map((p) => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </label>
+                  <label className="v-field">
+                    <span className="v-field__lbl">Classe energetica</span>
+                    <select className="v-select" value={i.classe}
+                            onChange={(e) => set({ classe: e.target.value as Input["classe"] })}>
+                      {CLASSI.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </label>
+                </div>
+
+                <label className="v-toggle">
+                  <span>Ascensore<small>Dal terzo piano in su pesa molto</small></span>
+                  <input type="checkbox" checked={i.ascensore}
+                         onChange={(e) => set({ ascensore: e.target.checked })} />
+                </label>
+
+                <details className="v-more">
+                  <summary>Altri dettagli — restringono l&apos;intervallo</summary>
+                  <div className="v-more__in">
+                    <div className="v-field">
+                      <span className="v-field__lbl">Tipologia quotata in zona {i.zona}</span>
+                      <div className="v-choices v-choices--4">
+                        {TIPI.map((t) => {
+                          const ok = zona[t.id] && Object.keys(zona[t.id]).length > 0;
+                          return (
+                            <button key={t.id} className="v-choice" aria-pressed={i.tipo === t.id}
+                                    disabled={!ok} onClick={() => set({ tipo: t.id })}>
+                              <b>{t.t}</b><small>{ok ? "quotata" : "non quotata qui"}</small>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="v-row2">
+                      <label className="v-field">
+                        <span className="v-field__lbl">Balconi e terrazzi</span>
+                        <input className="v-input" type="number" inputMode="numeric" placeholder="0"
+                               value={i.balconi || ""} onChange={(e) => set({ balconi: Number(e.target.value) })} />
+                        <span className="v-field__hint">Contano al 25%</span>
+                      </label>
+                      <label className="v-field">
+                        <span className="v-field__lbl">Luminosità</span>
+                        <select className="v-select" value={i.luce}
+                                onChange={(e) => set({ luce: e.target.value as Input["luce"] })}>
+                          <option value="scarsa">scarsa</option>
+                          <option value="media">media</option>
+                          <option value="ottima">ottima</option>
+                        </select>
+                      </label>
+                    </div>
+                    <label className="v-toggle">
+                      <span>Cantina o soffitta<small>Aggiunge 2,5 mq commerciali</small></span>
+                      <input type="checkbox" checked={!!i.cantina}
+                             onChange={(e) => set({ cantina: e.target.checked })} />
+                    </label>
+                    <div className="v-field">
+                      <span className="v-field__lbl">
+                        Posto auto{zona.box ? ` · box quotato ${eur(zona.box[0])}–${eur(zona.box[1])} €/mq` : ""}
+                      </span>
+                      <div className="v-choices v-choices--4">
+                        {([["nessuno", "Nessuno"], ["posto", "Posto auto"], ["box", "Box"]] as const).map(([id, t]) => (
+                          <button key={id} className="v-choice" aria-pressed={i.box === id}
+                                  onClick={() => set({ box: id })}>
+                            <b>{t}</b>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </details>
+
+                {avviso && <p className="v-note">{avviso}</p>}
+              </div>
+
+              <div className="v-actions">
+                <button className="v-btn v-btn--accent v-btn--lg"
+                        onClick={() => i.mq > 0 ? (setAvviso(null), setVista("calcolo"))
+                                                : setAvviso("Manca la superficie: senza metri quadri non c'è stima.")}>
+                  Valuta
+                </button>
+                <button className="v-btn v-btn--bare" onClick={() => setVista("dove")}>Indietro</button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ---------------------------------------------------- RISULTATO */}
+        {vista === "risultato" && esito && zona && (
+          <Risultato
+            stima={esito.stima} prospetti={esito.prospetti} input={i} zonaDesc={zona.d}
+            indirizzo={indirizzo} insight={insight}
+            scenario={scenario} onScenario={setScenario}
+            primaCasa={primaCasa} onPrimaCasa={setPrimaCasa}
+            onModifica={() => setVista("casa")}
+          />
+        )}
+      </main>
+
+      <footer className="v-footer">
+        <div className="v-wrap v-footer__in">
+          <span className="v-brand">Vayl<span>o</span></span>
+          <p className="v-micro">{FONTE}. Le stime sono indicative e non costituiscono perizia.</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* ============================================================ RISULTATO ==== */
+
+function Risultato({
+  stima, prospetti, input, zonaDesc, indirizzo, insight,
+  scenario, onScenario, primaCasa, onPrimaCasa, onModifica,
+}: {
+  stima: Stima; prospetti: Record<string, Prospetto>; input: Input; zonaDesc: string;
+  indirizzo: string; insight: React.ReactNode;
+  scenario: string; onScenario: (s: string) => void;
+  primaCasa: boolean; onPrimaCasa: (v: boolean) => void;
+  onModifica: () => void;
+}) {
+  const tacche = stima.affidabilita === "Alta" ? 3 : stima.affidabilita === "Media" ? 2 : 1;
+
+  return (
+    <>
+      {/* 01 — quanto vale */}
+      <section className="v-wrap v-result__hero">
+        <p className="v-eyebrow">{indirizzo}</p>
+        <p className="v-value">
+          <span className="v-value__cur">€</span><NumeroAnimato valore={stima.centro} durata={1100} />
+        </p>
+        <p className="v-value__span">
+          Intervallo realistico {eur(stima.min)} – {eur(stima.max)} €
+        </p>
+
+        <dl className="v-facts">
+          <div className="v-fact">
+            <dt>Al metro quadro</dt>
+            <dd>{eur(stima.euroMq)} €</dd>
+          </div>
+          <div className="v-fact">
+            <dt>Superficie commerciale</dt>
+            <dd>{num(stima.superficieCommerciale)} mq</dd>
+          </div>
+          <div className="v-fact">
+            <dt>Affidabilità</dt>
+            <dd>
+              <span className="v-conf">
+                <span className="v-conf__bars" aria-hidden="true">
+                  {[1, 2, 3].map((n) => <i key={n} className={n <= tacche ? "on" : ""} />)}
+                </span>
+                <span className="v-conf__lbl">{stima.affidabilita} · ± {num(stima.sigma * 100, 1)}%</span>
+              </span>
+            </dd>
+          </div>
+        </dl>
+
+        {insight && <p className="v-insight">{insight}</p>}
+      </section>
+
+      {/* 02 — come si posiziona */}
+      <section className="v-wrap v-chapter">
+        <Reveal>
+          <div className="v-chapter__head">
+            <span className="v-numeral">02</span>
+            <h2 className="v-h2">Come si posiziona nella zona</h2>
+          </div>
+          <MarketRange zona={input.zona} tipo={input.tipo} euroMq={stima.euroMq} />
+        </Reveal>
+      </section>
+
+      {/* 03 — perche' vale questa cifra */}
+      <section className="v-wrap v-chapter">
+        <Reveal>
+          <div className="v-chapter__head">
+            <span className="v-numeral">03</span>
+            <h2 className="v-h2">Perché vale questa cifra</h2>
+          </div>
+          <FactorExplanation stima={stima} />
+          <p className="v-small" style={{ marginTop: "var(--s-5)", maxWidth: "46ch" }}>
+            Ogni riga è un coefficiente dichiarato del motore. Se non sei d&apos;accordo con una voce,
+            la vedi e puoi cambiare i dati.
+          </p>
+        </Reveal>
+      </section>
+
+      {/* 04 — il quartiere */}
+      <section className="v-wrap v-chapter">
+        <Reveal>
+          <div className="v-chapter__head">
+            <span className="v-numeral">04</span>
+            <h2 className="v-h2">Il quartiere</h2>
+          </div>
+          <p className="v-lead v-measure">
+            Zona OMI <b>{input.zona}</b> — {zonaDesc}. Le quotazioni sono pubblicate ogni semestre
+            dall&apos;Agenzia delle Entrate e qui sono aggiornate all&apos;indice Istat dei prezzi delle abitazioni.
+          </p>
+          <p style={{ marginTop: "var(--s-5)" }}>
+            <Link className="v-btn v-btn--quiet" href="/quartieri">Vedi tutte le zone di Milano</Link>
+          </p>
+        </Reveal>
+      </section>
+
+      {/* 05 — ristrutturata */}
+      <section className="v-wrap v-chapter">
+        <Reveal>
+          <div className="v-chapter__head">
+            <span className="v-numeral">05</span>
+            <h2 className="v-h2">Quanto potrebbe valere ristrutturata</h2>
+          </div>
+          <RenovationSelector
+            attuale={stima.centro} prospetti={prospetti}
+            scelto={scenario} onSceglie={onScenario}
+            primaCasa={primaCasa} onPrimaCasa={onPrimaCasa}
+          />
+        </Reveal>
+      </section>
+
+      {/* 06 — chiusura */}
+      <section className="v-wrap v-chapter">
+        <Reveal>
+          <div className="v-chapter__head">
+            <span className="v-numeral">06</span>
+            <h2 className="v-h2">Tieni la stima</h2>
+          </div>
+          <p className="v-lead v-measure">
+            Questa valutazione è già salvata. La ritrovi fra le tue stime, con la data e i dati che hai inserito.
+          </p>
+          <div className="v-actions">
+            <Link className="v-btn" href="/stime">Le mie stime</Link>
+            <button className="v-btn v-btn--quiet" onClick={onModifica}>Modifica i dati</button>
+          </div>
+          <p className="v-disclaimer" style={{ marginTop: "var(--s-8)" }}>
+            Stima automatica indicativa costruita sulle quotazioni OMI {stima.semestre} della zona {input.zona},
+            aggiornate con l&apos;indice Istat. Non costituisce perizia né valutazione ai sensi degli standard
+            estimativi. Fonte: {stima.fonte}.
+          </p>
+        </Reveal>
+      </section>
+    </>
   );
 }

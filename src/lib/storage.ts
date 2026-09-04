@@ -17,14 +17,14 @@ export type StimaSalvata = {
   prezzoEsposto?: number;
 };
 
-const CHIAVE = "vaylo.stime";
+const CHIAVE = "stimami.stime";
 
 /* Il prodotto ha gia' cambiato nome una volta e potrebbe cambiarlo ancora. Ogni
    nome portava con se' la sua chiave di localStorage: qui stanno tutte quelle
    dismesse, dalla piu' recente alla piu' vecchia. Chi aveva stime salvate sotto
    un nome precedente non le perde, qualunque sia il salto che ha fatto.
    Quando si rinomina, la chiave uscente si aggiunge in testa a questa lista. */
-const CHIAVI_DISMESSE = ["valorecasa.stime"];
+const CHIAVI_DISMESSE = ["vaylo.stime", "valorecasa.stime"];
 
 function migraChiave() {
   if (typeof window === "undefined") return;

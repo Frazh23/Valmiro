@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "../styles/tokens.css";
 import "./globals.css";
-import "../styles/vaylo.css";
+import "../styles/sistema.css";
 
 export const metadata: Metadata = {
-  title: "Vaylo · quanto vale casa a Milano",
+  title: "Stimami · quanto vale casa a Milano",
   description:
     "Stima del valore di un immobile a Milano sulle quotazioni ufficiali OMI dell'Agenzia delle Entrate.",
 };

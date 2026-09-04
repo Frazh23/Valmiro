@@ -3,14 +3,14 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import Header from "@/components/vaylo/Header";
-import AddressSearch from "@/components/vaylo/AddressSearch";
-import ValuationReveal from "@/components/vaylo/ValuationReveal";
-import NumeroAnimato from "@/components/vaylo/NumeroAnimato";
-import MarketRange from "@/components/vaylo/MarketRange";
-import FactorExplanation from "@/components/vaylo/FactorExplanation";
-import RenovationSelector, { type Prospetto } from "@/components/vaylo/RenovationSelector";
-import Reveal from "@/components/vaylo/Reveal";
+import Header from "@/components/sistema/Header";
+import AddressSearch from "@/components/sistema/AddressSearch";
+import ValuationReveal from "@/components/sistema/ValuationReveal";
+import NumeroAnimato from "@/components/sistema/NumeroAnimato";
+import MarketRange from "@/components/sistema/MarketRange";
+import FactorExplanation from "@/components/sistema/FactorExplanation";
+import RenovationSelector, { type Prospetto } from "@/components/sistema/RenovationSelector";
+import Reveal from "@/components/sistema/Reveal";
 /* La mappa porta con se' i perimetri semplificati delle 42 zone: 70 KB di dati
    che finivano nel primo caricamento di /valuta anche se la mappa sta dentro un
    pannello chiuso. Ora il modulo arriva solo se qualcuno apre quel pannello. */
@@ -331,7 +331,7 @@ function Valuta() {
 
       <footer className="v-footer">
         <div className="v-wrap v-footer__in">
-          <span className="v-brand" aria-label="Vaylo">Vayl<span aria-hidden="true">o</span></span>
+          <span className="v-brand" aria-label="Stimami">Stimam<span aria-hidden="true">i</span></span>
           <p className="v-micro">{FONTE}. Le stime sono indicative e non costituiscono perizia.</p>
         </div>
       </footer>

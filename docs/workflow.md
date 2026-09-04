@@ -1,4 +1,4 @@
-# Ciclo di sviluppo Vaylo
+# Ciclo di sviluppo Stimami
 
 ```
 Claude Code  →  logica, integrazione, qualità del codice
@@ -42,15 +42,15 @@ Non si fonde in `main`: passa da `develop`, dopo revisione.
 - [ ] Il mobile è progettato o solo ristretto?
 - [ ] Contrasto, focus visibile, tastiera, `prefers-reduced-motion`?
 - [ ] Il codice è leggibile fra sei mesi?
-- [ ] È coerente con il linguaggio Vaylo, o è "un altro sito"?
+- [ ] È coerente con il linguaggio Stimami, o è "un altro sito"?
 
 ## Nota onesta su v0 e Tailwind
 
-v0 genera nativamente Tailwind + shadcn/ui. Vaylo non li usa: ha un livello di
+v0 genera nativamente Tailwind + shadcn/ui. Stimami non li usa: ha un livello di
 token in CSS puro. Ci sono due strade e vanno scelte consapevolmente.
 
 **A — v0 come esplorazione (impostazione attuale).** Il brief gli chiede CSS puro
-sui token Vaylo. v0 lo sa fare, ma va controcorrente rispetto al suo default:
+sui token Stimami. v0 lo sa fare, ma va controcorrente rispetto al suo default:
 ci si aspetta di dover riscrivere parte dell'output. In cambio il codebase resta
 uno solo, leggero e senza build step aggiuntivo.
 
@@ -70,7 +70,7 @@ Il repository è già inizializzato in locale con i tre rami. Da fare una volta:
 ```bash
 # 1. crea il repository su GitHub (vuoto, privato)
 # 2. collegalo e pubblica i rami
-git remote add origin git@github.com:<utente>/vaylo.git
+git remote add origin git@github.com:<utente>/stimami.git
 git push -u origin main develop design/v0
 ```
 

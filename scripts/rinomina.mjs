@@ -26,10 +26,10 @@ if (!nuovo || !/^[A-Z][a-zA-Z]{2,15}$/.test(nuovo)) {
 
 /* Il nome attuale si legge dal codice, non si scrive a mano: cosi' lo script
    resta valido anche al terzo rename. */
-const testata = readFileSync("src/components/vaylo/Header.tsx", "utf8");
+const testata = readFileSync("src/components/sistema/Header.tsx", "utf8");
 const m = testata.match(/className="v-brand"[^>]*>\s*([A-Za-z]+)<span(?: aria-hidden="true")?>([A-Za-z])<\/span>/);
 if (!m) { console.error("Non trovo il marchio in Header.tsx: lo script va aggiornato."); process.exit(1); }
-const attuale = m[1] + m[2];                    // es. "Vaylo"
+const attuale = m[1] + m[2];                    // es. "Stimami"
 const min = attuale.toLowerCase();
 const nuovoMin = nuovo.toLowerCase();
 
@@ -39,7 +39,7 @@ if (attuale === nuovo) { console.log(`Si chiama gia' ${nuovo}.`); process.exit(0
 const marchio = (n) => `${n.slice(0, -1)}<span aria-hidden="true">${n.slice(-1)}</span>`;
 
 const sostituzioni = [
-  ["src/components/vaylo/Header.tsx", [[`${attuale.slice(0, -1)}<span>${attuale.slice(-1)}</span>`, `${nuovo.slice(0, -1)}<span>${nuovo.slice(-1)}</span>`]]],
+  ["src/components/sistema/Header.tsx", [[`${attuale.slice(0, -1)}<span>${attuale.slice(-1)}</span>`, `${nuovo.slice(0, -1)}<span>${nuovo.slice(-1)}</span>`]]],
   ["src/app/layout.tsx",      [[attuale, nuovo]]],
   ["src/app/page.tsx",        [[marchio(attuale), marchio(nuovo)], [attuale, nuovo]]],
   ["src/app/valuta/page.tsx", [[marchio(attuale), marchio(nuovo)], [attuale, nuovo]]],

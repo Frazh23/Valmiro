@@ -1,7 +1,7 @@
-import Header from "@/components/vaylo/Header";
-import HomeSearch from "@/components/vaylo/HomeSearch";
-import PropertyVisual from "@/components/vaylo/PropertyVisual";
-import Reveal from "@/components/vaylo/Reveal";
+import Header from "@/components/sistema/Header";
+import HomeSearch from "@/components/sistema/HomeSearch";
+import PropertyVisual from "@/components/sistema/PropertyVisual";
+import Reveal from "@/components/sistema/Reveal";
 import { ZONE, SEMESTRE, FONTE } from "@/lib/data";
 
 const PASSI = [
@@ -75,7 +75,7 @@ export default function Home() {
 
       <footer className="v-footer">
         <div className="v-wrap v-footer__in">
-          <span className="v-brand" aria-label="Vaylo">Vayl<span aria-hidden="true">o</span></span>
+          <span className="v-brand" aria-label="Stimami">Stimam<span aria-hidden="true">i</span></span>
           <p className="v-micro">
             {FONTE}. Le stime sono indicative e non costituiscono perizia.
           </p>

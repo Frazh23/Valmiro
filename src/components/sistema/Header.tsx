@@ -33,8 +33,8 @@ export default function Header() {
   return (
     <header className={`v-header${posato ? " v-header--solid" : ""}`}>
       <div className="v-wrap v-header__in">
-        <Link href="/" className="v-brand" aria-label="Vaylo, torna alla home">
-          Vayl<span>o</span>
+        <Link href="/" className="v-brand" aria-label="Stimami, torna alla home">
+          Stimam<span>i</span>
         </Link>
         <nav className="v-nav" aria-label="Principale">
           <Link href="/valuta" className={attivo("/valuta")}>Valuta</Link>

@@ -1,4 +1,4 @@
-# Vaylo — linguaggio visuale
+# Stimami — linguaggio visuale
 
 Un solo sistema. Un componente scritto a mano e uno generato da v0 devono essere
 indistinguibili.
@@ -31,7 +31,7 @@ esiste lì, prima si aggiunge lì. Nessun valore letterale nei componenti.
 - **Movimento**: `--d-*` per le durate, `--e-out` per le uscite morbide.
   `prefers-reduced-motion` annulla le animazioni, non le accorcia.
 
-## Componenti — `src/components/vaylo/`
+## Componenti — `src/components/sistema/`
 
 | Componente | Cosa fa |
 |---|---|

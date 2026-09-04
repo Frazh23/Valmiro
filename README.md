@@ -1,4 +1,4 @@
-# Vaylo
+# Stimami
 
 Stima del valore di un immobile a Milano sulle **quotazioni ufficiali OMI** dell'Agenzia
 delle Entrate, con i perimetri veri delle 42 zone e un motore di stima trasparente:
@@ -118,8 +118,8 @@ degli standard estimativi. Non toglierlo.
 Il livello visuale vive in tre posti e in nessun altro:
 
 - `src/styles/tokens.css` — colori, spazi, raggi, tipografia, ombre, durate. Unica fonte di verità.
-- `src/styles/vaylo.css` — i componenti del linguaggio Vaylo.
-- `src/components/vaylo/` — i componenti React.
+- `src/styles/stimami.css` — i componenti del linguaggio Stimami.
+- `src/components/stimami/` — i componenti React.
 
 `src/app/globals.css` contiene gli stili delle schermate non ancora riprogettate
 (/stime, /accedi, mappa) ed è in via di smantellamento: non aggiungere nulla lì.

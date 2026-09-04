@@ -25,6 +25,7 @@ export default function AddressSearch({
   const [nota, setNota] = useState<string | null>(null);
   const [attivo, setAttivo] = useState(-1);
   const box = useRef<HTMLDivElement>(null);
+  const campo = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fuori = (e: MouseEvent) => {
@@ -42,7 +43,10 @@ export default function AddressSearch({
   }
 
   async function conferma() {
-    if (q.trim().length < 3 || cerco) return;
+    if (cerco) return;
+    /* Meglio riportare il fuoco nel campo che presentare una CTA spenta:
+       un bottone disabilitato all'arrivo si legge come sito rotto. */
+    if (q.trim().length < 3) { campo.current?.focus(); return; }
     setCerco(true); setLocali([]); setNota(null); setAttivo(-1);
     try {
       const r = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`).then((x) => x.json());
@@ -75,6 +79,7 @@ export default function AddressSearch({
     <div className="v-address" ref={box}>
       <div className="v-address__field">
         <input
+          ref={campo}
           value={q}
           onChange={(e) => digita(e.target.value)}
           onKeyDown={tasto}
@@ -84,8 +89,7 @@ export default function AddressSearch({
           autoFocus={autoFocus}
           enterKeyHint="search"
         />
-        <button className="v-btn v-btn--accent v-address__go" onClick={conferma}
-                disabled={q.trim().length < 3 || cerco}>
+        <button className="v-btn v-btn--accent v-address__go" onClick={conferma} disabled={cerco}>
           {cerco ? "Cerco…" : azione}
         </button>
       </div>

@@ -75,7 +75,7 @@ export default function Home() {
 
       <footer className="v-footer">
         <div className="v-wrap v-footer__in">
-          <span className="v-brand">Vayl<span>o</span></span>
+          <span className="v-brand" aria-label="Vaylo">Vayl<span aria-hidden="true">o</span></span>
           <p className="v-micro">
             {FONTE}. Le stime sono indicative e non costituiscono perizia.
           </p>

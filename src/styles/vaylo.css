@@ -23,7 +23,7 @@ a { color: inherit; text-decoration: none; }
 button { font: inherit; letter-spacing: inherit; }
 
 /* ---------- impalcatura ---------- */
-.v-page   { min-height: 100dvh; display: flex; flex-direction: column; }
+.v-page   { min-height: 100dvh; display: flex; flex-direction: column; overflow-x: clip; }
 .v-wrap   { width: 100%; max-width: var(--page); margin: 0 auto; padding-inline: var(--gutter); }
 .v-narrow { max-width: 780px; }
 .v-section{ padding-block: var(--section-y); }
@@ -146,7 +146,9 @@ button { font: inherit; letter-spacing: inherit; }
 @media (max-width: 900px) {
   .v-hero__grid { grid-template-columns: 1fr; gap: var(--s-7); }
   .v-hero__copy { max-width: 100%; }
-  .v-hero__visual { order: -1; }
+  /* Su telefono il campo indirizzo deve stare nella prima schermata: l'immagine
+     viene dopo. Un'immagine alta in cima spingerebbe la CTA sotto la piega. */
+  .v-hero__visual { margin-top: var(--s-4); }
 }
 
 /* ---------- campo indirizzo ---------- */
@@ -264,6 +266,7 @@ button { font: inherit; letter-spacing: inherit; }
 .v-locus button:hover { background: var(--surface-2); color: var(--ink); }
 
 .v-fields { display: grid; gap: var(--s-6); }
+.v-fields > *, .v-more__in > * { min-width: 0; }
 .v-field { display: grid; gap: var(--s-3); }
 .v-field__lbl { font-size: var(--t-small); font-weight: 550; color: var(--ink); }
 .v-field__hint { font-size: var(--t-micro); color: var(--ink-faint); }
@@ -414,7 +417,7 @@ button { font: inherit; letter-spacing: inherit; }
   padding-block: var(--s-4); border-bottom: 1px solid var(--line);
 }
 .v-factor:last-child { border-bottom: 0; }
-.v-factor__n { flex: 1; color: var(--ink-soft); }
+.v-factor__n { flex: 1; min-width: 0; color: var(--ink-soft); }
 .v-factor__v { font-variant-numeric: tabular-nums; font-weight: 550; white-space: nowrap; }
 .v-factor__v.pos { color: var(--pos); }
 .v-factor__v.neg { color: var(--neg); }
@@ -424,6 +427,7 @@ button { font: inherit; letter-spacing: inherit; }
 
 /* ---------- ristrutturazione ---------- */
 .v-reno { display: grid; gap: clamp(32px, 5vw, 56px); grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); align-items: start; }
+.v-reno > * { min-width: 0; }
 @media (max-width: 900px) { .v-reno { grid-template-columns: 1fr; } }
 .v-scenari { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-6); }
 .v-scenario {
@@ -467,13 +471,6 @@ button { font: inherit; letter-spacing: inherit; }
   border-radius: var(--r-md); padding: var(--s-4) var(--s-5); font-size: var(--t-small); color: var(--ink-soft); }
 .v-disclaimer { font-size: var(--t-micro); color: var(--ink-faint); max-width: 72ch; line-height: 1.6; }
 
-/* ---------- disegno architettonico dentro .v-visual ---------- */
-.v-visual__draw {
-  position: absolute; inset: 0; color: var(--ink);
-  background:
-    radial-gradient(120% 90% at 18% 8%, var(--warm-soft) 0%, transparent 58%),
-    linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 52%, var(--surface-3) 100%);
-}
 .v-visual__draw svg { width: 100%; height: 100%; }
 
 /* la composizione riempie il riquadro del confronto prima/dopo */
@@ -481,3 +478,81 @@ button { font: inherit; letter-spacing: inherit; }
   width: 100%; height: 100%; aspect-ratio: auto;
   border-radius: 0; box-shadow: none;
 }
+
+/* ---------- disegno architettonico dentro .v-visual ----------
+   Tutto in percentuale: la composizione regge 4:5, 4:3 e 3:2 senza ritagli. */
+.v-draw {
+  position: absolute; inset: 0; color: var(--ink);
+  background:
+    radial-gradient(72% 48% at 42% 26%, var(--visual-glow) 0%, transparent 66%),
+    linear-gradient(165deg, var(--surface) 0%, var(--surface-2) 52%, var(--surface-3) 100%);
+}
+.v-draw span { position: absolute; display: block; }
+
+/* parete di destra: un secondo piano, da' profondita' */
+.v-draw__wall {
+  right: 0; top: 0; bottom: 0; width: 19%;
+  background: currentColor; opacity: .04;
+  border-left: 1px solid currentColor;
+}
+/* pavimento */
+.v-draw__floor {
+  left: 0; right: 0; bottom: 0; height: 21%;
+  background: currentColor; opacity: .05;
+  border-top: 1px solid currentColor;
+}
+/* la luce che entra dalla vetrata e si appoggia a terra */
+.v-draw__light {
+  left: 8%; right: 12%; top: 16%; bottom: 0;
+  background: currentColor; opacity: .028;
+  clip-path: polygon(16% 0, 74% 0, 100% 100%, 0 100%);
+}
+/* vetrata */
+.v-draw__win {
+  left: 13%; right: 29%; top: 15%; bottom: 21%;
+  border: 1.5px solid currentColor; border-radius: 8px; opacity: .34;
+}
+.v-draw__transom  { left: 0; right: 0; top: 27%; border-top: 1.5px solid currentColor; }
+.v-draw__mullion  { top: 0; bottom: 0; left: 50%; border-left: 1.5px solid currentColor; }
+/* linea d'orizzonte oltre il vetro: un accenno di citta', non un grafico */
+.v-draw__horizon  { left: 0; right: 0; top: 15%; border-top: 1px solid currentColor; opacity: .55; }
+
+/* Il lato "dopo" del confronto deve leggersi a colpo d'occhio, altrimenti
+   trascinare la maniglia sembra non fare niente. */
+.v-ba__layer--after .v-draw {
+  background:
+    radial-gradient(78% 54% at 42% 26%, var(--visual-glow) 0%, transparent 74%),
+    linear-gradient(165deg, var(--surface) 0%, var(--surface) 50%, var(--surface-2) 100%);
+}
+.v-ba__layer--after .v-draw__win { opacity: .22; }
+.v-ba__layer--after .v-draw__light { opacity: .05; }
+
+/* ---------- adattamenti per telefono ---------- */
+@media (max-width: 560px) {
+  /* Il campo indirizzo a pillola con il bottone dentro si stringe troppo:
+     sotto i 560px diventano due blocchi, entrambi a piena larghezza. */
+  .v-address__field {
+    flex-direction: column; align-items: stretch; gap: var(--s-2);
+    border-radius: var(--r-lg); padding: 10px;
+  }
+  .v-address__field input { padding: 14px 12px; }
+  .v-address__go { width: 100%; padding: 16px 20px; }
+
+  /* la riga di prova va in colonna: i puntini di separazione non servono piu' */
+  .v-hero__proof { flex-direction: column; align-items: flex-start; gap: var(--s-2); }
+  .v-hero__proof i { display: none; }
+
+  /* i capitoli del risultato: numerale sopra il titolo, non a fianco */
+  .v-chapter__head { flex-direction: column; gap: var(--s-2); align-items: flex-start; }
+
+  /* il confronto prima/dopo diventa piu' alto: su telefono si guarda in verticale */
+  .v-ba { aspect-ratio: 4 / 3.4; }
+
+  /* gli scenari di ristrutturazione scorrono invece di andare a capo male */
+  .v-scenari { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+  .v-scenari::-webkit-scrollbar { display: none; }
+  .v-scenario { flex: none; }
+}
+
+/* Il titolo di sezione non deve finire sotto l'header appiccicoso. */
+.v-chapter { scroll-margin-top: 84px; }

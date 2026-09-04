@@ -13,7 +13,7 @@ const FASI = [
    finisce prima, le fasi rimaste scorrono al passo rapido; il minimo esiste solo
    perche' un lampo di 80 ms si leggerebbe come uno sfarfallio, non come un
    risultato. Chi ha chiesto meno movimento salta tutto. */
-const PASSO_MIN = 280;   // ms per fase mentre il lavoro e' ancora in corso
+const PASSO_MIN = 280;    // ms per fase mentre il lavoro e' ancora in corso
 const PASSO_RAPIDO = 150; // ms per fase quando il risultato e' gia' arrivato
 const TETTO = 2400;       // ms: oltre questo si mostra comunque il risultato
 
@@ -28,21 +28,26 @@ export default function ValuationReveal<T>({
   onErrore: (m: string) => void;
 }) {
   const [fase, setFase] = useState(0);
-  const partito = useRef(false);
+
+  /* Le callback arrivano come funzioni nuove a ogni render del genitore. Se
+     finissero nelle dipendenze dell'effetto, ogni render lo smonterebbe e la
+     sequenza morirebbe al primo passo: la schermata resterebbe ferma per sempre.
+     Le teniamo in un ref e l'effetto parte una volta sola. */
+  const rif = useRef({ lavoro, onFatto, onErrore });
+  rif.current = { lavoro, onFatto, onErrore };
 
   useEffect(() => {
-    if (partito.current) return;      // in dev React monta due volte: il calcolo parte una sola
-    partito.current = true;
     let vivo = true;
 
     (async () => {
       const t0 = performance.now();
       let esito: T | undefined;
+      let riuscito = false;
       let finito = false;
 
-      const p = lavoro().then(
-        (r) => { esito = r; finito = true; },
-        (e) => { if (vivo) onErrore(e?.message || "Calcolo non riuscito."); finito = true; }
+      const p = rif.current.lavoro().then(
+        (r) => { esito = r; riuscito = true; finito = true; },
+        (e) => { finito = true; if (vivo) rif.current.onErrore(e?.message || "Calcolo non riuscito."); }
       );
 
       const ridotto = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -50,17 +55,18 @@ export default function ValuationReveal<T>({
         for (let n = 1; n < FASI.length; n++) {
           if (!vivo) return;
           await attesa(finito ? PASSO_RAPIDO : PASSO_MIN);
+          if (!vivo) return;
+          setFase(n);
           if (performance.now() - t0 > TETTO) break;
-          if (vivo) setFase(n);
         }
       }
 
       await p;
-      if (vivo && esito !== undefined) onFatto(esito);
+      if (vivo && riuscito) rif.current.onFatto(esito as T);
     })();
 
     return () => { vivo = false; };
-  }, [lavoro, onFatto, onErrore]);
+  }, []);
 
   const avanzamento = ((fase + 1) / FASI.length) * 100;
 

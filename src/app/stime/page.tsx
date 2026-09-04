@@ -4,8 +4,8 @@ import Link from "next/link";
 import Testata from "@/components/Testata";
 import { leggiStime, eliminaStima, leggiStimeAccount, eliminaStimaAccount, migraStimeLocali, type StimaSalvata } from "@/lib/storage";
 import { useSessione } from "@/lib/sessione";
+import { eur } from "@/lib/formato";
 
-const eur = (n: number) => new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0 }).format(Math.round(n));
 
 export default function Stime() {
   const { utente, pronto } = useSessione();

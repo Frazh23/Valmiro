@@ -41,7 +41,11 @@ export default function Home() {
             </div>
 
             <div className="v-hero__visual">
-              <PropertyVisual didascalia="Milano" nota="Luce di taglio, primo mattino" />
+              <PropertyVisual
+                foto="angolo" fuoco="58% 50%" prioritaria
+                alt="Palazzo d'angolo anni Trenta su un viale alberato di Milano, nella luce del primo mattino"
+                didascalia="Milano" nota="Luce di taglio, primo mattino"
+              />
             </div>
           </div>
         </section>

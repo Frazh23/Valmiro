@@ -1,24 +1,42 @@
+import segnaposto from "../../../public/hero/placeholder.json";
+
 /**
  * L'elemento visuale forte della pagina.
  *
- * Oggi e' una composizione architettonica disegnata: una vetrata, la luce che
- * entra e si appoggia al pavimento, lo spigolo di una parete. Niente foto stock,
- * niente rete, nessun peso di caricamento.
+ * Con `foto` mostra una delle fotografie in public/hero: due tagli (2048 e
+ * 1280) e un segnaposto sfocato di pochi byte che riempie il riquadro mentre
+ * il file vero arriva, cosi' la pagina non "salta". Le foto sono 16:9 e il
+ * riquadro dell'hero e' 4:5: `fuoco` dice dove sta il soggetto, cosi' il
+ * ritaglio lo tiene invece di centrare a caso.
  *
- * E' costruita con elementi posizionati in percentuale, non con un SVG a viewBox
- * fisso: il riquadro cambia proporzione fra hero (4:5), confronto (4:3) e mobile
- * (3:2), e un SVG ritagliato perdeva ogni volta pezzi diversi del disegno.
- *
- * Quando ci saranno le immagini definitive basta passare `src`: il disegno resta
- * come fallback e non cambia nient'altro.
+ * Senza `foto` resta il disegno architettonico di prima, che non pesa nulla e
+ * serve da riserva: elementi in percentuale, non SVG a viewBox fisso, perche'
+ * il riquadro cambia proporzione fra hero, confronto e mobile.
  */
+export type Foto = keyof typeof segnaposto;
+
 export default function PropertyVisual({
-  src, alt = "", wide = false, didascalia, nota,
-}: { src?: string; alt?: string; wide?: boolean; didascalia?: string; nota?: string }) {
+  foto, fuoco = "50% 50%", alt = "", wide = false, didascalia, nota, prioritaria = false,
+}: {
+  foto?: Foto; fuoco?: string; alt?: string; wide?: boolean;
+  didascalia?: string; nota?: string;
+  /** l'immagine dell'hero si carica prima di tutto il resto */
+  prioritaria?: boolean;
+}) {
   return (
-    <figure className={`v-visual${wide ? " v-visual--wide" : ""}`} style={{ margin: 0 }}>
-      {src ? (
-        <img src={src} alt={alt} />
+    <figure className={`v-visual${wide ? " v-visual--wide" : ""}${foto ? " v-visual--foto" : ""}`} style={{ margin: 0 }}>
+      {foto ? (
+        <img
+          src={`/hero/${foto}.webp`}
+          srcSet={`/hero/${foto}-1280.webp 1280w, /hero/${foto}.webp 2048w`}
+          sizes="(max-width: 900px) 100vw, 46vw"
+          alt={alt}
+          width={2048} height={1152}
+          loading={prioritaria ? "eager" : "lazy"}
+          fetchPriority={prioritaria ? "high" : "auto"}
+          decoding="async"
+          style={{ objectPosition: fuoco, backgroundImage: `url(${segnaposto[foto]})`, backgroundSize: "cover" }}
+        />
       ) : (
         <div className="v-draw" aria-hidden="true">
           <span className="v-draw__wall" />

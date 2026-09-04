@@ -67,7 +67,8 @@ export type Stima = {
  * Un booleano non bastava: "non preciso" copriva due situazioni molto diverse e
  * l'interfaccia finiva per dire la cosa sbagliata in una delle due.
  */
-export type FonteIndirizzo = "anagrafe" | "civico" | "via" | "dizionario";
+export const FONTI = ["anagrafe", "civico", "via", "dizionario"] as const;
+export type FonteIndirizzo = (typeof FONTI)[number];
 export type Scelta = {
   zona: string; etichetta: string; descrizione: string;
   fonte: FonteIndirizzo;

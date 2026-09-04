@@ -23,7 +23,7 @@ import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
 import { RISTRUTTURAZIONE, scala } from "@/lib/engine";
 import { salvaStima, salvaStimaAccount } from "@/lib/storage";
 import { useSessione } from "@/lib/sessione";
-import type { FonteIndirizzo, Input, Scelta, Stato, Stima, Tipo } from "@/lib/types";
+import { FONTI, type FonteIndirizzo, type Input, type Scelta, type Stato, type Stima, type Tipo } from "@/lib/types";
 
 const STATI: { id: Stato; t: string; d: string }[] = [
   { id: "rist", t: "Da ristrutturare", d: "Impianti e finiture da rifare" },
@@ -77,7 +77,9 @@ function Valuta() {
       setI((v) => ({ ...v, zona: z }));
       setIndirizzo(params.get("ind") || ZONE[z].d);
       const f = params.get("f");
-      setFonte(f === "civico" || f === "via" ? f : "dizionario");
+      /* L'elenco delle fonti valide sta in types.ts: qui si legge da li', non
+         si ripete a mano, altrimenti ogni fonte nuova torna "dizionario". */
+      setFonte(FONTI.includes(f as FonteIndirizzo) ? (f as FonteIndirizzo) : "dizionario");
       setVista("casa");
     }
   }, [params]);

@@ -585,3 +585,9 @@ button { font: inherit; letter-spacing: inherit; }
 }
 .v-auth__msg--ok { background: var(--accent-soft); border-color: transparent; color: var(--accent-ink); }
 .v-auth__msg--ko { background: var(--warm-soft); border-color: transparent; color: var(--neg); }
+
+/* ---------- pagine di testo (privacy, termini) ---------- */
+.v-prose h2 { font-size: var(--t-h3); font-weight: 550; letter-spacing: var(--track-h); margin: var(--s-8) 0 var(--s-3); }
+.v-prose p { font-size: var(--t-body-lg); line-height: 1.55; color: var(--ink-soft); max-width: 62ch; margin: 0 0 var(--s-4); }
+.v-prose p b { color: var(--ink); font-weight: 550; }
+.v-prose a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Header from "@/components/sistema/Header";
 import HomeSearch from "@/components/sistema/HomeSearch";
 import PropertyVisual from "@/components/sistema/PropertyVisual";
@@ -78,6 +79,7 @@ export default function Home() {
           <span className="v-brand" aria-label="Valmiro">Valmir<span aria-hidden="true">o</span></span>
           <p className="v-micro">
             {FONTE}. Le stime sono indicative e non costituiscono perizia.
+            {" "}<Link href="/privacy">Privacy</Link>
           </p>
         </div>
       </footer>

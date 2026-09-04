@@ -100,7 +100,21 @@ logica di business inventata.
 
 Documentazione: **https://v0.app/docs/github**
 
-## 7. Collegare Vercel
+## 7. Vercel — fatto
+
+Progetto: **`vaylo`** nel team `Vaylo` (piano Hobby).
+Dominio di produzione: **https://vaylo-one.vercel.app**
+
+Nota: `vaylo.vercel.app` era gia' occupato da un altro prodotto (un servizio di
+valet parking, nessun rapporto con noi), per questo Vercel ha assegnato
+`vaylo-one`. Vale la pena verificare il marchio prima di legarsi al nome.
+
+**Attenzione al primo deploy.** Vercel costruisce quando riceve un push. Se il
+repository viene collegato *dopo* aver gia' pushato, non c'e' nessun evento da
+intercettare: il progetto resta con "No Deployment" e il dominio risponde 404.
+Si sblocca con il primo commit successivo al collegamento.
+
+### Come era stato configurato
 
 1. Vai su **https://vercel.com/new** e importa `Vaylo`.
 2. Framework: Next.js (lo riconosce da solo). Non cambiare i comandi di build.
@@ -129,12 +143,15 @@ Vai su
 e aggiungi in *Redirect URLs*:
 
 ```
-https://vaylo.vercel.app/**
-https://*-<tuo-team>.vercel.app/**
+https://vaylo-one.vercel.app/**
+https://vaylo-*-frazh23s-projects.vercel.app/**
 ```
 
-(il secondo copre le preview; il nome esatto lo leggi dall'URL della prima
-preview che Vercel genera). In *Site URL* metti il dominio di produzione.
+La prima riga e' la produzione, la seconda copre le preview: il pattern esatto
+lo confermi dall'URL della prima preview che Vercel genera, perche' il suffisso
+del team cambia da account ad account.
+
+In *Site URL* metti `https://vaylo-one.vercel.app`.
 
 ## 9. Ultima cosa, prima di aprire il sito a qualcuno
 

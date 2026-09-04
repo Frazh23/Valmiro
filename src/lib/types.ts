@@ -58,6 +58,8 @@ export type Stima = {
 
 /**
  * Un indirizzo risolto in una zona OMI, con da dove viene la risposta:
+ *   anagrafe   — il civico viene dall'anagrafe del Comune: e' il dato migliore
+ *                che abbiamo, ufficiale e con le coordinate del portone;
  *   civico     — il geocoder ha trovato proprio quel numero: punto esatto;
  *   via        — ha trovato la via ma non il civico: zona giusta, punto generico.
  *                Conta, perche' una via lunga puo' attraversare piu' zone;
@@ -65,7 +67,7 @@ export type Stima = {
  * Un booleano non bastava: "non preciso" copriva due situazioni molto diverse e
  * l'interfaccia finiva per dire la cosa sbagliata in una delle due.
  */
-export type FonteIndirizzo = "civico" | "via" | "dizionario";
+export type FonteIndirizzo = "anagrafe" | "civico" | "via" | "dizionario";
 export type Scelta = {
   zona: string; etichetta: string; descrizione: string;
   fonte: FonteIndirizzo;

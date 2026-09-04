@@ -9,6 +9,7 @@
     "start": "next start",
     "test": "node --test tests/*.test.mjs",
     "ingest": "node scripts/ingest-omi.mjs",
+    "ingest-civici": "node scripts/ingest-civici.mjs",
     "load-db": "node scripts/load-postgis.mjs",
     "typecheck": "tsc --noEmit"
   },

@@ -200,9 +200,9 @@ function Valuta() {
                 </div>
                 {fonte === "via" && (
                   <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
-                    Abbiamo trovato la via ma non il civico: nelle mappe aperte non tutti i numeri
-                    esistono. La zona è quella giusta, il punto è un punto qualsiasi della via — se
-                    la via è lunga e attraversa più zone, conviene controllarla sulla mappa.
+                    Zona presa dalla via, non dal numero civico. Per quasi tutte le vie di Milano
+                    è la stessa cosa; per le poche che attraversano più zone OMI il civico sposta la
+                    stima, quindi conviene aggiungerlo o controllare il punto sulla mappa.
                   </p>
                 )}
                 {fonte === "dizionario" && (

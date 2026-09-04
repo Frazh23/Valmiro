@@ -1,14 +1,22 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { cercaZona } from "@/lib/data";
 import type { Scelta } from "@/lib/types";
+
+type Suggerimento = {
+  etichetta: string; zona: string; descrizione: string;
+  civici: number; multizona: boolean;
+};
 
 /**
  * Campo indirizzo.
- * Mentre si scrive i suggerimenti arrivano dal dizionario locale: istantanei,
- * senza rete. Il geocoder vero (/api/geocode) parte solo alla conferma, perche'
- * Nominatim ammette una richiesta al secondo e chiamarlo a ogni tasto ci farebbe
- * bloccare. Nessuna logica di ricerca vive qui: e' tutta in lib/data e nella rotta.
+ *
+ * I suggerimenti arrivano da /api/vie, cioe' dalle 4.030 vie dell'anagrafe
+ * comunale: sono dati nostri, quindi si possono chiedere a ogni tasto: nessun
+ * limite di frequenza come con Nominatim. L'attesa breve serve solo a non
+ * mandare una richiesta per lettera.
+ *
+ * Alla conferma passa da /api/geocode, che risolve il civico. Nessuna logica di
+ * ricerca vive qui: sta tutta in lib/indirizzario e nelle rotte.
  */
 export default function AddressSearch({
   onScegli, azione = "Valuta ora", valoreIniziale = "", autoFocus = false,
@@ -19,13 +27,16 @@ export default function AddressSearch({
   autoFocus?: boolean;
 }) {
   const [q, setQ] = useState(valoreIniziale);
-  const [locali, setLocali] = useState<{ nome: string; zona: string; descrizione: string }[]>([]);
+  const [vie, setVie] = useState<Suggerimento[]>([]);
   const [remoti, setRemoti] = useState<Scelta[] | null>(null);
   const [cerco, setCerco] = useState(false);
   const [nota, setNota] = useState<string | null>(null);
   const [attivo, setAttivo] = useState(-1);
   const box = useRef<HTMLDivElement>(null);
   const campo = useRef<HTMLInputElement>(null);
+  /* L'ultima richiesta partita. Le risposte possono tornare fuori ordine e una
+     lenta di tre lettere fa non deve sovrascrivere quella che si sta leggendo. */
+  const turno = useRef(0);
 
   useEffect(() => {
     const fuori = (e: MouseEvent) => {
@@ -35,26 +46,34 @@ export default function AddressSearch({
     return () => removeEventListener("mousedown", fuori);
   }, []);
 
-  const chiudi = () => { setLocali([]); setRemoti(null); setAttivo(-1); };
+  const chiudi = () => { setVie([]); setRemoti(null); setAttivo(-1); };
 
   function digita(v: string) {
     setQ(v); setRemoti(null); setNota(null); setAttivo(-1);
-    setLocali(v.trim().length >= 2 ? cercaZona(v, 6) : []);
+    if (v.trim().length < 2) { setVie([]); return; }
+    const mio = ++turno.current;
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/vie?q=${encodeURIComponent(v)}`).then((x) => x.json());
+        if (turno.current === mio) setVie(r.vie || []);
+      } catch { /* i suggerimenti sono un di piu': se cadono, si cerca lo stesso */ }
+    }, 130);
+    return () => clearTimeout(t);
   }
 
-  async function conferma() {
+  async function conferma(testo = q) {
     if (cerco) return;
     /* Meglio riportare il fuoco nel campo che presentare una CTA spenta:
        un bottone disabilitato all'arrivo si legge come sito rotto. */
-    if (q.trim().length < 3) { campo.current?.focus(); return; }
-    setCerco(true); setLocali([]); setNota(null); setAttivo(-1);
+    if (testo.trim().length < 3) { campo.current?.focus(); return; }
+    setCerco(true); setVie([]); setNota(null); setAttivo(-1);
     try {
-      const r = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`).then((x) => x.json());
+      const r = await fetch(`/api/geocode?q=${encodeURIComponent(testo)}`).then((x) => x.json());
       const c: Scelta[] = r.candidati || [];
-      if (c.length === 1 && r.metodo === "geocoder") { scegli(c[0]); return; }
+      if (c.length === 1 && r.trovato && !r.motivo) { scegli(c[0]); return; }
       setRemoti(c);
       if (!c.length) setNota(r.motivo || "Nessun indirizzo trovato. Prova con la via e il civico.");
-      else if (r.metodo === "dizionario") setNota(r.motivo);
+      else if (r.motivo) setNota(r.motivo);
     } catch {
       setNota("Ricerca non riuscita. Riprova fra un istante.");
     } finally {
@@ -64,17 +83,39 @@ export default function AddressSearch({
 
   function scegli(s: Scelta) { setQ(s.etichetta); chiudi(); setNota(null); onScegli(s); }
 
-  const lista: Scelta[] = remoti
-    ? remoti
-    : locali.map((c) => ({
-        zona: c.zona, etichetta: c.nome, descrizione: c.descrizione,
-        fonte: "dizionario" as const, preciso: false,
+  /**
+   * Scegliere una via dall'elenco non e' scegliere un indirizzo: se nel campo
+   * c'e' gia' un civico lo si porta dietro, cosi' "savona 35" cliccato su
+   * "Via Savona" arriva al portone e non al centro della via.
+   */
+  function scegliVia(v: Suggerimento) {
+    const numero = q.trim().match(/(\d+\s*[\/-]?\s*[a-zA-Z]?)\s*$/)?.[1]?.trim();
+    const testo = numero ? `${v.etichetta} ${numero}` : v.etichetta;
+    setQ(testo);
+    if (numero) { conferma(testo); return; }
+    chiudi();
+    onScegli({
+      zona: v.zona, etichetta: v.etichetta, descrizione: v.descrizione,
+      fonte: "via", preciso: false,
+    });
+  }
+
+  const righe = remoti
+    ? remoti.map((c) => ({ etichetta: c.etichetta, zona: c.zona, descrizione: c.descrizione, nota: "" }))
+    : vie.map((v) => ({
+        etichetta: v.etichetta, zona: v.zona, descrizione: v.descrizione,
+        nota: v.multizona ? "serve il civico" : "",
       }));
 
   function tasto(e: React.KeyboardEvent) {
-    if (e.key === "ArrowDown" && lista.length) { e.preventDefault(); setAttivo((n) => (n + 1) % lista.length); }
-    else if (e.key === "ArrowUp" && lista.length) { e.preventDefault(); setAttivo((n) => (n <= 0 ? lista.length : n) - 1); }
-    else if (e.key === "Enter") { e.preventDefault(); attivo >= 0 && lista[attivo] ? scegli(lista[attivo]) : conferma(); }
+    if (e.key === "ArrowDown" && righe.length) { e.preventDefault(); setAttivo((n) => (n + 1) % righe.length); }
+    else if (e.key === "ArrowUp" && righe.length) { e.preventDefault(); setAttivo((n) => (n <= 0 ? righe.length : n) - 1); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      if (attivo < 0) return conferma();
+      if (remoti) { const s = remoti[attivo]; if (s) scegli(s); }
+      else { const v = vie[attivo]; if (v) scegliVia(v); }
+    }
     else if (e.key === "Escape") chiudi();
   }
 
@@ -92,26 +133,27 @@ export default function AddressSearch({
           autoFocus={autoFocus}
           enterKeyHint="search"
         />
-        <button className="v-btn v-btn--accent v-address__go" onClick={conferma} disabled={cerco}>
+        <button className="v-btn v-btn--accent v-address__go" onClick={() => conferma()} disabled={cerco}>
           {cerco ? "Cerco…" : azione}
         </button>
       </div>
 
-      {lista.length > 0 && (
+      {righe.length > 0 && (
         <div className="v-suggest" role="listbox">
-          <div className="v-suggest__head">{remoti ? "Indirizzi trovati" : "Vie e quartieri che conosco"}</div>
-          {lista.map((c, n) => (
+          <div className="v-suggest__head">{remoti ? "Indirizzi trovati" : "Vie di Milano"}</div>
+          {righe.map((c, n) => (
             <button key={c.etichetta + c.zona + n} role="option" aria-selected={n === attivo}
-                    data-active={n === attivo} onClick={() => scegli(c)}>
+                    data-active={n === attivo}
+                    onClick={() => (remoti ? scegli(remoti[n]) : scegliVia(vie[n]))}>
               <span className="v-suggest__name">
                 <b>{c.etichetta}</b>
-                <small>{c.descrizione}</small>
+                <small>{c.nota ? `${c.descrizione} · ${c.nota}` : c.descrizione}</small>
               </span>
               <span className="v-zpill">{c.zona}</span>
             </button>
           ))}
           {!remoti && (
-            <div className="v-suggest__foot">Invio per cercare l&apos;indirizzo esatto con il civico</div>
+            <div className="v-suggest__foot">Aggiungi il numero civico per la stima piu&apos; precisa</div>
           )}
         </div>
       )}

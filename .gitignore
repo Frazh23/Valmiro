@@ -19,3 +19,8 @@ out/
 _da-cancellare/
 audit.json
 *.zip
+
+# sorgenti grezze scaricate a mano: pesanti, si rigenerano dal portale
+data/ds634*
+data/*.zip
+data/civici-grezzi*

@@ -16,6 +16,26 @@ for (const f of FEATURES) {
     g.type === "MultiPolygon" ? (g.coordinates as Ring[][]) : [g.coordinates as Ring[]];
 }
 
+/**
+ * Rettangolo che racchiude tutte le zone OMI di Milano, calcolato dai poligoni
+ * stessi invece che scritto a mano: se un giorno l'area cambia, si aggiorna da solo.
+ * Serve a vincolare il geocoder, che altrimenti risponde con vie omonime dei
+ * comuni della citta' metropolitana.
+ */
+export const BBOX_MILANO = (() => {
+  let latMin = 90, latMax = -90, lonMin = 180, lonMax = -180;
+  for (const zona in POLIGONI)
+    for (const poly of POLIGONI[zona])
+      for (const anello of poly)
+        for (const [x, y] of anello) {
+          if (y < latMin) latMin = y;
+          if (y > latMax) latMax = y;
+          if (x < lonMin) lonMin = x;
+          if (x > lonMax) lonMax = x;
+        }
+  return { lonMin, latMin, lonMax, latMax };
+})();
+
 function dentroAnello(lon: number, lat: number, r: Ring) {
   let dentro = false;
   for (let i = 0, j = r.length - 1; i < r.length; j = i++) {

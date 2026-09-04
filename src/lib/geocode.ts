@@ -6,7 +6,14 @@
    locale, il geocoder parte solo quando l'utente conferma.
    -------------------------------------------------------------------------- */
 
-export type Posizione = { lat: number; lon: number; etichetta: string; via?: string; civico?: string };
+import { BBOX_MILANO } from "./geo";
+
+export type Posizione = {
+  lat: number; lon: number; etichetta: string;
+  via?: string; civico?: string;
+  /** true se il geocoder ha trovato proprio quel civico, false se solo la via */
+  conCivico?: boolean;
+};
 
 const cache = new Map<string, Posizione[]>();
 let ultima = 0;
@@ -24,16 +31,23 @@ export function spezzaIndirizzo(q: string) {
   return m ? { via: m[1].trim(), civico: m[2] } : { via: s, civico: "" };
 }
 
-async function nominatim(q: string): Promise<Posizione[]> {
+async function nominatim(q: string, ignoraCivico = false): Promise<Posizione[]> {
   await attendi(1100);
   const { via, civico } = spezzaIndirizzo(q);
+  const usaCivico = civico && !ignoraCivico;
   const url = new URL("https://nominatim.openstreetmap.org/search");
-  url.searchParams.set("street", civico ? `${civico} ${via}` : via);
+  url.searchParams.set("street", usaCivico ? `${civico} ${via}` : via);
   url.searchParams.set("city", "Milano");
   url.searchParams.set("country", "Italia");
   url.searchParams.set("format", "jsonv2");
   url.searchParams.set("addressdetails", "1");
   url.searchParams.set("limit", "5");
+  /* Senza vincolo geografico "Milano" viene inteso anche come citta' metropolitana,
+     e una via omonima di Sesto o di Rho vince sulla nostra. Il riquadro e' quello
+     delle zone OMI: fuori di li' non sapremmo comunque dare un prezzo. */
+  const b = BBOX_MILANO;
+  url.searchParams.set("viewbox", `${b.lonMin},${b.latMax},${b.lonMax},${b.latMin}`);
+  url.searchParams.set("bounded", "1");
   const r = await fetch(url, {
     headers: { "User-Agent": process.env.GEOCODER_UA || "valmiro/0.1", "Accept-Language": "it" },
   });
@@ -46,6 +60,7 @@ async function nominatim(q: string): Promise<Posizione[]> {
       lat: parseFloat(x.lat), lon: parseFloat(x.lon),
       etichetta: nome || (x.display_name || "").split(",").slice(0, 2).join(","),
       via: a.road || a.pedestrian || a.square, civico: a.house_number,
+      conCivico: Boolean(a.house_number),
     };
   });
 }
@@ -64,11 +79,26 @@ async function tomtom(q: string): Promise<Posizione[]> {
   }));
 }
 
+/**
+ * Da indirizzo a posizioni dentro Milano.
+ *
+ * Se il civico non esiste nella mappa — succede spesso, OpenStreetMap non ha tutti
+ * i numeri civici d'Italia — si ritenta con la sola via invece di fallire. Meglio
+ * una zona giusta trovata sulla via che un "indirizzo non riconosciuto" su una via
+ * che esiste eccome: il risultato resta corretto, perche' la zona OMI e' comunque
+ * l'unita' su cui si formano i prezzi.
+ */
 export async function geocodifica(indirizzo: string): Promise<Posizione[]> {
   const chiave = indirizzo.trim().toLowerCase();
   if (cache.has(chiave)) return cache.get(chiave)!;
   const provider = process.env.GEOCODER || "nominatim";
-  const p = provider === "tomtom" ? await tomtom(indirizzo) : await nominatim(indirizzo);
+  if (provider === "tomtom") {
+    const p = await tomtom(indirizzo);
+    cache.set(chiave, p);
+    return p;
+  }
+  let p = await nominatim(indirizzo);
+  if (!p.length && spezzaIndirizzo(indirizzo).civico) p = await nominatim(indirizzo, true);
   cache.set(chiave, p);
   return p;
 }

@@ -33,7 +33,10 @@ export async function GET(req: Request) {
     visti.add(chiave);
     candidati.push({
       etichetta: p.etichetta, lat: p.lat, lon: p.lon, zona,
-      descrizione: ZONE[zona].d, fascia: FASCIA_NOME[ZONE[zona].f], preciso: true,
+      descrizione: ZONE[zona].d, fascia: FASCIA_NOME[ZONE[zona].f],
+      /* preciso = il geocoder ha trovato il civico. Senza, la via e' quella giusta
+         ma il punto e' un suo punto qualsiasi: va detto, non dato per scontato. */
+      preciso: p.conCivico !== false,
     });
   }
 

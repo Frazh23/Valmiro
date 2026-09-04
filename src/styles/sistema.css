@@ -151,6 +151,37 @@ button { font: inherit; letter-spacing: inherit; }
   .v-hero__visual { margin-top: var(--s-4); }
 }
 
+/* ---------- hero con la fotografia che sanguina dal bordo ---------- */
+.v-hero--foto {
+  position: relative; overflow: hidden;
+  min-height: clamp(560px, 78vh, 840px);
+  display: flex; align-items: center;
+  padding-block: clamp(40px, 6vw, 80px);
+}
+.v-hero__in { position: relative; z-index: 1; width: 100%; }
+.v-hero__col { max-width: 520px; }
+.v-hero__foto {
+  position: absolute; top: 0; right: 0; bottom: 0; z-index: 0;
+  width: 54%; height: 100%; object-fit: cover; object-position: 72% 50%;
+  /* la dissolvenza e' una maschera, non un velo sopra: la carta resta carta.
+     Comincia dove finisce il campo indirizzo, cosi' il bottone sta sul panna. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30%);
+          mask-image: linear-gradient(to right, transparent 0, #000 30%);
+}
+@media (min-width: 1700px) { .v-hero__foto { width: 50%; } }
+@media (max-width: 900px) {
+  /* prima il campo, poi la foto: l'ordine e' del layout, non del DOM */
+  .v-hero--foto { display: flex; flex-direction: column; min-height: 0; padding-bottom: 0; }
+  .v-hero__col { max-width: 100%; }
+  .v-hero__foto {
+    order: 2; position: relative; display: block; width: 100%; height: auto;
+    aspect-ratio: 3 / 2; object-position: 50% 58%;
+    margin-top: var(--s-7);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
+            mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
+  }
+}
+
 /* ---------- campo indirizzo ---------- */
 .v-address { position: relative; }
 .v-address__field {

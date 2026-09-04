@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Header from "@/components/sistema/Header";
 import HomeSearch from "@/components/sistema/HomeSearch";
-import PropertyVisual from "@/components/sistema/PropertyVisual";
 import Reveal from "@/components/sistema/Reveal";
 import { ZONE, SEMESTRE, FONTE } from "@/lib/data";
 
@@ -19,9 +18,22 @@ export default function Home() {
       <Header />
 
       <main className="v-fill">
-        <section className="v-wrap v-hero">
-          <div className="v-hero__grid">
-            <div>
+        {/* La foto non e' un oggetto nella pagina: e' il luogo. Sanguina dal bordo
+            destro senza cornice e si dissolve nella carta, cosi' titolo e campo
+            stanno sul panna dove si leggono. Su telefono scende sotto il campo,
+            a tutta larghezza, con la stessa dissolvenza dall'alto. */}
+        <section className="v-hero v-hero--foto">
+          <img
+            className="v-hero__foto"
+            src="/hero/liberty.webp"
+            srcSet="/hero/liberty-1280.webp 1280w, /hero/liberty.webp 2048w"
+            sizes="(max-width: 900px) 100vw, 60vw"
+            width={2048} height={1152}
+            alt="Facciata di un palazzo Liberty di Milano con balconi in ferro battuto e biciclette, nella luce del primo mattino"
+            loading="eager" fetchPriority="high" decoding="async"
+          />
+          <div className="v-wrap v-hero__in">
+            <div className="v-hero__col">
               <p className="v-eyebrow">Milano</p>
               <h1 className="v-display v-hero__copy" style={{ marginTop: "var(--s-4)" }}>
                 Quanto vale davvero la tua casa
@@ -38,13 +50,6 @@ export default function Home() {
                 <span>{zone} zone OMI</span><i /><span>Dati ufficiali dell&apos;Agenzia delle Entrate</span>
                 <i /><span>{SEMESTRE}</span>
               </div>
-            </div>
-
-            <div className="v-hero__visual">
-              <PropertyVisual
-                foto="liberty" fuoco="72% 50%" prioritaria
-                alt="Facciata di un palazzo Liberty di Milano con balconi in ferro battuto e biciclette, nella luce del primo mattino"
-              />
             </div>
           </div>
         </section>

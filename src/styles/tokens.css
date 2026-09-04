@@ -99,41 +99,12 @@
   --e-inout: cubic-bezier(.65,0,.35,1);
   --e-soft:  cubic-bezier(.4,0,.2,1);
 
-  color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper:       #0D0C0A;
-    --paper-deep:  #141310;
-    --surface:     #17150F;
-    --surface-2:   #201D17;
-    --surface-3:   #2C2820;
-
-    --ink:         #F4F0E9;
-    --ink-soft:    #B3ABA0;
-    --ink-faint:   #857D72;
-    --ink-ghost:   #5C554C;
-
-    --line:        #2A261F;
-    --line-strong: #3D382F;
-
-    --accent:      #63C4A8;
-    --accent-ink:  #8FDCC4;
-    --accent-soft: #10261F;
-    --accent-on:   #06201A;
-
-    --pos:         #63C4A8;
-    --neg:         #E08A72;
-    --warm:        #D9B46E;
-    --warm-soft:   #2A2114;
-    --visual-glow: #232520;
-
-    --sh-1: 0 1px 2px rgba(0,0,0,.5);
-    --sh-2: 0 2px 8px rgba(0,0,0,.5), 0 20px 44px -30px #000;
-    --sh-3: 0 4px 16px rgba(0,0,0,.6), 0 48px 90px -50px #000;
-    --sh-lift: 0 12px 40px -18px rgba(0,0,0,.75);
-  }
+  /* Valmiro e' un prodotto chiaro. Non "chiaro se il sistema e' chiaro": la
+     carta e la luce sono l'identita', come in un catalogo d'architettura, e i
+     numeri di una stima si leggono meglio su fondo chiaro. Dichiararlo qui
+     evita che il browser dipinga di scuro i controlli nativi su una pagina
+     chiara. La palette scura resta nella storia di git, se un giorno servisse. */
+  color-scheme: light;
 }
 
 /* Chi ha chiesto meno movimento lo ottiene davvero: le animazioni non vengono

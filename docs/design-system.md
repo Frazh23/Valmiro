@@ -12,6 +12,17 @@ ovunque, gradienti casuali o 3D gratuito.
 
 Una schermata, un obiettivo. La complessità si rivela mentre si scorre.
 
+## Il tema è chiaro, e basta
+
+Valmiro non segue la preferenza di sistema: la carta chiara è l'identità, non
+un'alternativa. `color-scheme: light` è dichiarato nei token, così anche i
+controlli nativi del browser restano chiari.
+
+Conseguenza operativa: **niente `prefers-color-scheme` nei componenti.** Se un
+componente disegna da sé — un canvas, un SVG generato — i colori si leggono dai
+token con `getComputedStyle`, non si scelgono con un booleano chiaro/scuro.
+`Mappa.tsx` è l'esempio.
+
 ## Token — `src/styles/tokens.css`
 
 È l'unica fonte di verità. Se un colore, uno spazio, un raggio o una durata non

@@ -32,7 +32,14 @@ export default function Mappa({ zona, onPick }: { zona: string | null; onPick: (
   useEffect(() => {
     const cv = ref.current!;
     const disegna = () => {
-      const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+      /* La mappa e' disegnata su canvas, quindi i colori vanno scritti a mano:
+         li si prende dai token invece di dedurli dalla preferenza di sistema,
+         che dopo il passaggio al tema chiaro fisso non descrive piu' la pagina. */
+      const token = (nome: string, ripiego: string) =>
+        getComputedStyle(document.documentElement).getPropertyValue(nome).trim() || ripiego;
+      const accento = token("--accent", "#1F6F5C");
+      const bordo = token("--line-strong", "#CFC8BD");
+      const carta = token("--surface", "#FFFFFF");
       const dpr = Math.min(2, devicePixelRatio || 1);
       const w = cv.clientWidth, h = cv.clientHeight;
       cv.width = w * dpr; cv.height = h * dpr;
@@ -60,10 +67,11 @@ export default function Mappa({ zona, onPick }: { zona: string | null; onPick: (
           g.closePath();
         }
         const a = (ALPHA[f] ?? 0.2) * (hov ? 1.45 : 1);
-        g.fillStyle = sel ? (dark ? "#35C6A6" : "#0E8C74")
-          : dark ? `rgba(53,198,166,${a})` : `rgba(14,140,116,${a})`;
+        g.fillStyle = accento;
+        g.globalAlpha = sel ? 1 : a;
         g.fill("evenodd");
-        g.strokeStyle = sel ? (dark ? "#04211C" : "#fff") : dark ? "rgba(255,255,255,.14)" : "rgba(15,21,28,.16)";
+        g.globalAlpha = 1;   // il bordo e' pieno: l'alpha serviva solo al riempimento
+        g.strokeStyle = sel ? carta : bordo;
         g.lineWidth = sel ? 1.6 : 0.7;
         g.stroke();
       }

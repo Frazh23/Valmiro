@@ -6,6 +6,14 @@ type Suggerimento = {
   etichetta: string; zona: string; descrizione: string;
   civici: number; multizona: boolean;
 };
+type CivicoSuggerito = { etichetta: string; civico: string; zona: string; descrizione: string };
+type Risposta = {
+  vie: Suggerimento[];
+  via?: string; civicoCercato?: string; civici?: CivicoSuggerito[]; vicini?: boolean;
+};
+
+/** Una riga della tendina, qualunque cosa rappresenti: sa da sola cosa fare se scelta. */
+type Riga = { etichetta: string; zona: string; descrizione: string; nota: string; scegli: () => void };
 
 /**
  * Campo indirizzo.
@@ -27,7 +35,7 @@ export default function AddressSearch({
   autoFocus?: boolean;
 }) {
   const [q, setQ] = useState(valoreIniziale);
-  const [vie, setVie] = useState<Suggerimento[]>([]);
+  const [vie, setVie] = useState<Risposta>({ vie: [] });
   const [remoti, setRemoti] = useState<Scelta[] | null>(null);
   const [cerco, setCerco] = useState(false);
   const [nota, setNota] = useState<string | null>(null);
@@ -46,16 +54,16 @@ export default function AddressSearch({
     return () => removeEventListener("mousedown", fuori);
   }, []);
 
-  const chiudi = () => { setVie([]); setRemoti(null); setAttivo(-1); };
+  const chiudi = () => { setVie({ vie: [] }); setRemoti(null); setAttivo(-1); };
 
   function digita(v: string) {
     setQ(v); setRemoti(null); setNota(null); setAttivo(-1);
-    if (v.trim().length < 2) { setVie([]); return; }
+    if (v.trim().length < 2) { setVie({ vie: [] }); return; }
     const mio = ++turno.current;
     const t = setTimeout(async () => {
       try {
-        const r = await fetch(`/api/vie?q=${encodeURIComponent(v)}`).then((x) => x.json());
-        if (turno.current === mio) setVie(r.vie || []);
+        const r: Risposta = await fetch(`/api/vie?q=${encodeURIComponent(v)}`).then((x) => x.json());
+        if (turno.current === mio) setVie(r.vie ? r : { vie: [] });
       } catch { /* i suggerimenti sono un di più: se cadono, si cerca lo stesso */ }
     }, 130);
     return () => clearTimeout(t);
@@ -66,7 +74,7 @@ export default function AddressSearch({
     /* Meglio riportare il fuoco nel campo che presentare una CTA spenta:
        un bottone disabilitato all'arrivo si legge come sito rotto. */
     if (testo.trim().length < 3) { campo.current?.focus(); return; }
-    setCerco(true); setVie([]); setNota(null); setAttivo(-1);
+    setCerco(true); setVie({ vie: [] }); setNota(null); setAttivo(-1);
     try {
       const r = await fetch(`/api/geocode?q=${encodeURIComponent(testo)}`).then((x) => x.json());
       const c: Scelta[] = r.candidati || [];
@@ -100,21 +108,36 @@ export default function AddressSearch({
     });
   }
 
-  const righe = remoti
-    ? remoti.map((c) => ({ etichetta: c.etichetta, zona: c.zona, descrizione: c.descrizione, nota: "" }))
-    : vie.map((v) => ({
-        etichetta: v.etichetta, zona: v.zona, descrizione: v.descrizione,
-        nota: v.multizona ? "serve il civico" : "",
-      }));
+  /* I civici vengono prima delle vie: se l'anagrafe ne propone, e' perche' nel
+     campo c'e' gia' un numero, e un portone e' una risposta migliore di una via. */
+  const righe: Riga[] = remoti
+    ? remoti.map((c) => ({ etichetta: c.etichetta, zona: c.zona, descrizione: c.descrizione, nota: "", scegli: () => scegli(c) }))
+    : [
+        ...(vie.civici || []).map((c) => ({
+          etichetta: c.etichetta, zona: c.zona, descrizione: c.descrizione, nota: "",
+          scegli: () => scegli({ zona: c.zona, etichetta: c.etichetta, descrizione: c.descrizione, fonte: "anagrafe", preciso: true }),
+        })),
+        ...vie.vie.map((v) => ({
+          etichetta: v.etichetta, zona: v.zona, descrizione: v.descrizione,
+          nota: v.multizona ? "serve il civico" : "",
+          scegli: () => scegliVia(v),
+        })),
+      ];
+
+  const titolo = remoti
+    ? "Indirizzi trovati"
+    : vie.civici?.length
+      ? vie.vicini
+        ? `Il ${vie.civicoCercato} non risulta in ${vie.via} · i più vicini`
+        : `Civici di ${vie.via}`
+      : "Vie di Milano";
 
   function tasto(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown" && righe.length) { e.preventDefault(); setAttivo((n) => (n + 1) % righe.length); }
     else if (e.key === "ArrowUp" && righe.length) { e.preventDefault(); setAttivo((n) => (n <= 0 ? righe.length : n) - 1); }
     else if (e.key === "Enter") {
       e.preventDefault();
-      if (attivo < 0) return conferma();
-      if (remoti) { const s = remoti[attivo]; if (s) scegli(s); }
-      else { const v = vie[attivo]; if (v) scegliVia(v); }
+      if (attivo >= 0 && righe[attivo]) righe[attivo].scegli(); else conferma();
     }
     else if (e.key === "Escape") chiudi();
   }
@@ -140,11 +163,10 @@ export default function AddressSearch({
 
       {righe.length > 0 && (
         <div className="v-suggest" role="listbox">
-          <div className="v-suggest__head">{remoti ? "Indirizzi trovati" : "Vie di Milano"}</div>
+          <div className="v-suggest__head">{titolo}</div>
           {righe.map((c, n) => (
             <button key={c.etichetta + c.zona + n} role="option" aria-selected={n === attivo}
-                    data-active={n === attivo}
-                    onClick={() => (remoti ? scegli(remoti[n]) : scegliVia(vie[n]))}>
+                    data-active={n === attivo} onClick={c.scegli}>
               <span className="v-suggest__name">
                 <b>{c.etichetta}</b>
                 <small>{c.nota ? `${c.descrizione} · ${c.nota}` : c.descrizione}</small>
@@ -152,7 +174,7 @@ export default function AddressSearch({
               <span className="v-zpill">{c.zona}</span>
             </button>
           ))}
-          {!remoti && (
+          {!remoti && !vie.civici?.length && (
             <div className="v-suggest__foot">Aggiungi il numero civico per la stima più precisa</div>
           )}
         </div>

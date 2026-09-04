@@ -163,3 +163,31 @@ export function risolvi(q: string): Risoluzione {
   if (!via.zone) return { esito: "via", via };
   return { esito: "civico-assente", via, civico, vicini: accanto(lista, civico) };
 }
+
+export type CivicoSuggerito = { civico: string; lon: number; lat: number; zona: string };
+
+/**
+ * I civici di una via che cominciano con quello che si sta scrivendo.
+ *
+ * "via torino 4" deve proporre 4, 42, 43, 44… in ordine numerico, con il numero
+ * esatto per primo se esiste. Se nessun civico comincia cosi' — il 40 di Via
+ * Torino non c'e' — si propongono quello prima e quello dopo, e lo si dichiara:
+ * `vicini` a true dice all'interfaccia di intitolare la lista di conseguenza.
+ */
+export function suggerisciCivici(via: Via, parziale: string, max = 6): { elenco: CivicoSuggerito[]; vicini: boolean } {
+  const lista = (CIVICI[via.chiave] || []).filter((c): c is [string, number, number, string] => Boolean(c[3]));
+  const p = parziale.toUpperCase().replace("/", "");
+  const compatto = (c: string) => c.toUpperCase().replace("/", "");
+  const num = (c: string) => parseInt(c, 10);
+
+  const prefisso = lista
+    .filter((c) => compatto(c[0]).startsWith(p))
+    .sort((a, b) => (compatto(a[0]) === p ? -1 : compatto(b[0]) === p ? 1 : 0) || num(a[0]) - num(b[0]) || a[0].localeCompare(b[0]))
+    .slice(0, max);
+
+  const forma = (c: [string, number, number, string]): CivicoSuggerito => ({ civico: c[0], lon: c[1], lat: c[2], zona: c[3] });
+  if (prefisso.length) return { elenco: prefisso.map(forma), vicini: false };
+
+  const intorno = new Set(accanto(lista, parziale));
+  return { elenco: lista.filter((c) => intorno.has(c[0])).map(forma), vicini: true };
+}

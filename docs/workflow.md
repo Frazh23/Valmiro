@@ -63,6 +63,8 @@ Si parte con A. Si passa a B solo se A si rivela una frizione ricorrente.
 
 ## Collegare GitHub, v0 e Vercel
 
+> Procedura completa, con i link e i valori esatti: **`docs/pubblicazione.md`**.
+
 Il repository è già inizializzato in locale con i tre rami. Da fare una volta:
 
 ```bash

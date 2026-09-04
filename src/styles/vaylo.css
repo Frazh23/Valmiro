@@ -556,3 +556,17 @@ button { font: inherit; letter-spacing: inherit; }
 
 /* Il titolo di sezione non deve finire sotto l'header appiccicoso. */
 .v-chapter { scroll-margin-top: 84px; }
+
+/* ---------- ristrutturazione: onesta' dei numeri ---------- */
+.v-reno__range { margin-top: var(--s-3); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.v-plateau {
+  margin-top: var(--s-5); padding: var(--s-4) var(--s-5);
+  background: var(--surface-2); border-left: 2px solid var(--line-strong);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  font-size: var(--t-small); color: var(--ink-soft); max-width: 46ch; line-height: 1.55;
+}
+.v-plateau b { color: var(--ink); font-weight: 550; }
+.v-caveat {
+  margin-top: var(--s-5); font-size: var(--t-small); color: var(--ink-faint);
+  max-width: 48ch; line-height: 1.55;
+}

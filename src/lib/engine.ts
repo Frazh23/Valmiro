@@ -179,6 +179,13 @@ export function prospettoRistrutturazione(i: Input, livelloId: string, primaCasa
     costoNetto: costo - detrazione,
     valorePrima: prima.centro,
     valoreDopo: dopo.centro,
+    /* La stima dopo i lavori porta la stessa incertezza di quella di partenza.
+       Esporla evita che l'interfaccia mostri un punto secco piu' preciso del
+       numero da cui deriva. Nessun calcolo nuovo: sono campi che stima() ha
+       gia' prodotto, qui vengono solo restituiti. */
+    valoreDopoMin: dopo.min,
+    valoreDopoMax: dopo.max,
+    sigmaDopo: dopo.sigma,
     margine: dopo.centro - prima.centro - (costo - detrazione),
   };
 }

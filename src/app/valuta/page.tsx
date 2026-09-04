@@ -440,6 +440,11 @@ function Risultato({
             <span className="v-numeral">05</span>
             <h2 className="v-h2">Quanto potrebbe valere ristrutturata</h2>
           </div>
+          <p className="v-lead v-measure" style={{ marginBottom: "clamp(28px,4vw,44px)" }}>
+            Le quotazioni ufficiali distinguono due stati di conservazione, non tre. Per questo
+            tre livelli di spesa possono arrivare a due soli livelli di valore: quando succede
+            te lo diciamo, invece di far salire il numero per farlo sembrare più interessante.
+          </p>
           <RenovationSelector
             attuale={stima.centro} prospetti={prospetti}
             scelto={scenario} onSceglie={onScenario}

@@ -158,3 +158,31 @@ In *Site URL* metti `https://vaylo-one.vercel.app`.
 `GEOCODER_UA` deve contenere un contatto vero: la politica d'uso di Nominatim
 lo pretende e senza si viene bloccati. È già impostato al punto 7, ma va tenuto
 allineato anche in `.env.local`.
+
+---
+
+## 10. Email di autenticazione — blocco noto prima del lancio
+
+Il servizio email integrato di Supabase e' limitato a **2 messaggi all'ora** ed e'
+dichiarato dalla documentazione stessa come **non adatto alla produzione**: nessuna
+garanzia di consegna, nessun SLA. Serve per esplorare e provare, niente di piu'.
+
+Sintomo: alla seconda registrazione ravvicinata compare `email rate limit exceeded`.
+Non e' un difetto dell'applicazione.
+
+**Durante lo sviluppo**, per non restare bloccati: Authentication → Sign In / Providers
+→ Email → disattivare *Confirm email*. La registrazione entra subito, senza mail.
+E' accettabile finche' il sito e' su un indirizzo che non conosce nessuno.
+
+**Prima di aprire il sito a qualcuno, entrambe le cose:**
+
+1. **Riattivare *Confirm email*.** Senza conferma chiunque puo' registrarsi con
+   l'indirizzo di un altro, e siccome le stime contengono indirizzi di case —
+   dato personale — non e' un dettaglio.
+2. **Configurare un SMTP proprio** (Resend, Postmark, Brevo, Amazon SES) in
+   Authentication → SMTP Settings, con un mittente su un dominio nostro. Dopo la
+   configurazione Supabase parte da un limite prudenziale di 30 messaggi all'ora,
+   alzabile dalla pagina Rate Limits.
+
+Finche' l'SMTP e' quello predefinito, il sito non puo' reggere nemmeno una decina
+di registrazioni al giorno.

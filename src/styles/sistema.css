@@ -109,27 +109,35 @@ button { font: inherit; letter-spacing: inherit; }
   font-size: 1.45rem; font-weight: 600; letter-spacing: -0.03em; color: var(--ink);
 }
 .v-brand span { color: var(--accent); }
-.v-nav { display: flex; align-items: center; gap: var(--s-6); margin-left: auto; }
+.v-nav { display: flex; align-items: center; gap: var(--s-2); margin-left: auto; }
+/* Le voci stanno anche sopra la fotografia dell'hero: inchiostro pieno, un
+   punto piu' grandi, e un velo di carta dietro — lo stesso vetro del bottone
+   "Accedi" — cosi' restano leggibili sulla facciata chiara come sul panna. */
 .v-nav a {
-  font-size: var(--t-small); font-weight: 500; color: var(--ink-faint);
-  transition: color var(--d-base) var(--e-soft); position: relative; padding-block: 4px;
+  font-size: 0.9375rem; font-weight: 500; color: var(--ink-soft);
+  transition: color var(--d-base) var(--e-soft), background var(--d-base) var(--e-soft);
+  position: relative; padding: 8px 12px; border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
-.v-nav a:hover { color: var(--ink); }
+.v-nav a:hover { color: var(--ink); background: var(--surface); }
+/* quando la barra e' gia' solida il velo non serve: le voci tornano nude */
+.v-header--solid .v-nav a:not(.v-nav__cta) { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
 .v-nav a.on { color: var(--ink); }
 .v-nav a.on::after {
-  content: ""; position: absolute; left: 0; right: 0; bottom: -2px;
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 4px;
   height: 1.5px; background: var(--accent); border-radius: 2px;
 }
 .v-nav__cta {
   border: 1px solid var(--line-strong); border-radius: var(--r-pill);
-  padding: 8px 18px !important; color: var(--ink) !important;
+  padding: 8px 18px !important; color: var(--ink) !important; margin-left: var(--s-3);
 }
 .v-nav__cta:hover { background: var(--surface); }
 .v-nav__cta.on::after { display: none; }
 @media (max-width: 720px) {
   .v-header__in { height: 60px; gap: var(--s-4); }
-  .v-nav { gap: var(--s-4); }
-  .v-nav a { font-size: var(--t-micro); }
+  .v-nav { gap: 0; }
+  .v-nav a { font-size: var(--t-small); padding: 7px 9px; }
   .v-nav__hide { display: none; }
 }
 

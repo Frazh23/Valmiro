@@ -210,9 +210,9 @@ button { font: inherit; letter-spacing: inherit; }
 }
 .v-visual--wide { aspect-ratio: 16 / 10; }
 .v-visual img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* Sulla fotografia la didascalia sta su un velo scuro in basso, altrimenti
-   sparisce sulla strada chiara. Il velo e' un gradiente, non un riquadro. */
-.v-visual--foto::after {
+/* Se sulla fotografia c'e' una didascalia, sta su un velo scuro in basso,
+   altrimenti sparisce sulla strada chiara. Senza didascalia, niente velo. */
+.v-visual--foto:has(.v-visual__caption)::after {
   content: ""; position: absolute; inset: auto 0 0 0; height: 34%;
   background: linear-gradient(to top, rgba(20,18,15,.55), rgba(20,18,15,0));
   pointer-events: none;

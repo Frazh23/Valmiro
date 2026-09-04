@@ -42,9 +42,8 @@ export default function Home() {
 
             <div className="v-hero__visual">
               <PropertyVisual
-                foto="angolo" fuoco="58% 50%" prioritaria
-                alt="Palazzo d'angolo anni Trenta su un viale alberato di Milano, nella luce del primo mattino"
-                didascalia="Milano" nota="Luce di taglio, primo mattino"
+                foto="liberty" fuoco="72% 50%" prioritaria
+                alt="Facciata di un palazzo Liberty di Milano con balconi in ferro battuto e biciclette, nella luce del primo mattino"
               />
             </div>
           </div>

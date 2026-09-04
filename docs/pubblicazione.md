@@ -11,7 +11,7 @@ Vai su **https://github.com/new** e compila così:
 
 | Campo | Valore |
 |---|---|
-| Repository name | `vaylo` |
+| Repository name | `Vaylo` |
 | Description | Stima immobiliare a Milano su quotazioni OMI ufficiali |
 | Visibility | **Private** |
 | Add a README file | **NO, lascialo spento** |
@@ -24,11 +24,14 @@ e il suo `.gitignore`. Se GitHub crea un README, il primo push viene rifiutato.
 Al termine GitHub mostra una pagina "Quick setup" con l'indirizzo del repository.
 Non seguire quelle istruzioni: usa quelle qui sotto.
 
-## 2. Dire a git chi sei (una volta sola, su tutta la macchina)
+## 2. Identita' di git — gia' fatto
 
-```bash
-git config --global user.name "Francesco Zambelli"
-git config --global user.email "francesco23.zambelli@gmail.com"
+Impostata a livello di repository (`.git/config`), non globale: vale per Vaylo
+e non tocca eventuali altri progetti sulla macchina.
+
+```
+user.name  = Francesco Zambelli
+user.email = francesco23.zambelli@gmail.com
 ```
 
 ## 3. Creare il token che autorizza il push
@@ -39,17 +42,19 @@ Vai su **https://github.com/settings/personal-access-tokens/new** e imposta:
 
 - **Token name**: `vaylo-macbook`
 - **Expiration**: 90 giorni (o quello che preferisci)
-- **Repository access**: *Only select repositories* → scegli `vaylo`
+- **Repository access**: *Only select repositories* → scegli `Vaylo`
 - **Permissions** → *Repository permissions* → **Contents: Read and write**
   (basta questa; lascia tutto il resto su "No access")
 
 Premi *Generate token* e **copia subito la stringa** che inizia per `github_pat_`:
 GitHub non te la rimostrerà più. Trattala come una password.
 
-## 4. Collegare e pubblicare
+## 4. Pubblicare
+
+Il remote e' gia' collegato (`origin` → `https://github.com/Frazh23/Vaylo.git`).
+Resta un comando solo:
 
 ```bash
-git remote add origin https://github.com/<TUO-UTENTE>/vaylo.git
 git push -u origin main develop design/v0
 ```
 
@@ -83,7 +88,7 @@ Deve esserci invece `.env.example`, senza valori veri.
 v0 lavora sullo stesso repository, non su una copia.
 
 1. Vai su **https://v0.app** e accedi con lo stesso account Vercel.
-2. Usa **Import from GitHub** (non "crea nuovo progetto") e scegli `vaylo`.
+2. Usa **Import from GitHub** (non "crea nuovo progetto") e scegli `Vaylo`.
 3. Come **base branch** seleziona **`design/v0`**.
 
 Da lì v0 crea da solo un ramo di lavoro per ogni modifica e apre una pull
@@ -97,7 +102,7 @@ Documentazione: **https://v0.app/docs/github**
 
 ## 7. Collegare Vercel
 
-1. Vai su **https://vercel.com/new** e importa `vaylo`.
+1. Vai su **https://vercel.com/new** e importa `Vaylo`.
 2. Framework: Next.js (lo riconosce da solo). Non cambiare i comandi di build.
 3. **Production Branch**: `main` (Settings → Git).
 4. **Environment Variables** (Settings → Environment Variables), per tutti gli ambienti:

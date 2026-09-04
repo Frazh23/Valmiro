@@ -56,7 +56,7 @@ export default function AddressSearch({
       try {
         const r = await fetch(`/api/vie?q=${encodeURIComponent(v)}`).then((x) => x.json());
         if (turno.current === mio) setVie(r.vie || []);
-      } catch { /* i suggerimenti sono un di piu': se cadono, si cerca lo stesso */ }
+      } catch { /* i suggerimenti sono un di più: se cadono, si cerca lo stesso */ }
     }, 130);
     return () => clearTimeout(t);
   }
@@ -153,7 +153,7 @@ export default function AddressSearch({
             </button>
           ))}
           {!remoti && (
-            <div className="v-suggest__foot">Aggiungi il numero civico per la stima piu&apos; precisa</div>
+            <div className="v-suggest__foot">Aggiungi il numero civico per la stima più precisa</div>
           )}
         </div>
       )}

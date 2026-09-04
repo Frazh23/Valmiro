@@ -40,7 +40,7 @@ export async function GET(req: Request) {
   }
 
   if (r.esito === "civico-assente") {
-    /* La via attraversa piu' zone e il numero non risulta: non scegliamo noi
+    /* La via attraversa più zone e il numero non risulta: non scegliamo noi
        quale zona darle. Meglio proporre i civici che esistono davvero. */
     const vicini = r.vicini.length
       ? ` I numeri piu' vicini in anagrafe sono ${r.vicini.join(" e ")}.`
@@ -49,7 +49,7 @@ export async function GET(req: Request) {
       trovato: false,
       metodo: "anagrafe",
       candidati: [],
-      motivo: `Il civico ${r.civico} non risulta in ${r.via.nome} nell'anagrafe del Comune.${vicini} La via attraversa piu' zone, quindi il numero cambia la stima: correggilo o indica il punto sulla mappa.`,
+      motivo: `Il civico ${r.civico} non risulta in ${r.via.nome} nell'anagrafe del Comune.${vicini} La via attraversa più zone, quindi il numero cambia la stima: correggilo o indica il punto sulla mappa.`,
     });
   }
 
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
         fonte: "via", preciso: false,
       }],
       motivo: v.zone
-        ? `${v.nome} attraversa piu' zone OMI. Aggiungi il civico per una stima piu' precisa.`
+        ? `${v.nome} attraversa più zone OMI. Aggiungi il civico per una stima più precisa.`
         : undefined,
     });
   }

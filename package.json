@@ -1,0 +1,30 @@
+{
+  "name": "vaylo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stima del valore di un immobile a Milano su quotazioni OMI ufficiali",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --test tests/*.test.mjs",
+    "ingest": "node scripts/ingest-omi.mjs",
+    "load-db": "node scripts/load-postgis.mjs"
+  },
+  "dependencies": {
+    "next": "15.5.18",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "@supabase/supabase-js": "^2.47.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5.5.4"
+  },
+  "overrides": {
+    "sharp": "^0.35.0",
+    "postcss": "^8.5.10"
+  }
+}

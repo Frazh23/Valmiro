@@ -1,0 +1,21 @@
+# dipendenze e build
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# segreti: .env.local contiene le chiavi, non deve mai finire nel repository
+.env.local
+.env*.local
+
+# macOS
+.DS_Store
+
+# copie di conflitto create da iCloud Drive ("nome 2.ts", "nome 3.json", ...)
+* [0-9].*
+* [0-9]
+
+# scarti
+_da-cancellare/
+audit.json
+*.zip

@@ -1,0 +1,1102 @@
+[
+{
+"n": "Via Montenapoleone",
+"z": "B12"
+},
+{
+"n": "Via della Spiga",
+"z": "B12"
+},
+{
+"n": "Via Manzoni",
+"z": "B12"
+},
+{
+"n": "Piazza Duomo",
+"z": "B12"
+},
+{
+"n": "Piazza San Babila",
+"z": "B12"
+},
+{
+"n": "Corso Vittorio Emanuele II",
+"z": "B12"
+},
+{
+"n": "Via Durini",
+"z": "B12"
+},
+{
+"n": "Corso Matteotti",
+"z": "B12"
+},
+{
+"n": "Piazza Missori",
+"z": "B12"
+},
+{
+"n": "Largo Cairoli",
+"z": "B12"
+},
+{
+"n": "Piazza della Scala",
+"z": "B12"
+},
+{
+"n": "Via Verdi",
+"z": "B12"
+},
+{
+"n": "Quadrilatero della moda",
+"z": "B12"
+},
+{
+"n": "Via Festa del Perdono",
+"z": "B13"
+},
+{
+"n": "Corso di Porta Romana",
+"z": "B13"
+},
+{
+"n": "Via Larga",
+"z": "B13"
+},
+{
+"n": "Piazza Santo Stefano",
+"z": "B13"
+},
+{
+"n": "Via Francesco Sforza",
+"z": "B13"
+},
+{
+"n": "Via Laghetto",
+"z": "B13"
+},
+{
+"n": "Università Statale",
+"z": "B13"
+},
+{
+"n": "Via Brera",
+"z": "B15"
+},
+{
+"n": "Via Solferino",
+"z": "B15"
+},
+{
+"n": "Via Fiori Chiari",
+"z": "B15"
+},
+{
+"n": "Via Palermo",
+"z": "B15"
+},
+{
+"n": "Piazza San Marco",
+"z": "B15"
+},
+{
+"n": "Via Pontaccio",
+"z": "B15"
+},
+{
+"n": "Via Madonnina",
+"z": "B15"
+},
+{
+"n": "Piazza Sant'Ambrogio",
+"z": "B16"
+},
+{
+"n": "Largo Cadorna",
+"z": "B16"
+},
+{
+"n": "Via Dante",
+"z": "B16"
+},
+{
+"n": "Via Meravigli",
+"z": "B16"
+},
+{
+"n": "Via Carducci",
+"z": "B16"
+},
+{
+"n": "Via Nirone",
+"z": "B16"
+},
+{
+"n": "Piazza Cordusio",
+"z": "B16"
+},
+{
+"n": "Corso Sempione",
+"z": "B17"
+},
+{
+"n": "Arco della Pace",
+"z": "B17"
+},
+{
+"n": "Parco Sempione",
+"z": "B17"
+},
+{
+"n": "Via Melzi d'Eril",
+"z": "B17"
+},
+{
+"n": "Corso Magenta",
+"z": "B17"
+},
+{
+"n": "Via Boccaccio",
+"z": "B17"
+},
+{
+"n": "Castello Sforzesco",
+"z": "B17"
+},
+{
+"n": "Via Turati",
+"z": "B18"
+},
+{
+"n": "Piazza della Repubblica",
+"z": "B18"
+},
+{
+"n": "Via della Moscova",
+"z": "B18"
+},
+{
+"n": "Corso Venezia",
+"z": "B18"
+},
+{
+"n": "Via Manin",
+"z": "B18"
+},
+{
+"n": "Piazza Cavour",
+"z": "B18"
+},
+{
+"n": "Via Palestro",
+"z": "B18"
+},
+{
+"n": "Via Montebello",
+"z": "B18"
+},
+{
+"n": "Giardini Montanelli",
+"z": "B18"
+},
+{
+"n": "Piazza Cinque Giornate",
+"z": "B19"
+},
+{
+"n": "Viale Piave",
+"z": "B19"
+},
+{
+"n": "Corso Concordia",
+"z": "B19"
+},
+{
+"n": "Viale Regina Margermita",
+"z": "B19"
+},
+{
+"n": "Viale Premuda",
+"z": "B19"
+},
+{
+"n": "Piazza Tricolore",
+"z": "B19"
+},
+{
+"n": "Via Sottocorno",
+"z": "B19"
+},
+{
+"n": "Porta Vittoria",
+"z": "B19"
+},
+{
+"n": "Viale Bligny",
+"z": "B20"
+},
+{
+"n": "Piazza Medaglie d'Oro",
+"z": "B20"
+},
+{
+"n": "Viale Sabotino",
+"z": "B20"
+},
+{
+"n": "Viale Beatrice d'Este",
+"z": "B20"
+},
+{
+"n": "Via Crocefisso",
+"z": "B20"
+},
+{
+"n": "Porta Romana",
+"z": "B20"
+},
+{
+"n": "Corso di Porta Ticinese",
+"z": "B21"
+},
+{
+"n": "Colonne di San Lorenzo",
+"z": "B21"
+},
+{
+"n": "Via San Vittore",
+"z": "B21"
+},
+{
+"n": "Via Olona",
+"z": "B21"
+},
+{
+"n": "Corso Genova",
+"z": "B21"
+},
+{
+"n": "Piazza Vetra",
+"z": "B21"
+},
+{
+"n": "Via De Amicis",
+"z": "B21"
+},
+{
+"n": "Porta Genova",
+"z": "B21"
+},
+{
+"n": "Corso Buenos Aires",
+"z": "C12"
+},
+{
+"n": "Piazza Lima",
+"z": "C12"
+},
+{
+"n": "Via Vitruvio",
+"z": "C12"
+},
+{
+"n": "Via Vittor Pisani",
+"z": "C12"
+},
+{
+"n": "Piazza Duca d'Aosta",
+"z": "C12"
+},
+{
+"n": "Via Regina Giovanna",
+"z": "C12"
+},
+{
+"n": "Via Plinio",
+"z": "C12"
+},
+{
+"n": "Via Casati",
+"z": "C12"
+},
+{
+"n": "Porta Venezia",
+"z": "C12"
+},
+{
+"n": "CityLife",
+"z": "C13"
+},
+{
+"n": "Piazza Tre Torri",
+"z": "C13"
+},
+{
+"n": "Via Senofonte",
+"z": "C13"
+},
+{
+"n": "Piazzale Giulio Cesare",
+"z": "C13"
+},
+{
+"n": "Fiera Milano City",
+"z": "C13"
+},
+{
+"n": "Piazza Gae Aulenti",
+"z": "C14"
+},
+{
+"n": "Corso Como",
+"z": "C14"
+},
+{
+"n": "Piazza XXV Aprile",
+"z": "C14"
+},
+{
+"n": "Bosco Verticale",
+"z": "C14"
+},
+{
+"n": "Via Vincenzo Capelli",
+"z": "C14"
+},
+{
+"n": "Garibaldi",
+"z": "C14"
+},
+{
+"n": "Stazione Centrale",
+"z": "C15"
+},
+{
+"n": "Viale Stelvio",
+"z": "C15"
+},
+{
+"n": "Via Sammartini",
+"z": "C15"
+},
+{
+"n": "Via Ferrante Aporti",
+"z": "C15"
+},
+{
+"n": "Via Sondrio",
+"z": "C15"
+},
+{
+"n": "Via Paolo Sarpi",
+"z": "C16"
+},
+{
+"n": "Via Cenisio",
+"z": "C16"
+},
+{
+"n": "Via Carlo Farini",
+"z": "C16"
+},
+{
+"n": "Chinatown",
+"z": "C16"
+},
+{
+"n": "Via Bramante",
+"z": "C16"
+},
+{
+"n": "Via Procaccini",
+"z": "C16"
+},
+{
+"n": "Via Messina",
+"z": "C16"
+},
+{
+"n": "Via Washington",
+"z": "C17"
+},
+{
+"n": "Piazzale Baracca",
+"z": "C17"
+},
+{
+"n": "Via Marghera",
+"z": "C17"
+},
+{
+"n": "Piazza Piemonte",
+"z": "C17"
+},
+{
+"n": "Via Monte Rosa",
+"z": "C17"
+},
+{
+"n": "Via Ravizza",
+"z": "C17"
+},
+{
+"n": "Piazza Pagano",
+"z": "C17"
+},
+{
+"n": "Via Vercelli",
+"z": "C17"
+},
+{
+"n": "Via Solari",
+"z": "C18"
+},
+{
+"n": "Via Vigevano",
+"z": "C18"
+},
+{
+"n": "Via Ascanio Sforza",
+"z": "C18"
+},
+{
+"n": "Naviglio Pavese",
+"z": "C18"
+},
+{
+"n": "Naviglio Grande",
+"z": "C18"
+},
+{
+"n": "Via Tortona",
+"z": "C18"
+},
+{
+"n": "Via Savona",
+"z": "C18"
+},
+{
+"n": "Via Bergognone",
+"z": "C18"
+},
+{
+"n": "Ripa di Porta Ticinese",
+"z": "C18"
+},
+{
+"n": "Via Sarfatti",
+"z": "C19"
+},
+{
+"n": "Via Crema",
+"z": "C19"
+},
+{
+"n": "Corso Lodi",
+"z": "C19"
+},
+{
+"n": "Piazzale Lodi",
+"z": "C19"
+},
+{
+"n": "Bocconi",
+"z": "C19"
+},
+{
+"n": "Viale Toscana",
+"z": "C19"
+},
+{
+"n": "Corso XXII Marzo",
+"z": "C20"
+},
+{
+"n": "Corso Indipendenza",
+"z": "C20"
+},
+{
+"n": "Piazzale Susa",
+"z": "C20"
+},
+{
+"n": "Viale Corsica",
+"z": "C20"
+},
+{
+"n": "Parco Lambro",
+"z": "D10"
+},
+{
+"n": "Via Feltre",
+"z": "D10"
+},
+{
+"n": "Via Udine",
+"z": "D10"
+},
+{
+"n": "Cimiano",
+"z": "D10"
+},
+{
+"n": "Piazza Piola",
+"z": "D12"
+},
+{
+"n": "Città Studi",
+"z": "D12"
+},
+{
+"n": "Viale Romagna",
+"z": "D12"
+},
+{
+"n": "Viale Argonne",
+"z": "D12"
+},
+{
+"n": "Via Pacini",
+"z": "D12"
+},
+{
+"n": "Politecnico Leonardo",
+"z": "D12"
+},
+{
+"n": "Lambrate",
+"z": "D13"
+},
+{
+"n": "Via Rubattino",
+"z": "D13"
+},
+{
+"n": "Via Rombon",
+"z": "D13"
+},
+{
+"n": "Via Conte Rosso",
+"z": "D13"
+},
+{
+"n": "Ortica",
+"z": "D13"
+},
+{
+"n": "Via Tito Livio",
+"z": "D16"
+},
+{
+"n": "Via Tertulliano",
+"z": "D16"
+},
+{
+"n": "Ortomercato",
+"z": "D16"
+},
+{
+"n": "Via Lombroso",
+"z": "D16"
+},
+{
+"n": "Via Marocchetti",
+"z": "D18"
+},
+{
+"n": "Vigentino",
+"z": "D18"
+},
+{
+"n": "Chiesa Rossa",
+"z": "D18"
+},
+{
+"n": "Via Ripamonti",
+"z": "D18"
+},
+{
+"n": "Via Ortles",
+"z": "D20"
+},
+{
+"n": "Via Bazzi",
+"z": "D20"
+},
+{
+"n": "Via Spadolini",
+"z": "D20"
+},
+{
+"n": "Barona",
+"z": "D21"
+},
+{
+"n": "Famagosta",
+"z": "D21"
+},
+{
+"n": "Via Faenza",
+"z": "D21"
+},
+{
+"n": "Via Segesta",
+"z": "D24"
+},
+{
+"n": "Via Aretusa",
+"z": "D24"
+},
+{
+"n": "Via Vespri Siciliani",
+"z": "D24"
+},
+{
+"n": "Via Lorenteggio",
+"z": "D25"
+},
+{
+"n": "Via Inganni",
+"z": "D25"
+},
+{
+"n": "Bisceglie",
+"z": "D25"
+},
+{
+"n": "San Cristoforo",
+"z": "D25"
+},
+{
+"n": "Ippodromo",
+"z": "D28"
+},
+{
+"n": "Via Caprilli",
+"z": "D28"
+},
+{
+"n": "Monte Stella",
+"z": "D28"
+},
+{
+"n": "QT8",
+"z": "D28"
+},
+{
+"n": "Stadio San Siro",
+"z": "D28"
+},
+{
+"n": "Bovisa",
+"z": "D31"
+},
+{
+"n": "Via Imbonati",
+"z": "D31"
+},
+{
+"n": "Politecnico Bovisa",
+"z": "D31"
+},
+{
+"n": "Dergano",
+"z": "D31"
+},
+{
+"n": "Affori",
+"z": "D32"
+},
+{
+"n": "Comasina",
+"z": "D32"
+},
+{
+"n": "Bovisasca",
+"z": "D32"
+},
+{
+"n": "Niguarda",
+"z": "D33"
+},
+{
+"n": "Bignami",
+"z": "D33"
+},
+{
+"n": "Parco Nord",
+"z": "D33"
+},
+{
+"n": "Bicocca",
+"z": "D34"
+},
+{
+"n": "Viale Sarca",
+"z": "D34"
+},
+{
+"n": "Teatro Arcimboldi",
+"z": "D34"
+},
+{
+"n": "Università Bicocca",
+"z": "D34"
+},
+{
+"n": "Crescenzago",
+"z": "D35"
+},
+{
+"n": "Gorla",
+"z": "D35"
+},
+{
+"n": "Viale Monza",
+"z": "D35"
+},
+{
+"n": "Quartiere Adriano",
+"z": "D35"
+},
+{
+"n": "Maggiolina",
+"z": "D36"
+},
+{
+"n": "Parco Trotter",
+"z": "D36"
+},
+{
+"n": "Leoncavallo",
+"z": "D36"
+},
+{
+"n": "Via Padova",
+"z": "D36"
+},
+{
+"n": "Forlanini",
+"z": "D37"
+},
+{
+"n": "Via Mecenate",
+"z": "D37"
+},
+{
+"n": "Ponte Lambro",
+"z": "D37"
+},
+{
+"n": "Santa Giulia",
+"z": "D38"
+},
+{
+"n": "Rogoredo",
+"z": "D38"
+},
+{
+"n": "Cascina Merlata",
+"z": "D39"
+},
+{
+"n": "Expo",
+"z": "D39"
+},
+{
+"n": "MIND",
+"z": "D39"
+},
+{
+"n": "Musocco",
+"z": "D40"
+},
+{
+"n": "Certosa",
+"z": "D40"
+},
+{
+"n": "Baggio",
+"z": "E5"
+},
+{
+"n": "Muggiano",
+"z": "E5"
+},
+{
+"n": "Quartiere Romano",
+"z": "E5"
+},
+{
+"n": "Gallaratese",
+"z": "E6"
+},
+{
+"n": "Lampugnano",
+"z": "E6"
+},
+{
+"n": "Bonola",
+"z": "E6"
+},
+{
+"n": "Trenno",
+"z": "E6"
+},
+{
+"n": "Gratosoglio",
+"z": "E7"
+},
+{
+"n": "Via dei Missaglia",
+"z": "E7"
+},
+{
+"n": "Quarto Oggiaro",
+"z": "E8"
+},
+{
+"n": "Via Sacco",
+"z": "E8"
+},
+{
+"n": "Centro storico",
+"z": "B12"
+},
+{
+"n": "Duomo",
+"z": "B12"
+},
+{
+"n": "San Babila",
+"z": "B12"
+},
+{
+"n": "Montenapoleone",
+"z": "B12"
+},
+{
+"n": "San Lorenzo",
+"z": "B13"
+},
+{
+"n": "Brera",
+"z": "B15"
+},
+{
+"n": "Sant'Ambrogio",
+"z": "B16"
+},
+{
+"n": "Cadorna",
+"z": "B16"
+},
+{
+"n": "Turati",
+"z": "B18"
+},
+{
+"n": "Moscova",
+"z": "B18"
+},
+{
+"n": "Venezia",
+"z": "B19"
+},
+{
+"n": "Porta Vigentina",
+"z": "B20"
+},
+{
+"n": "Porta Ticinese",
+"z": "B21"
+},
+{
+"n": "Pisani",
+"z": "C12"
+},
+{
+"n": "Buenos Aires",
+"z": "C12"
+},
+{
+"n": "Regina Giovanna",
+"z": "C12"
+},
+{
+"n": "Porta Nuova",
+"z": "C14"
+},
+{
+"n": "Cenisio",
+"z": "C16"
+},
+{
+"n": "Farini",
+"z": "C16"
+},
+{
+"n": "Sarpi",
+"z": "C16"
+},
+{
+"n": "Sempione",
+"z": "C17"
+},
+{
+"n": "Pagano",
+"z": "C17"
+},
+{
+"n": "Washington",
+"z": "C17"
+},
+{
+"n": "Solari",
+"z": "C18"
+},
+{
+"n": "Ascanio Sforza",
+"z": "C18"
+},
+{
+"n": "Tabacchi",
+"z": "C19"
+},
+{
+"n": "Sarfatti",
+"z": "C19"
+},
+{
+"n": "Crema",
+"z": "C19"
+},
+{
+"n": "Libia",
+"z": "C20"
+},
+{
+"n": "XXII Marzo",
+"z": "C20"
+},
+{
+"n": "Indipendenza",
+"z": "C20"
+},
+{
+"n": "Feltre",
+"z": "D10"
+},
+{
+"n": "Udine",
+"z": "D10"
+},
+{
+"n": "Piola",
+"z": "D12"
+},
+{
+"n": "Argonne",
+"z": "D12"
+},
+{
+"n": "Corsica",
+"z": "D12"
+},
+{
+"n": "Rubattino",
+"z": "D13"
+},
+{
+"n": "Rombon",
+"z": "D13"
+},
+{
+"n": "Tito Livio",
+"z": "D16"
+},
+{
+"n": "Tertulliano",
+"z": "D16"
+},
+{
+"n": "Marocchetti",
+"z": "D18"
+},
+{
+"n": "Ortles",
+"z": "D20"
+},
+{
+"n": "Spadolini",
+"z": "D20"
+},
+{
+"n": "Bazzi",
+"z": "D20"
+},
+{
+"n": "Faenza",
+"z": "D21"
+},
+{
+"n": "Segesta",
+"z": "D24"
+},
+{
+"n": "Aretusa",
+"z": "D24"
+},
+{
+"n": "Vespri Siciliani",
+"z": "D24"
+},
+{
+"n": "Lorenteggio",
+"z": "D25"
+},
+{
+"n": "Inganni",
+"z": "D25"
+},
+{
+"n": "San Carlo",
+"z": "D25"
+},
+{
+"n": "Caprilli",
+"z": "D28"
+},
+{
+"n": "Bausan",
+"z": "D31"
+},
+{
+"n": "Imbonati",
+"z": "D31"
+},
+{
+"n": "Sarca",
+"z": "D34"
+},
+{
+"n": "Monza",
+"z": "D35"
+},
+{
+"n": "Adriano",
+"z": "D35"
+},
+{
+"n": "Mecenate",
+"z": "D37"
+},
+{
+"n": "Missaglia",
+"z": "E7"
+},
+{
+"n": "Sacco",
+"z": "E8"
+}
+]

@@ -18,17 +18,23 @@ export type StimaSalvata = {
 };
 
 const CHIAVE = "vaylo.stime";
-const CHIAVE_VECCHIA = "valorecasa.stime";
 
-/* Il prodotto si chiamava valore.casa: se nel browser ci sono stime salvate con la
-   vecchia chiave le spostiamo una volta sola, cosi' nessuno perde il proprio storico. */
+/* Il prodotto ha gia' cambiato nome una volta e potrebbe cambiarlo ancora. Ogni
+   nome portava con se' la sua chiave di localStorage: qui stanno tutte quelle
+   dismesse, dalla piu' recente alla piu' vecchia. Chi aveva stime salvate sotto
+   un nome precedente non le perde, qualunque sia il salto che ha fatto.
+   Quando si rinomina, la chiave uscente si aggiunge in testa a questa lista. */
+const CHIAVI_DISMESSE = ["valorecasa.stime"];
+
 function migraChiave() {
   if (typeof window === "undefined") return;
   try {
-    const vecchie = localStorage.getItem(CHIAVE_VECCHIA);
-    if (!vecchie) return;
-    if (!localStorage.getItem(CHIAVE)) localStorage.setItem(CHIAVE, vecchie);
-    localStorage.removeItem(CHIAVE_VECCHIA);
+    for (const vecchia of CHIAVI_DISMESSE) {
+      const dati = localStorage.getItem(vecchia);
+      if (!dati) continue;
+      if (!localStorage.getItem(CHIAVE)) localStorage.setItem(CHIAVE, dati);
+      localStorage.removeItem(vecchia);
+    }
   } catch {}
 }
 

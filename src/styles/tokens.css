@@ -8,21 +8,21 @@
 
 :root {
   /* --- superfici: neutre e calde, non grigie ------------------------------ */
-  --paper:        #F6F4F1;   /* fondo pagina */
-  --paper-deep:   #EDE9E3;   /* fasce alternate */
-  --surface:      #FFFFFF;
-  --surface-2:    #F1EEE9;
-  --surface-3:    #E5E0D8;
+  --paper:        #F3EFE6;   /* fondo pagina: panna leggera, la carta si sente */
+  --paper-deep:   #EBE5D9;   /* fasce alternate */
+  --surface:      #FCFAF5;   /* non bianco puro: sul panna stonerebbe */
+  --surface-2:    #EFEAE0;
+  --surface-3:    #E3DCCE;
 
   /* --- inchiostro -------------------------------------------------------- */
   --ink:          #14120F;
   --ink-soft:     #55504A;
-  --ink-faint:    #8B847B;
-  --ink-ghost:    #B6AFA5;
+  --ink-faint:    #726A60;   /* scurito con il panna: 4,6:1 sulla carta, prima era 3,4 */
+  --ink-ghost:    #A0988C;
 
   /* --- linee ------------------------------------------------------------- */
-  --line:         #E3DED6;
-  --line-strong:  #CFC8BD;
+  --line:         #E0D9CC;
+  --line-strong:  #CCC3B2;
 
   /* --- accento: verde profondo, trattenuto. Mai fluorescente. ------------ */
   --accent:       #1F6F5C;
@@ -35,7 +35,7 @@
   --neg:          #A33F2C;
   --warm:         #8A6A2F;
   --warm-soft:    #F5EEDF;
-  --visual-glow:  #FBF3E2;   /* la luce che entra nel disegno architettonico */
+  --visual-glow:  #FBF2DD;   /* la luce che entra nel disegno architettonico */
 
   /* --- tipografia -------------------------------------------------------- */
   /* Nessun font remoto: la build gira anche senza rete, e su Apple lo stack

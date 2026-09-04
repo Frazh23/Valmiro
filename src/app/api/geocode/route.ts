@@ -34,8 +34,7 @@ export async function GET(req: Request) {
     candidati.push({
       etichetta: p.etichetta, lat: p.lat, lon: p.lon, zona,
       descrizione: ZONE[zona].d, fascia: FASCIA_NOME[ZONE[zona].f],
-      /* preciso = il geocoder ha trovato il civico. Senza, la via e' quella giusta
-         ma il punto e' un suo punto qualsiasi: va detto, non dato per scontato. */
+      fonte: p.conCivico === false ? "via" : "civico",
       preciso: p.conCivico !== false,
     });
   }
@@ -44,7 +43,7 @@ export async function GET(req: Request) {
 
   const dizionario = cercaZona(q).map((c) => ({
     etichetta: c.nome, zona: c.zona, descrizione: c.descrizione,
-    fascia: FASCIA_NOME[ZONE[c.zona].f], preciso: false,
+    fascia: FASCIA_NOME[ZONE[c.zona].f], fonte: "dizionario", preciso: false,
   }));
 
   return NextResponse.json({

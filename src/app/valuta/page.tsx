@@ -23,7 +23,7 @@ import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
 import { RISTRUTTURAZIONE, scala } from "@/lib/engine";
 import { salvaStima, salvaStimaAccount } from "@/lib/storage";
 import { useSessione } from "@/lib/sessione";
-import type { Input, Scelta, Stato, Stima, Tipo } from "@/lib/types";
+import type { FonteIndirizzo, Input, Scelta, Stato, Stima, Tipo } from "@/lib/types";
 
 const STATI: { id: Stato; t: string; d: string }[] = [
   { id: "rist", t: "Da ristrutturare", d: "Impianti e finiture da rifare" },
@@ -54,7 +54,7 @@ function Valuta() {
 
   const [vista, setVista] = useState<"dove" | "casa" | "calcolo" | "risultato">("dove");
   const [indirizzo, setIndirizzo] = useState("");
-  const [preciso, setPreciso] = useState(false);
+  const [fonte, setFonte] = useState<FonteIndirizzo>("dizionario");
   const [avviso, setAvviso] = useState<string | null>(null);
   const [primaCasa, setPrimaCasa] = useState(true);
   const [scenario, setScenario] = useState("attuale");
@@ -76,13 +76,14 @@ function Valuta() {
     if (z && ZONE[z]) {
       setI((v) => ({ ...v, zona: z }));
       setIndirizzo(params.get("ind") || ZONE[z].d);
-      setPreciso(params.get("p") === "1");
+      const f = params.get("f");
+      setFonte(f === "civico" || f === "via" ? f : "dizionario");
       setVista("casa");
     }
   }, [params]);
 
   function scegliIndirizzo(s: Scelta) {
-    set({ zona: s.zona }); setIndirizzo(s.etichetta); setPreciso(s.preciso);
+    set({ zona: s.zona }); setIndirizzo(s.etichetta); setFonte(s.fonte);
     setAvviso(null); setVista("casa");
   }
 
@@ -175,7 +176,7 @@ function Valuta() {
                   {mappaAperta && (
                     <Mappa
                       zona={i.zona || null}
-                      onPick={(z) => { set({ zona: z }); setIndirizzo(ZONE[z].d); setPreciso(true); setVista("casa"); }}
+                      onPick={(z) => { set({ zona: z }); setIndirizzo(ZONE[z].d); setFonte("civico"); setVista("casa"); }}
                     />
                   )}
                 </div>
@@ -197,9 +198,17 @@ function Valuta() {
                     <button onClick={() => setVista("dove")}>Cambia</button>
                   </span>
                 </div>
-                {!preciso && (
+                {fonte === "via" && (
                   <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
-                    Zona dedotta dal nome. Se non è quella giusta, cambia indirizzo e indica il punto sulla mappa.
+                    Abbiamo trovato la via ma non il civico: nelle mappe aperte non tutti i numeri
+                    esistono. La zona è quella giusta, il punto è un punto qualsiasi della via — se
+                    la via è lunga e attraversa più zone, conviene controllarla sulla mappa.
+                  </p>
+                )}
+                {fonte === "dizionario" && (
+                  <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
+                    Zona dedotta dal nome del quartiere, non da coordinate. Se non è quella giusta,
+                    cambia indirizzo o indica il punto sulla mappa.
                   </p>
                 )}
               </div>

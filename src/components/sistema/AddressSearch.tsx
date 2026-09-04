@@ -66,7 +66,10 @@ export default function AddressSearch({
 
   const lista: Scelta[] = remoti
     ? remoti
-    : locali.map((c) => ({ zona: c.zona, etichetta: c.nome, descrizione: c.descrizione, preciso: false }));
+    : locali.map((c) => ({
+        zona: c.zona, etichetta: c.nome, descrizione: c.descrizione,
+        fonte: "dizionario" as const, preciso: false,
+      }));
 
   function tasto(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown" && lista.length) { e.preventDefault(); setAttivo((n) => (n + 1) % lista.length); }

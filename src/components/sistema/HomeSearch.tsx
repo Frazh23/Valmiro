@@ -8,8 +8,7 @@ import type { Scelta } from "@/lib/types";
 export default function HomeSearch() {
   const router = useRouter();
   const vai = (s: Scelta) => {
-    const p = new URLSearchParams({ zona: s.zona, ind: s.etichetta, desc: s.descrizione });
-    if (s.preciso) p.set("p", "1");
+    const p = new URLSearchParams({ zona: s.zona, ind: s.etichetta, desc: s.descrizione, f: s.fonte });
     router.push(`/valuta?${p}`);
   };
   return <AddressSearch onScegli={vai} azione="Valuta ora" />;

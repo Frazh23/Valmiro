@@ -56,5 +56,19 @@ export type Stima = {
   fonte: string;
 };
 
-/** Un indirizzo risolto in una zona OMI. `preciso` distingue il geocoder dal dizionario. */
-export type Scelta = { zona: string; etichetta: string; descrizione: string; preciso: boolean };
+/**
+ * Un indirizzo risolto in una zona OMI, con da dove viene la risposta:
+ *   civico     — il geocoder ha trovato proprio quel numero: punto esatto;
+ *   via        — ha trovato la via ma non il civico: zona giusta, punto generico.
+ *                Conta, perche' una via lunga puo' attraversare piu' zone;
+ *   dizionario — nessuna coordinata, solo il nome del quartiere: da confermare.
+ * Un booleano non bastava: "non preciso" copriva due situazioni molto diverse e
+ * l'interfaccia finiva per dire la cosa sbagliata in una delle due.
+ */
+export type FonteIndirizzo = "civico" | "via" | "dizionario";
+export type Scelta = {
+  zona: string; etichetta: string; descrizione: string;
+  fonte: FonteIndirizzo;
+  /** comodita': vero solo quando il civico e' stato trovato davvero */
+  preciso: boolean;
+};

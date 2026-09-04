@@ -570,3 +570,18 @@ button { font: inherit; letter-spacing: inherit; }
   margin-top: var(--s-5); font-size: var(--t-small); color: var(--ink-faint);
   max-width: 48ch; line-height: 1.55;
 }
+
+/* ---------- accesso ---------- */
+.v-auth__social { margin-top: var(--s-7); display: grid; gap: var(--s-5); }
+.v-auth__google { width: 100%; justify-content: center; }
+.v-auth__or {
+  display: flex; align-items: center; gap: var(--s-4); margin: 0 0 var(--s-2);
+  font-size: var(--t-micro); color: var(--ink-faint); letter-spacing: .04em;
+}
+.v-auth__or::before, .v-auth__or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.v-auth__msg {
+  margin: 0; padding: 14px 18px; border-radius: var(--r-md); font-size: var(--t-small); line-height: 1.5;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
+}
+.v-auth__msg--ok { background: var(--accent-soft); border-color: transparent; color: var(--accent-ink); }
+.v-auth__msg--ko { background: var(--warm-soft); border-color: transparent; color: var(--neg); }

@@ -184,6 +184,8 @@ E' accettabile finche' il sito e' su un indirizzo che non conosce nessuno.
    configurazione Supabase parte da un limite prudenziale di 30 messaggi all'ora,
    alzabile dalla pagina Rate Limits.
 
+La procedura completa, con Resend e Google, e' in `docs/accesso-e-email.md`.
+
 Finche' l'SMTP e' quello predefinito, il sito non puo' reggere nemmeno una decina
 di registrazioni al giorno.
 

@@ -1,6 +1,6 @@
-# Stimami — regole del progetto
+# Valmiro — regole del progetto
 
-Stimami stima il valore di un immobile a Milano sulle quotazioni ufficiali OMI
+Valmiro stima il valore di un immobile a Milano sulle quotazioni ufficiali OMI
 dell'Agenzia delle Entrate. Questo file vale per chiunque tocchi il codice:
 Claude, v0, o una persona.
 
@@ -29,7 +29,7 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 | Supabase, sessione, profili | `src/lib/supabase.ts`, `src/lib/sessione.ts` | non riscrivere |
 | Salvataggio stime | `src/lib/storage.ts` | localStorage + tabella `stime` |
 | Token visuali | `src/styles/tokens.css` | unica fonte di verità visuale |
-| Componenti Stimami | `src/components/sistema/` | qui va il nuovo |
+| Componenti Valmiro | `src/components/sistema/` | qui va il nuovo |
 | Stili legacy | `src/app/globals.css` | in via di smantellamento |
 
 ## Come si consuma il motore dal frontend

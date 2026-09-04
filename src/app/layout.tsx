@@ -4,7 +4,7 @@ import "./globals.css";
 import "../styles/sistema.css";
 
 export const metadata: Metadata = {
-  title: "Stimami · quanto vale casa a Milano",
+  title: "Valmiro · quanto vale casa a Milano",
   description:
     "Stima del valore di un immobile a Milano sulle quotazioni ufficiali OMI dell'Agenzia delle Entrate.",
 };

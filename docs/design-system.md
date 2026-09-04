@@ -1,4 +1,4 @@
-# Stimami — linguaggio visuale
+# Valmiro — linguaggio visuale
 
 Un solo sistema. Un componente scritto a mano e uno generato da v0 devono essere
 indistinguibili.

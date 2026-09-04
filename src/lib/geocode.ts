@@ -35,7 +35,7 @@ async function nominatim(q: string): Promise<Posizione[]> {
   url.searchParams.set("addressdetails", "1");
   url.searchParams.set("limit", "5");
   const r = await fetch(url, {
-    headers: { "User-Agent": process.env.GEOCODER_UA || "stimami/0.1", "Accept-Language": "it" },
+    headers: { "User-Agent": process.env.GEOCODER_UA || "valmiro/0.1", "Accept-Language": "it" },
   });
   if (!r.ok) throw new Error(`Nominatim ha risposto ${r.status}`);
   const j = (await r.json()) as any[];

@@ -8,7 +8,7 @@ Serve a far uscire iterazioni coerenti fra loro e con il codice esistente.
 ## Blocco fisso (copia integralmente)
 
 ```
-Stai lavorando su STIMAMI: una piattaforma di real estate intelligence per Milano.
+Stai lavorando su VALMIRO: una piattaforma di real estate intelligence per Milano.
 Un privato inserisce l'indirizzo di casa sua e riceve una valutazione costruita
 sulle quotazioni ufficiali dell'Agenzia delle Entrate.
 
@@ -30,7 +30,7 @@ VINCOLI TECNICI — sono vincoli, non preferenze
 - Next.js 15 App Router, React 19, TypeScript.
 - NIENTE Tailwind, NIENTE shadcn/ui, NIENTE nuove dipendenze.
   Si scrive CSS normale che usa le variabili già definite.
-- Usa SOLO le variabili CSS di Stimami (elenco sotto). Nessun valore letterale
+- Usa SOLO le variabili CSS di Valmiro (elenco sotto). Nessun valore letterale
   di colore, spaziatura, raggio o durata.
 - Nomi delle classi con prefisso v-.
 - Rispetta prefers-reduced-motion.

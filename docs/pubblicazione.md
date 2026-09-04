@@ -1,4 +1,4 @@
-# Pubblicare Stimami: GitHub → v0 → Vercel
+# Pubblicare Valmiro: GitHub → v0 → Vercel
 
 Da fare una volta sola. I comandi vanno lanciati nel Terminale, dentro
 `~/Documents/valore-casa`, con il dev server **fermo** (`Ctrl+C`).
@@ -11,7 +11,7 @@ Vai su **https://github.com/new** e compila così:
 
 | Campo | Valore |
 |---|---|
-| Repository name | `Stimami` |
+| Repository name | `Valmiro` |
 | Description | Stima immobiliare a Milano su quotazioni OMI ufficiali |
 | Visibility | **Private** |
 | Add a README file | **NO, lascialo spento** |
@@ -26,7 +26,7 @@ Non seguire quelle istruzioni: usa quelle qui sotto.
 
 ## 2. Identita' di git — gia' fatto
 
-Impostata a livello di repository (`.git/config`), non globale: vale per Stimami
+Impostata a livello di repository (`.git/config`), non globale: vale per Valmiro
 e non tocca eventuali altri progetti sulla macchina.
 
 ```
@@ -40,9 +40,9 @@ GitHub non accetta più la password dell'account per il push. Serve un token.
 
 Vai su **https://github.com/settings/personal-access-tokens/new** e imposta:
 
-- **Token name**: `stimami-macbook`
+- **Token name**: `valmiro-macbook`
 - **Expiration**: 90 giorni (o quello che preferisci)
-- **Repository access**: *Only select repositories* → scegli `Stimami`
+- **Repository access**: *Only select repositories* → scegli `Valmiro`
 - **Permissions** → *Repository permissions* → **Contents: Read and write**
   (basta questa; lascia tutto il resto su "No access")
 
@@ -51,7 +51,7 @@ GitHub non te la rimostrerà più. Trattala come una password.
 
 ## 4. Pubblicare
 
-Il remote e' gia' collegato (`origin` → `https://github.com/Frazh23/Stimami.git`).
+Il remote e' gia' collegato (`origin` → `https://github.com/Frazh23/Valmiro.git`).
 Resta un comando solo:
 
 ```bash
@@ -88,7 +88,7 @@ Deve esserci invece `.env.example`, senza valori veri.
 v0 lavora sullo stesso repository, non su una copia.
 
 1. Vai su **https://v0.app** e accedi con lo stesso account Vercel.
-2. Usa **Import from GitHub** (non "crea nuovo progetto") e scegli `Stimami`.
+2. Usa **Import from GitHub** (non "crea nuovo progetto") e scegli `Valmiro`.
 3. Come **base branch** seleziona **`design/v0`**.
 
 Da lì v0 crea da solo un ramo di lavoro per ogni modifica e apre una pull
@@ -102,12 +102,12 @@ Documentazione: **https://v0.app/docs/github**
 
 ## 7. Vercel — fatto
 
-Progetto: **`stimami`** nel team `Stimami` (piano Hobby).
-Dominio di produzione: **https://stimami-one.vercel.app**
+Progetto: **`valmiro`** nel team `Valmiro` (piano Hobby).
+Dominio di produzione: **https://valmiro-one.vercel.app**
 
-Nota: `stimami.vercel.app` era gia' occupato da un altro prodotto (un servizio di
+Nota: `valmiro.vercel.app` era gia' occupato da un altro prodotto (un servizio di
 valet parking, nessun rapporto con noi), per questo Vercel ha assegnato
-`stimami-one`. Vale la pena verificare il marchio prima di legarsi al nome.
+`valmiro-one`. Vale la pena verificare il marchio prima di legarsi al nome.
 
 **Attenzione al primo deploy.** Vercel costruisce quando riceve un push. Se il
 repository viene collegato *dopo* aver gia' pushato, non c'e' nessun evento da
@@ -116,7 +116,7 @@ Si sblocca con il primo commit successivo al collegamento.
 
 ### Come era stato configurato
 
-1. Vai su **https://vercel.com/new** e importa `Stimami`.
+1. Vai su **https://vercel.com/new** e importa `Valmiro`.
 2. Framework: Next.js (lo riconosce da solo). Non cambiare i comandi di build.
 3. **Production Branch**: `main` (Settings → Git).
 4. **Environment Variables** (Settings → Environment Variables), per tutti gli ambienti:
@@ -126,7 +126,7 @@ Si sblocca con il primo commit successivo al collegamento.
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://pzfqrcihhmlgdizwyzog.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | la chiave publishable (quella già in `.env.local`) |
 | `GEOCODER` | `nominatim` |
-| `GEOCODER_UA` | `stimami/0.1 (contatto: francesco23.zambelli@gmail.com)` |
+| `GEOCODER_UA` | `valmiro/0.1 (contatto: francesco23.zambelli@gmail.com)` |
 
 **La chiave `service_role` di Supabase non va messa.** È una chiave che scavalca
 le regole RLS: nel browser sarebbe un accesso libero al database di chiunque.
@@ -143,15 +143,15 @@ Vai su
 e aggiungi in *Redirect URLs*:
 
 ```
-https://stimami-one.vercel.app/**
-https://stimami-*-frazh23s-projects.vercel.app/**
+https://valmiro-one.vercel.app/**
+https://valmiro-*-frazh23s-projects.vercel.app/**
 ```
 
 La prima riga e' la produzione, la seconda copre le preview: il pattern esatto
 lo confermi dall'URL della prima preview che Vercel genera, perche' il suffisso
 del team cambia da account ad account.
 
-In *Site URL* metti `https://stimami-one.vercel.app`.
+In *Site URL* metti `https://valmiro-one.vercel.app`.
 
 ## 9. Ultima cosa, prima di aprire il sito a qualcuno
 
@@ -189,39 +189,56 @@ di registrazioni al giorno.
 
 ---
 
-## 11. Il prodotto si chiama Stimami (4 set 2026)
+## 11. Il prodotto si chiama Valmiro (4 set 2026)
 
-Prima si chiamava Vaylo. **Non e' stata una scelta di gusto: era un nome bloccato.**
+Due cambi di nome nello stesso giorno. Vale la pena scrivere perche', perche' la
+lezione si ripete.
 
-TMview ha mostrato due marchi dell'Unione Europea registrati:
+### Perche' non Vaylo
+
+TMview ha mostrato due marchi dell'Unione Europea **registrati**:
 
 - **Vaylo** — EUTM 019184639, Resemolnet AB, classi 35, 36, 38, 39, **42**, 43
 - **VAYLO** — EUTM 019313573, Stablezact Fintech Ltd, classi 9, **36**, **42**
 
-La classe 36 copre gli affari immobiliari e i servizi finanziari, la 42 il software:
-sono esattamente le due caselle di questo prodotto. Un marchio EUIPO vale anche in
-Italia, quindi comprare `vaylo.it` non avrebbe risolto nulla — un dominio non
-conferisce diritti sul nome.
+La classe 36 copre affari immobiliari e servizi finanziari, la 42 il software:
+esattamente questo prodotto. Un marchio EUIPO vale anche in Italia, quindi
+comprare `vaylo.it` non avrebbe risolto nulla — un dominio non conferisce diritti
+sul nome. Anche le varianti erano prese: **Kaylo** e' un marchio UE registrato in
+classe 42 e **KAYLOO** in classe 36 (Ayvens). I nomi inventati di cinque lettere
+sono la categoria piu' affollata del registro: quel filone era esaurito.
 
-Anche le varianti erano occupate: Kaylo e' un marchio UE registrato in classe 42
-(Munk Creative Ltd) e KAYLOO lo e' in classe 36 (Ayvens). I nomi inventati di
-cinque lettere sono la categoria piu' affollata del registro: quel filone era
-esaurito, non sfortunato.
+### Perche' non Stimami
 
-**Stimami** e' risultato pulito su TMview per EU, IT e GB nelle classi 36 e 42:
-i soli risultati sono *Stimamizol* (farmaco Johnson & Johnson, classe 5) e
-*Stimamiglio* (un cognome). Dominio: `stimami.it` libero, `stimami.com` no.
+Marchi puliti su TMview (i soli risultati erano *Stimamizol*, farmaco di Johnson
+& Johnson in classe 5, e *Stimamiglio*, un cognome), ma **`stimami.it` e
+`stimami.com` sono gia' registrati**.
 
-Nota onesta: essendo vicino a "stima", che e' il servizio, e' un marchio piu'
-debole — protegge meno contro nomi simili. Vale un parere di un consulente in
-marchi prima del deposito.
+### L'errore di metodo, e come e' stato corretto
+
+La disponibilita' dei domini era stata pre-verificata cercando i record **A**.
+Un dominio registrato ma parcheggiato, senza sito attivo, non ha record A: cosi'
+`stimami.it` risultava libero e non lo era. Il controllo ora interroga i server
+DNS chiedendo i record **NS** e distingue NXDOMAIN — il dominio non esiste nel
+registro — da qualsiasi altra risposta, che significa registrato. Resta un
+pre-screening: la conferma vera la da' il registrar.
+
+### Valmiro
+
+TMview pulito per EU, IT e GB nelle classi 36 e 42 — l'unico risultato e'
+*Imobiliaria Valmirocipriani*, agenzia brasiliana intestata al proprio titolare,
+altro territorio e marchio composto da un nome di persona. **`valmiro.it` libero**,
+verificato con il metodo corretto.
+
+Nota onesta: Valmiro non significa niente, quindi va costruito. In cambio, proprio
+per questo, e' molto piu' difendibile di un nome che descrive il servizio.
 
 ### Cosa NON e' stato rinominato, e perche'
 
-- La cartella del progetto sul disco resta `valore-casa`: rinominarla rompe i
-  percorsi aperti. Si fa a server spento, quando conviene.
-- Il prefisso `v-` delle classi CSS resta: e' solo uno spazio di nomi, cambiarlo
-  significherebbe toccare centinaia di righe per zero beneficio.
-- `src/components/sistema/` e `src/styles/sistema.css` hanno preso un nome
-  **neutro rispetto al marchio**, proprio perche' un eventuale terzo rename non
-  debba piu' toccare la struttura del codice.
+- Il prefisso `v-` delle classi CSS: e' solo uno spazio di nomi.
+- `src/components/sistema/` e `src/styles/sistema.css` hanno gia' un nome neutro
+  rispetto al marchio, apposta perche' un nuovo rename non tocchi la struttura.
+  Questa scelta si e' ripagata nel giro di un'ora.
+- La chiave di localStorage: `valmiro.stime` e' la nuova, e `stimami.stime` e
+  `vaylo.stime` e `valorecasa.stime` restano nella catena delle dismesse. Chi ha
+  stime salvate nel browser non le perde, da qualunque nome arrivi.

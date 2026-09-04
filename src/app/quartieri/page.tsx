@@ -6,7 +6,7 @@ import { ZONE, SEMESTRE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
 import { eur } from "@/lib/formato";
 
 export const metadata: Metadata = {
-  title: "I quartieri di Milano · Stimami",
+  title: "I quartieri di Milano · Valmiro",
   description: "Le 42 zone omogenee OMI di Milano e le loro quotazioni ufficiali al metro quadro.",
 };
 
@@ -31,7 +31,7 @@ export default function Quartieri() {
           </h1>
           <p className="v-lead v-measure" style={{ marginTop: "var(--s-5)" }}>
             L&apos;Agenzia delle Entrate divide Milano in zone omogenee e per ognuna pubblica una
-            forbice di euro al metro quadro. Sono i valori su cui Stimami costruisce ogni stima,
+            forbice di euro al metro quadro. Sono i valori su cui Valmiro costruisce ogni stima,
             aggiornati all&apos;indice Istat. Semestre di riferimento: {SEMESTRE}.
           </p>
 
@@ -58,7 +58,7 @@ export default function Quartieri() {
       </main>
       <footer className="v-footer">
         <div className="v-wrap v-footer__in">
-          <span className="v-brand" aria-label="Stimami">Stimam<span aria-hidden="true">i</span></span>
+          <span className="v-brand" aria-label="Valmiro">Valmir<span aria-hidden="true">o</span></span>
           <p className="v-micro">{FONTE}. Le stime sono indicative e non costituiscono perizia.</p>
         </div>
       </footer>

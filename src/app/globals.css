@@ -1,12 +1,12 @@
 /* ==========================================================================
-   STIMAMI · STILI LEGACY
+   VALMIRO · STILI LEGACY
    Serve alle schermate non ancora riprogettate (/stime, /accedi, mappa).
    Non aggiungere niente qui: il nuovo si scrive in src/styles/sistema.css.
    Man mano che una schermata passa al nuovo linguaggio, le sue regole
    spariscono da questo file.
    ========================================================================== */
 
-/* Ponte fra i nomi vecchi e i token Stimami, cosi' il legacy non stona. */
+/* Ponte fra i nomi vecchi e i token Valmiro, cosi' il legacy non stona. */
 :root{
   --gold:var(--warm);--gold-soft:var(--warm-soft);
   --rust:var(--neg);--rust-soft:color-mix(in srgb,var(--neg) 12%,transparent);

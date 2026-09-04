@@ -21,7 +21,7 @@ const DRY = process.argv.includes("--dry");
 const log = (...a) => console.log("[ingest]", ...a);
 
 async function json(url) {
-  const r = await fetch(url, { headers: { "User-Agent": "stimami ingest" } });
+  const r = await fetch(url, { headers: { "User-Agent": "valmiro ingest" } });
   if (!r.ok) throw new Error(`${url} ha risposto ${r.status}`);
   return r.json();
 }

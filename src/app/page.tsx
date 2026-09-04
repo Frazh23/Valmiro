@@ -75,7 +75,7 @@ export default function Home() {
 
       <footer className="v-footer">
         <div className="v-wrap v-footer__in">
-          <span className="v-brand" aria-label="Stimami">Stimam<span aria-hidden="true">i</span></span>
+          <span className="v-brand" aria-label="Valmiro">Valmir<span aria-hidden="true">o</span></span>
           <p className="v-micro">
             {FONTE}. Le stime sono indicative e non costituiscono perizia.
           </p>

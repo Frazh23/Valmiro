@@ -86,6 +86,7 @@ export default function Privacy() {
 
           <p className="v-small" style={{ marginTop: "var(--s-8)", color: "var(--ink-faint)" }}>
             Titolare del trattamento: Francesco Zambelli, <a href="mailto:privacy@valmiro.it">privacy@valmiro.it</a>.
+            Per tutto il resto, <a href="mailto:informazioni@valmiro.it">informazioni@valmiro.it</a>.
             Ultimo aggiornamento: 4 settembre 2026. <Link href="/">Torna alla home</Link>.
           </p>
         </article>

@@ -311,6 +311,8 @@ button { font: inherit; letter-spacing: inherit; }
 .v-footer { border-top: 1px solid var(--line); padding-block: var(--s-7) var(--s-8); margin-top: auto; }
 .v-footer__in { display: flex; flex-wrap: wrap; gap: var(--s-5); justify-content: space-between; align-items: flex-start; }
 .v-footer p { max-width: 56ch; }
+.v-footer a { color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.v-footer a:hover { color: var(--ink); text-decoration-color: var(--ink-soft); }
 
 /* ==========================================================================
    FLUSSO DI VALUTAZIONE

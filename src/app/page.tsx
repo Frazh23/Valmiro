@@ -88,6 +88,7 @@ export default function Home() {
           <p className="v-micro">
             {FONTE}. Le stime sono indicative e non costituiscono perizia.
             {" "}<Link href="/privacy">Privacy</Link>
+            {" · "}<a href="mailto:informazioni@valmiro.it">informazioni@valmiro.it</a>
           </p>
         </div>
       </footer>

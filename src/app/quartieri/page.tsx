@@ -59,7 +59,11 @@ export default function Quartieri() {
       <footer className="v-footer">
         <div className="v-wrap v-footer__in">
           <span className="v-brand" aria-label="Valmiro">Valmir<span aria-hidden="true">o</span></span>
-          <p className="v-micro">{FONTE}. Le stime sono indicative e non costituiscono perizia.</p>
+          <p className="v-micro">
+            {FONTE}. Le stime sono indicative e non costituiscono perizia.
+            {" "}<Link href="/privacy">Privacy</Link>
+            {" · "}<a href="mailto:informazioni@valmiro.it">informazioni@valmiro.it</a>
+          </p>
         </div>
       </footer>
     </div>

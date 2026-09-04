@@ -33,10 +33,15 @@ esiste lì, prima si aggiunge lì. Nessun valore letterale nei componenti.
   La gerarchia si fa con questi, non con quattro dimensioni di carattere.
 - **Accento** uno solo, verde profondo `--accent`. Usato con parsimonia: un bottone,
   una barra, un perno. Se compare tre volte in una schermata, ne bastava una.
-- **Tipografia**: `--font-display` per i titoli (tracking negativo, peso 600),
-  `--font-ui` per il resto, `--font-editorial` (serif) solo per i numerali di sezione
-  e una parola in corsivo nella frase di chiusura. Nessun font remoto: la build gira
-  senza rete e su Apple lo stack di sistema è già SF Pro / New York.
+- **Tipografia**: due voci. **Fraunces** (`--font-editorial`, con la voce
+  `--voce-editorial`: SOFT 60, WONK 1) è il marchio e i titoli — `v-brand`,
+  `v-display`, `v-h1`, `v-h2`, `v-statement` — a peso 500, tracking
+  `--track-serif`. Il sans di sistema (`--font-display`, `--font-ui`) è tutto il
+  resto, e **sempre i numeri**: una cifra si legge tabulare, non si ammira in
+  serif. Fraunces viaggia con il repo (`@fontsource-variable/fraunces`, OFL,
+  importato in `layout.tsx`): nessun font remoto, la build gira senza rete e
+  nessuna richiesta parte verso Google quando un utente apre la pagina.
+  Un componente v0 che introduce un altro carattere è da rifiutare.
 - **Spazio**: `--section-y` fra le sezioni (72–168px). Il respiro verticale è metà
   del carattere premium: nel dubbio, di più.
 - **Movimento**: `--d-*` per le durate, `--e-out` per le uscite morbide.

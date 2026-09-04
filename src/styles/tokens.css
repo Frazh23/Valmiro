@@ -43,7 +43,14 @@
      Per adottare un font proprietario basta ridefinire queste tre variabili. */
   --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-editorial: ui-serif, "New York", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  /* Fraunces e' il carattere del marchio e dei titoli: viaggia con il repo
+     (pacchetto @fontsource-variable/fraunces, licenza OFL, importato in
+     layout.tsx), niente richieste a Google quando un utente apre la pagina.
+     Se il file non arriva, il ripiego e' il serif di sistema: la pagina resta
+     leggibile e del registro giusto. */
+  --font-editorial: "Fraunces Variable", ui-serif, "New York", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  /* la voce di Fraunces: SOFT ammorbidisce le grazie, WONK accende la a e la r "storte" */
+  --voce-editorial: "SOFT" 60, "WONK" 1;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* scala tipografica: pochi gradini, molto distanti fra loro */
@@ -62,6 +69,7 @@
 
   --track-display: -0.038em;
   --track-h:       -0.026em;
+  --track-serif:   -0.018em;  /* Fraunces vuole meno compressione del sans */
   --track-body:    -0.006em;
   --track-eyebrow:  0.14em;
 

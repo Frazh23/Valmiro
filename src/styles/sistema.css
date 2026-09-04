@@ -31,16 +31,22 @@ button { font: inherit; letter-spacing: inherit; }
 .v-fill   { flex: 1; }
 
 /* ---------- tipografia ---------- */
+/* I titoli parlano con la voce del marchio: Fraunces, peso medio, grazie
+   morbide. I numeri restano nel sans di sistema, tabulari: una cifra si legge,
+   non si ammira. */
 .v-display {
-  font-family: var(--font-display);
-  font-size: var(--t-display); line-height: var(--lh-tight);
-  letter-spacing: var(--track-display); font-weight: 600;
+  font-family: var(--font-editorial); font-variation-settings: var(--voce-editorial);
+  font-optical-sizing: auto;
+  font-size: var(--t-display); line-height: 1.0;
+  letter-spacing: var(--track-serif); font-weight: 500;
   margin: 0; text-wrap: balance;
 }
-.v-h1 { font-family: var(--font-display); font-size: var(--t-h1); line-height: var(--lh-snug);
-        letter-spacing: var(--track-h); font-weight: 600; margin: 0; text-wrap: balance; }
-.v-h2 { font-family: var(--font-display); font-size: var(--t-h2); line-height: var(--lh-snug);
-        letter-spacing: var(--track-h); font-weight: 600; margin: 0; text-wrap: balance; }
+.v-h1 { font-family: var(--font-editorial); font-variation-settings: var(--voce-editorial); font-optical-sizing: auto;
+        font-size: var(--t-h1); line-height: 1.1;
+        letter-spacing: var(--track-serif); font-weight: 500; margin: 0; text-wrap: balance; }
+.v-h2 { font-family: var(--font-editorial); font-variation-settings: var(--voce-editorial); font-optical-sizing: auto;
+        font-size: var(--t-h2); line-height: var(--lh-snug);
+        letter-spacing: var(--track-serif); font-weight: 500; margin: 0; text-wrap: balance; }
 .v-h3 { font-size: var(--t-h3); font-weight: 600; letter-spacing: var(--track-h); margin: 0; }
 .v-lead { font-size: var(--t-body-lg); color: var(--ink-soft); line-height: 1.5; margin: 0; text-wrap: pretty; }
 .v-body { color: var(--ink-soft); margin: 0; text-wrap: pretty; }
@@ -98,8 +104,9 @@ button { font: inherit; letter-spacing: inherit; }
 }
 .v-header__in { display: flex; align-items: center; gap: var(--s-6); height: 68px; }
 .v-brand {
-  font-family: var(--font-display); font-size: 1.3rem; font-weight: 650;
-  letter-spacing: -0.045em; color: var(--ink);
+  font-family: var(--font-editorial); font-variation-settings: var(--voce-editorial);
+  font-optical-sizing: auto;
+  font-size: 1.45rem; font-weight: 600; letter-spacing: -0.03em; color: var(--ink);
 }
 .v-brand span { color: var(--accent); }
 .v-nav { display: flex; align-items: center; gap: var(--s-6); margin-left: auto; }
@@ -275,8 +282,9 @@ button { font: inherit; letter-spacing: inherit; }
 /* ---------- fascia di chiusura ---------- */
 .v-band { background: var(--paper-deep); border-block: 1px solid var(--line); }
 .v-statement {
-  font-family: var(--font-display); font-size: clamp(1.5rem, 3.4vw, 2.5rem);
-  line-height: 1.22; letter-spacing: var(--track-h); font-weight: 500;
+  font-family: var(--font-editorial); font-variation-settings: var(--voce-editorial);
+  font-optical-sizing: auto; font-size: clamp(1.5rem, 3.4vw, 2.5rem);
+  line-height: 1.22; letter-spacing: var(--track-serif); font-weight: 450;
   max-width: 22ch; margin: 0; text-wrap: balance;
 }
 .v-statement em { font-family: var(--font-editorial); font-style: italic; color: var(--accent); }

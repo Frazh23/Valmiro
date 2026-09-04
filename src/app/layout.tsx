@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+/* Fraunces, variabile, con tutti gli assi (peso, ottico, SOFT, WONK): e' il
+   marchio e i titoli. Il file sta nel repo tramite npm: la build gira senza
+   rete e nessuna richiesta parte verso Google. */
+import "@fontsource-variable/fraunces/full.css";
 import "../styles/tokens.css";
 import "./globals.css";
 import "../styles/sistema.css";

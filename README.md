@@ -97,7 +97,8 @@ si lasciano i vecchi. Ti dà storico, ricostruzione delle stime passate e rollba
 
 1. **Salvare ogni stima** nella tabella `stime`, con indirizzo, caratteristiche e prezzo
    esposto dichiarato. È il dataset proprietario: cresce da solo e nessuno può comprarlo.
-2. **Tarare** `COMPRESSIONE_STATO` e i coefficienti su 40-50 annunci milanesi reali,
+2. **Tarare** `COMPRESSIONE_STATO` e i coefficienti su 40-50 annunci milanesi reali
+   (strumento pronto: `npm run calibra`, annunci in `data/calibrazione/`, vedi il README lì),
    misurando lo scarto medio. Con OMI più coefficienti, un errore del 10-12% è onesto.
 3. **Passare a un geocoder a consumo** quando il traffico supera i limiti di Nominatim.
    Si cambia solo `src/lib/geocode.ts`.

@@ -53,6 +53,19 @@ export const DETRAZIONE = { primaCasa: 0.5, altri: 0.36, tetto: 96000, rate: 10 
  */
 export const COMPRESSIONE_STATO = 0.7;
 
+/**
+ * I parametri che la calibrazione puo' muovere, in un oggetto invece che in
+ * costanti sciolte: scripts/calibra.mjs li cambia a runtime per provare valori
+ * diversi sugli annunci reali, senza ricompilare e senza toccare il codice.
+ * In produzione valgono i default qui sotto; cambiarli e' una decisione che
+ * passa da un commit, non da un file di configurazione.
+ */
+export const PARAMETRI = {
+  compressioneStato: COMPRESSIONE_STATO,
+  /** correzione globale del livello: 1 = le mediane OMI aggiornate Istat sono giuste cosi' */
+  livello: 1,
+};
+
 /** Le due fasce OMI ridotte alle loro mediane, con i ripieghi per le zone incomplete. */
 export function scala(zona: string, tipo: Tipo) {
   const z = ZONE[zona];
@@ -70,7 +83,7 @@ export function scala(zona: string, tipo: Tipo) {
 /** Euro al mq per lo stato dichiarato, ancorati alle mediane OMI. */
 export function baseOmi(zona: string, tipo: Tipo, stato: Stato) {
   const s = scala(zona, tipo);
-  const premio = Math.pow(s.mediaO / s.mediaN, COMPRESSIONE_STATO);
+  const premio = Math.pow(s.mediaO / s.mediaN, PARAMETRI.compressioneStato);
   if (stato === "rist") return s.mediaN * 0.9;
   if (stato === "abit") return s.mediaN;
   if (stato === "otti") return s.mediaN * premio;
@@ -89,7 +102,7 @@ export function stima(i: Input): Stima {
   if (!(i.mq > 0)) throw new Error("Superficie mancante o non valida");
 
   const sc = superficieCommerciale(i);
-  const base = baseOmi(i.zona, i.tipo, i.stato) * INDICE_ISTAT;
+  const base = baseOmi(i.zona, i.tipo, i.stato) * INDICE_ISTAT * PARAMETRI.livello;
   const grezzo = sc * base;
 
   const alto = ["3-5", "6+", "ultimo"].includes(i.piano);

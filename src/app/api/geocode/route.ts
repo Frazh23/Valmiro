@@ -43,7 +43,7 @@ export async function GET(req: Request) {
     /* La via attraversa più zone e il numero non risulta: non scegliamo noi
        quale zona darle. Meglio proporre i civici che esistono davvero. */
     const vicini = r.vicini.length
-      ? ` I numeri piu' vicini in anagrafe sono ${r.vicini.join(" e ")}.`
+      ? ` I numeri più vicini in anagrafe sono ${r.vicini.join(" e ")}.`
       : "";
     return NextResponse.json({
       trovato: false,

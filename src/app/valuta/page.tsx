@@ -2,6 +2,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import Header from "@/components/vaylo/Header";
 import AddressSearch from "@/components/vaylo/AddressSearch";
 import ValuationReveal from "@/components/vaylo/ValuationReveal";
@@ -10,7 +11,13 @@ import MarketRange from "@/components/vaylo/MarketRange";
 import FactorExplanation from "@/components/vaylo/FactorExplanation";
 import RenovationSelector, { type Prospetto } from "@/components/vaylo/RenovationSelector";
 import Reveal from "@/components/vaylo/Reveal";
-import Mappa from "@/components/Mappa";
+/* La mappa porta con se' i perimetri semplificati delle 42 zone: 70 KB di dati
+   che finivano nel primo caricamento di /valuta anche se la mappa sta dentro un
+   pannello chiuso. Ora il modulo arriva solo se qualcuno apre quel pannello. */
+const Mappa = dynamic(() => import("@/components/Mappa"), {
+  ssr: false,
+  loading: () => <p className="v-small">Carico la mappa…</p>,
+});
 import { eur, num } from "@/lib/formato";
 import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
 import { RISTRUTTURAZIONE, scala } from "@/lib/engine";
@@ -53,6 +60,7 @@ function Valuta() {
   const [scenario, setScenario] = useState("attuale");
   const [esito, setEsito] = useState<Esito | null>(null);
   const [salvata, setSalvata] = useState(false);
+  const [mappaAperta, setMappaAperta] = useState(false);
 
   const [i, setI] = useState<Input>({
     zona: "", tipo: "civ", mq: 0, balconi: 0, cantina: false, box: "nessuno",
@@ -158,13 +166,18 @@ function Valuta() {
                 </p>
               </div>
               <AddressSearch onScegli={scegliIndirizzo} azione="Continua" autoFocus />
-              <details className="v-more" style={{ marginTop: "var(--s-7)" }}>
+              <details
+                className="v-more" style={{ marginTop: "var(--s-7)" }}
+                onToggle={(e) => setMappaAperta((e.currentTarget as HTMLDetailsElement).open)}
+              >
                 <summary>Non trovi l&apos;indirizzo? Indica il punto sulla mappa</summary>
                 <div className="v-more__in">
-                  <Mappa
-                    zona={i.zona || null}
-                    onPick={(z) => { set({ zona: z }); setIndirizzo(ZONE[z].d); setPreciso(true); setVista("casa"); }}
-                  />
+                  {mappaAperta && (
+                    <Mappa
+                      zona={i.zona || null}
+                      onPick={(z) => { set({ zona: z }); setIndirizzo(ZONE[z].d); setPreciso(true); setVista("casa"); }}
+                    />
+                  )}
                 </div>
               </details>
             </div>

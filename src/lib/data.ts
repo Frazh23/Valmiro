@@ -1,20 +1,24 @@
-import zoneJson from "../../data/quotazioni-omi-2024-2.json";
+import zoneJson from "../../data/quotazioni-omi-2025-2.json";
 import nomiJson from "../../data/nomi-zone.json";
 import type { Zona } from "./types";
 
 export const ZONE = zoneJson as unknown as Record<string, Zona>;
 export const NOMI = nomiJson as { n: string; z: string }[];
 
-/** Semestre a cui si riferiscono le quotazioni caricate. Aggiornato da scripts/ingest-omi.mjs */
-export const SEMESTRE = "2024 · 2° semestre";
+/** Semestre a cui si riferiscono le quotazioni caricate. Aggiornato da scripts/ingest-fornitura.mjs o ingest-omi.mjs */
+export const SEMESTRE = "2025 · 2° semestre";
 export const FONTE =
   "Agenzia delle Entrate — Osservatorio del Mercato Immobiliare, via Comune di Milano (CC BY 4.0)";
 
 /**
- * Indice Istat dei prezzi delle abitazioni: porta la base OMI, che esce con mesi di
- * ritardo, al trimestre corrente. Va aggiornato trimestralmente, vedi README.
+ * Indice Istat dei prezzi delle abitazioni (IPAB): porta la base OMI, che esce con
+ * mesi di ritardo, al trimestre corrente. Base: 2° semestre 2025 (media del terzo e
+ * quarto trimestre). Istat: +0,9% nel quarto trimestre 2025 sul terzo, +1,0% nel
+ * primo trimestre 2026 sul quarto (stima preliminare, giugno 2026). Dalla media
+ * del semestre al primo trimestre 2026: circa +1,5%. Da rifare quando esce il
+ * secondo trimestre 2026 (fine settembre), vedi README.
  */
-export const INDICE_ISTAT = 1.024;
+export const INDICE_ISTAT = 1.015;
 
 export const FASCIA_NOME: Record<string, string> = {
   B: "Centro", C: "Semicentro", D: "Periferia", E: "Suburbana", R: "Extraurbana",

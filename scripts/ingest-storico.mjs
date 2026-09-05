@@ -8,7 +8,7 @@
  * mese). Il file grezzo pesa 3 MB e non entra nel repo: si scarica dal
  * portale e si passa a questo script, che produce due file versionati:
  *
- *   data/locazioni-omi-2024-2.json  i canoni dell'ultimo semestre, per zona,
+ *   data/locazioni-omi-AAAA-S.json  i canoni dell'ultimo semestre, per zona,
  *                                   tipologia e stato: la base della rendita
  *   data/omi-storico.json           per ogni zona, semestre per semestre dal
  *                                   2014, prezzi e canoni delle abitazioni
@@ -21,6 +21,9 @@
  * comincia li', e lo diciamo.
  *
  *   node scripts/ingest-storico.mjs percorso/al/ds1996.csv
+ *
+ * I semestri successivi al riepilogo arrivano dalla fornitura QIP dell'Agenzia:
+ * scripts/ingest-fornitura.mjs li aggiunge in coda allo storico.
  */
 
 import { readFileSync, writeFileSync } from "node:fs";

@@ -29,9 +29,11 @@ Nominatim lo richiede, e senza rischi di essere bloccato.
 
 ```
 data/                            i dati veri, versionati con il codice
-  zone-omi.json                  43 poligoni ufficiali (anche .geojson per QGIS/PostGIS)
-  zone-omi-semplificate.json     stessi poligoni a 3.732 vertici, per la mappa nel browser
-  quotazioni-omi-2024-2.json     42 zone × 4 tipologie × 2 stati + box
+  zone-omi.json                  43 poligoni ufficiali 2025/2 (anche .geojson per QGIS/PostGIS)
+  zone-omi-semplificate.json     stessi poligoni a 3.818 vertici, per la mappa nel browser
+  quotazioni-omi-2025-2.json     42 zone × 4 tipologie × 2 stati + box (2024-2 resta per confronto)
+  locazioni-omi-2025-2.json      i canoni, stesso tracciato
+  fornitura/2025-2/              la fornitura QIP dell'Agenzia com'e' arrivata: VALORI, ZONE, KML
   nomi-zone.json                 275 tra vie, piazze e quartieri → zona (euristica)
 src/lib/engine.ts                il motore: modulo puro, nessuna rete, nessun database
 src/lib/geo.ts                   point-in-polygon, coordinate → zona
@@ -82,6 +84,22 @@ le quotazioni escono due volte l'anno ma senza data certa.
 
 Dopo un ingest riuscito: aggiorna l'import e `SEMESTRE` in `src/lib/data.ts`, rilancia
 `npm test`, e solo allora pubblica.
+
+Se invece hai la **fornitura ufficiale dell'Agenzia** (i tre file QIP: `*_VALORI.csv`,
+`*_ZONE.csv`, `F205.kml`), la strada è un'altra e fa tutto:
+
+```bash
+npm run ingest-fornitura data/fornitura/2025-2/QIP_2025-2_VALORI.csv data/fornitura/2025-2/QIP_2025-2_ZONE.csv data/fornitura/2025-2/F205.kml
+```
+
+Scrive quotazioni, canoni, perimetri (interi e semplificati) e aggiunge il semestre allo
+storico; stampa zone nuove o mancanti, quanto si sono mosse le quotazioni e quali
+perimetri sono cambiati. Se un perimetro è cambiato, rigenera anche l'indirizzario
+(`npm run ingest-civici`), perché la zona di ogni civico è calcolata una volta sola. Poi
+`SEMESTRE`, `INDICE_ISTAT` (la base Istat cambia con il semestre) e, in
+`src/lib/affitto.ts`, l'import dei canoni e `SEMESTRE_LOCAZIONI`. Infine `npm run
+calibra`: con una base nuova il livello per fascia può cambiare, ed è successo nel
+2025/2 (centro da 1,05 a 1,02).
 
 ## Database (opzionale)
 

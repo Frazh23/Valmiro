@@ -17,7 +17,7 @@ const INDICE = JSON.parse(readFileSync(new URL("../data/vie-milano.json", import
 const CIVICI = JSON.parse(readFileSync(new URL("../data/civici-milano.json", import.meta.url), "utf8")).civici;
 const VIE = INDICE.vie;
 const GEO = JSON.parse(readFileSync(new URL("../data/zone-omi.json", import.meta.url), "utf8"));
-const QUOTAZIONI = JSON.parse(readFileSync(new URL("../data/quotazioni-omi-2024-2.json", import.meta.url), "utf8"));
+const QUOTAZIONI = JSON.parse(readFileSync(new URL("../data/quotazioni-omi-2025-2.json", import.meta.url), "utf8"));
 
 const via = (chiave) => VIE.find((v) => v.chiave === chiave);
 

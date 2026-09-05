@@ -15,7 +15,8 @@
     "load-db": "node scripts/load-postgis.mjs",
     "typecheck": "tsc --noEmit",
     "comparabili": "node scripts/comparabili.mjs",
-    "ingest-storico": "node scripts/ingest-storico.mjs"
+    "ingest-storico": "node scripts/ingest-storico.mjs",
+    "ingest-fornitura": "node scripts/ingest-fornitura.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

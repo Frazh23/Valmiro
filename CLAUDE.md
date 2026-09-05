@@ -23,7 +23,7 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 | Cosa | Dove | Chi lo tocca |
 |---|---|---|
 | Motore di stima (puro, testato) | `src/lib/engine.ts` | solo con un test che lo copre |
-| Quotazioni, zone, nomi | `src/lib/data.ts`, `data/*.json` | rigenerati da `scripts/ingest-omi.mjs` |
+| Quotazioni, zone, nomi | `src/lib/data.ts`, `data/*.json` | rigenerati da `scripts/ingest-fornitura.mjs` (fornitura QIP dell'Agenzia) o `scripts/ingest-omi.mjs` (CKAN del Comune) |
 | Point-in-polygon, geocoding | `src/lib/geo.ts`, `src/lib/geocode.ts` | — |
 | Calibrazione del motore | `scripts/calibra.mjs`, `scripts/comparabili.mjs`, `scripts/annunci.mjs`, `data/annunci/` | propone, non scrive: i parametri cambiano con un commit; l'archivio cresce per lotti, non si riscrive |
 | Canoni di locazione e storico | `src/lib/affitto.ts`, `data/locazioni-omi-*.json`, `data/omi-storico.json` | rigenerati da `scripts/ingest-storico.mjs`; non toccano la stima del valore |

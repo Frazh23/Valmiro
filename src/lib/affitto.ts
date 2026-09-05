@@ -1,4 +1,4 @@
-import locazioniJson from "../../data/locazioni-omi-2024-2.json";
+import locazioniJson from "../../data/locazioni-omi-2025-2.json";
 import storicoJson from "../../data/omi-storico.json";
 import { ZONE } from "./data";
 import { PARAMETRI, COMPRESSIONE_STATO } from "./engine";
@@ -17,7 +17,7 @@ import type { FasceOmi, Input, Stato, Stima, Tipo } from "./types";
    -------------------------------------------------------------------------- */
 
 export const LOCAZIONI = locazioniJson as unknown as Record<string, Record<Tipo, FasceOmi>>;
-export const SEMESTRE_LOCAZIONI = "2024 · 2° semestre";
+export const SEMESTRE_LOCAZIONI = "2025 · 2° semestre";
 
 type Serie = { s: string; c: [number, number]; l: [number, number] }[];
 type StoricoZona = { dal: string; stato: "NORMALE" | "OTTIMO"; serie: Serie };
@@ -111,9 +111,13 @@ export type Andamento = {
 export function andamento(zona: string): Andamento | null {
   const z = STORICO[zona];
   if (!z || !z.serie.length) return null;
-  const punti = z.serie.map((p) => ({ s: p.s, prezzo: (p.c[0] + p.c[1]) / 2, canone: (p.l[0] + p.l[1]) / 2 }));
+  const punti = z.serie.map((p) => ({ s: p.s, prezzo: (p.c[0] + p.c[1]) / 2, canone: p.l[0] && p.l[1] ? (p.l[0] + p.l[1]) / 2 : NaN }));
   const primo = punti[0], ultimo = punti[punti.length - 1];
-  const dueAnni = punti.length > 4 ? punti[punti.length - 5] : null;
+  /* "due anni fa" per etichetta, non per posizione: la serie puo' avere un
+     buco (il 1° semestre 2025 non e' mai stato fornito) e contare quattro
+     punti indietro sposterebbe il confronto senza dirlo */
+  const etichettaDueAnni = `${Number(ultimo.s.slice(0, 4)) - 2}${ultimo.s.slice(4)}`;
+  const dueAnni = punti.find((p) => p.s === etichettaDueAnni) || null;
   return {
     dal: z.dal, stato: z.stato, punti,
     variazione: ultimo.prezzo / primo.prezzo - 1,

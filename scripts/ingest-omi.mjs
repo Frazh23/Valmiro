@@ -115,13 +115,15 @@ const main = async () => {
   if (Object.keys(zoneOut).length < 30) throw new Error(`Solo ${Object.keys(zoneOut).length} zone: tracciato sospetto, non scrivo`);
 
   // conserva descrizione e fascia gia' presenti
-  const vecchio = JSON.parse(await readFile(new URL("../data/quotazioni-omi-2024-2.json", import.meta.url), "utf8"));
+  const { readdir } = await import("node:fs/promises");
+  const ultimo = (await readdir(new URL("../data/", import.meta.url))).filter((n) => /^quotazioni-omi-\d{4}-\d\.json$/.test(n)).sort().pop();
+  const vecchio = JSON.parse(await readFile(new URL(`../data/${ultimo}`, import.meta.url), "utf8"));
   for (const z in zoneOut) { zoneOut[z].d = vecchio[z]?.d || z; zoneOut[z].f = z[0]; }
 
   await writeFile(new URL(`../data/quotazioni-omi-${quot.anno}-${quot.sem}.json`, import.meta.url),
     JSON.stringify(zoneOut, null, 0));
   log(`scritte ${Object.keys(zoneOut).length} zone da ${usate} righe`);
-  log(`ORA: aggiorna l'import e SEMESTRE in src/lib/data.ts, poi rilancia i test`);
+  log(`ORA: aggiorna l'import e SEMESTRE in src/lib/data.ts, poi rilancia i test. Se hai la fornitura QIP dell'Agenzia (VALORI, ZONE, KML), preferisci npm run ingest-fornitura: fa tutto, canoni e perimetri compresi`);
   log(`E POI: scarica il riepilogo storico (DS1996) e lancia npm run ingest-storico, che rigenera canoni e andamento`);
 };
 

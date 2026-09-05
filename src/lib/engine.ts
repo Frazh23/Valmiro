@@ -78,7 +78,7 @@ export const ONERI = {
  * non cambia ristrutturando. Lo comprimiamo con un esponente: 1 = premio pieno,
  * 0 = nessun premio.
  *
- * TARATO il 5 settembre 2026 su 201 annunci reali di Milano (data/calibrazione),
+ * TARATO il 5 settembre 2026 su 201 annunci reali di Milano (data/annunci),
  * con classe energetica e civici verificati in anagrafe. Il premio andava
  * compresso di piu' in centro e semicentro (fasce B e C), dove la fascia OTTIMO
  * dell'OMI e' tirata su dal lusso e un appartamento normale ristrutturato non ci
@@ -97,9 +97,12 @@ export const COMPRESSIONE_STATO = 0.7;
  */
 export const PARAMETRI = {
   compressioneStato: { B: 0.45, C: 0.45, D: 0.7, E: 0.7, R: 0.7 } as Record<string, number>,
-  /* correzione del livello: in centro la mediana NORMALE dell'OMI corre sotto il
-     mercato di circa il 5%, in periferia e' giusta */
-  livello: { B: 1.05, C: 1.05, D: 1.0, E: 1.0, R: 1.0 } as Record<string, number>,
+  /* correzione del livello: in semicentro la mediana NORMALE dell'OMI corre sotto
+     il mercato di circa il 5%, in periferia e' giusta. In centro era cosi' con le
+     quotazioni 2024/2; con il 2025/2 (Brera +17%, Sempione +15%) l'OMI ha
+     recuperato quasi tutto e il livello scende a 1,02: misurato il 5/9/2026
+     sugli stessi 201 annunci (fascia B: mediano -3,1% con 1,05, -0,2% con 1,02). */
+  livello: { B: 1.02, C: 1.05, D: 1.0, E: 1.0, R: 1.0 } as Record<string, number>,
   /* "da ristrutturare": il mercato lo prezza a -5% dal normale, non a -10% */
   scontoRist: 0.95,
   /* Segmento di pregio: sui 70 annunci "signorile" del 5/9/2026 la dispersione

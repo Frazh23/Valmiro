@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
    verifichiamo qui gli invarianti sui dati e le proprieta' del motore ricalcolandone la
    logica critica. Per testare engine.ts direttamente: npm i -D tsx e usa `tsx --test`. */
 
-const ZONE = JSON.parse(readFileSync(new URL("../data/quotazioni-omi-2024-2.json", import.meta.url)));
+const ZONE = JSON.parse(readFileSync(new URL("../data/quotazioni-omi-2025-2.json", import.meta.url)));
 const GEO = JSON.parse(readFileSync(new URL("../data/zone-omi.json", import.meta.url)));
 
 test("i dati OMI coprono 42 zone quotate", () => {

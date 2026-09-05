@@ -5,8 +5,9 @@ import { readFileSync } from "node:fs";
 /* Verita' sui dati di locazione e sullo storico: le stesse invarianti che
    affitto.ts da' per scontate. Se un ingest le rompe, si sa qui. */
 
-const ZONE = JSON.parse(readFileSync(new URL("../data/quotazioni-omi-2024-2.json", import.meta.url)));
-const LOC = JSON.parse(readFileSync(new URL("../data/locazioni-omi-2024-2.json", import.meta.url)));
+const SEM = "2025-2";
+const ZONE = JSON.parse(readFileSync(new URL(`../data/quotazioni-omi-${SEM}.json`, import.meta.url)));
+const LOC = JSON.parse(readFileSync(new URL(`../data/locazioni-omi-${SEM}.json`, import.meta.url)));
 const STORICO = JSON.parse(readFileSync(new URL("../data/omi-storico.json", import.meta.url)));
 
 test("ogni zona quotata ha i canoni delle abitazioni civili", () => {
@@ -39,7 +40,7 @@ test("lo storico copre tutte le zone, dal 2° semestre 2014 salvo le quattro nat
     const s = STORICO.zone[z];
     assert.ok(s && s.serie.length, `zona ${z} senza storico`);
     if (s.dal !== "2014-2") nuove.push(z);
-    else assert.equal(s.serie.length, 21, `zona ${z}: ${s.serie.length} semestri invece di 21`);
+    else assert.equal(s.serie.length, 22, `zona ${z}: ${s.serie.length} semestri invece di 22 (manca solo il 2025-1, mai fornito)`);
     for (let i = 1; i < s.serie.length; i++) assert.ok(s.serie[i].s > s.serie[i - 1].s, `zona ${z}: serie non ordinata`);
   }
   assert.deepEqual(nuove.sort(), ["D37", "D38", "D39", "D40"]);
@@ -49,7 +50,7 @@ test("l'ultimo semestre dello storico coincide con le quotazioni caricate", () =
   for (const z of Object.keys(ZONE)) {
     const s = STORICO.zone[z];
     const ultimo = s.serie[s.serie.length - 1];
-    assert.equal(ultimo.s, "2024-2");
+    assert.equal(ultimo.s, SEM);
     const c = ZONE[z].civ[s.stato];
     assert.deepEqual(ultimo.c, c, `zona ${z}: storico e quotazioni non coincidono`);
   }
@@ -90,7 +91,7 @@ test("al pareggio l'affitto breve rende esattamente quanto il 4+4", () => {
 test("l'andamento di una zona storica parte dal 2014-2 e quello di una nuova lo dice", () => {
   const c18 = affitto.andamento("C18");
   assert.equal(c18.dal, "2014-2");
-  assert.equal(c18.punti.length, 21);
+  assert.equal(c18.punti.length, 22);
   assert.ok(c18.variazione > 0);
   const d37 = affitto.andamento("D37");
   assert.equal(d37.nuova, true);

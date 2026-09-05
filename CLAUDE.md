@@ -25,7 +25,7 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 | Motore di stima (puro, testato) | `src/lib/engine.ts` | solo con un test che lo copre |
 | Quotazioni, zone, nomi | `src/lib/data.ts`, `data/*.json` | rigenerati da `scripts/ingest-omi.mjs` |
 | Point-in-polygon, geocoding | `src/lib/geo.ts`, `src/lib/geocode.ts` | — |
-| Calibrazione del motore | `scripts/calibra.mjs`, `scripts/comparabili.mjs`, `data/calibrazione/` | propone, non scrive: i parametri cambiano con un commit |
+| Calibrazione del motore | `scripts/calibra.mjs`, `scripts/comparabili.mjs`, `scripts/annunci.mjs`, `data/annunci/` | propone, non scrive: i parametri cambiano con un commit; l'archivio cresce per lotti, non si riscrive |
 | Categoria catastale -> tipologia OMI | `src/lib/catasto.ts` | la mappa A/1..A/11 e' documentata riga per riga |
 | Indirizzario di Milano | `src/lib/indirizzario.ts`, `data/vie-milano.json`, `data/civici-milano.json` | rigenerati da `scripts/ingest-civici.mjs` |
 | API | `src/app/api/estimate`, `src/app/api/geocode`, `src/app/api/vie` | contratto stabile |

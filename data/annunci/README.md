@@ -1,8 +1,25 @@
-# Annunci per la calibrazione
+# L'archivio degli annunci
 
-Un annuncio per riga, separatore `;`. Servono **almeno 20 righe** perché lo script
-accetti di girare, 40-50 perché il risultato valga qualcosa. Meglio pochi annunci
-letti bene che tanti copiati di fretta: ogni colonna sbagliata sposta la taratura.
+Qui stanno tutti gli annunci reali che abbiamo letto, **un file per lotto**, con il nome
+che dice quando e da dove: `2026-09-05-vendite-fz.csv`, `2026-10-01-idealista.csv`.
+L'archivio cresce aggiungendo file, mai riscrivendo quelli vecchi: un annuncio del 2026
+resta un prezzo del 2026, e un giorno servirà proprio per questo (andamento, comparabili
+con data). Gli affitti vanno in file a parte, con `affitti` nel nome, con il canone
+mensile in `prezzo_richiesto`.
+
+`npm run calibra` e `npm run comparabili` leggono **tutto l'archivio** (con un file come
+argomento, solo quello: è così che si fa un test fuori campione su un lotto nuovo). I
+duplicati fra lotti — stesso indirizzo, stessi metri, stesso prezzo — vengono tolti
+tenendo la lettura più recente. La logica di lettura è in `scripts/annunci.mjs`.
+
+Un annuncio per riga, separatore `;`. Servono **almeno 20 righe** perché la calibrazione
+accetti di girare, 40-50 perché il risultato valga qualcosa. Meglio pochi annunci letti
+bene che tanti copiati di fretta: ogni colonna sbagliata sposta la taratura.
+
+**Perché serve che cresca.** L'esperimento del 5/9/2026 (`npm run comparabili`) ha
+mostrato che con 147 annunci al civico i comparabili vicini tolgono solo un punto e mezzo
+di dispersione: per farli lavorare davvero servono migliaia di annunci con data e civico.
+Ogni lotto in più avvicina quel momento.
 
 **Da dove prenderli.** A mano, leggendo l'annuncio (un minuto l'uno), oppure con
 l'API ufficiale di Idealista tramite `npm run idealista`. Mai con scraping dei
@@ -42,8 +59,8 @@ il motore suggerirebbe (`pubblica`), non con il valore centrale: un annuncio è 
 prezzo chiesto, non un prezzo fatto. Se c'è `prezzo_venduto`, si confronta con il
 valore centrale.
 
-## I dataset presenti
+## I lotti presenti
 
 | File | Origine | Stato |
 |---|---|---|
-| `dataset-fz-2026-09-05.csv` | 201 vendite (da 300 annunci: 90 affitti e 8 duplicati esclusi) raccolte da Francesco il 5/9/2026 facendo cercare gli annunci a un'IA con navigazione, con classe energetica dichiarata e URL di fonte; convertite in questo formato con zona OMI risolta dal civico (147) o dalla via (42) o dal quartiere (12). | **Verificato a campione**: 12 righe riaperte a mano, prezzi e metri confermati in 12/12 (2 da copia indicizzata), 2 correzioni di stato applicate. Due casi atipici veri e tenuti: micro-suite da 21 m² a 380.000 €, loft su tre livelli. Il segmento "Lusso" (77 righe) è sistematicamente sottostimato dal modello a zone e va letto a parte. **È il dataset su cui è stata fatta la taratura del 5/9/2026.** |
+| `2026-09-05-vendite-fz.csv` | 201 vendite (da 300 annunci: 90 affitti e 8 duplicati esclusi) raccolte da Francesco il 5/9/2026 facendo cercare gli annunci a un'IA con navigazione, con classe energetica dichiarata e URL di fonte; convertite in questo formato con zona OMI risolta dal civico (147) o dalla via (42) o dal quartiere (12). | **Verificato a campione**: 12 righe riaperte a mano, prezzi e metri confermati in 12/12 (2 da copia indicizzata), 2 correzioni di stato applicate. Due casi atipici veri e tenuti: micro-suite da 21 m² a 380.000 €, loft su tre livelli. Il segmento "Lusso" (77 righe: etichetta del portale, non categoria catastale) è sistematicamente sottostimato dal modello a zone (+14% in mediana, dispersione 19%) e va letto a parte. **È il lotto su cui è stata fatta la taratura del 5/9/2026.** |

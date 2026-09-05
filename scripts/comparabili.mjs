@@ -1,7 +1,7 @@
 /**
  * Esperimento 1b: i comparabili al civico riducono l'errore?
  *
- *   node scripts/comparabili.mjs [data/calibrazione/xxx.csv]
+ *   npm run comparabili [file.csv]      (senza file: tutto l'archivio data/annunci/)
  *
  * Per ogni annuncio geolocalizzato al civico (indirizzario del Comune) si
  * calcola il residuo del motore, log(prezzo / stima), e si prova a correggere
@@ -20,42 +20,33 @@
  * Non scrive nulla: misura.
  */
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-const RADICE = join(dirname(fileURLToPath(import.meta.url)), "..");
-const BUILD = `${RADICE}/.calibrazione/build`;
+import { join } from "node:path";
+import { RADICE, caricaAnnunci, inputDaRiga } from "./annunci.mjs";
+const BUILD = join(RADICE, ".calibrazione/build");
 execSync(`npx tsc src/lib/engine.ts src/lib/indirizzario.ts --outDir ${BUILD} --module commonjs --target es2022 --moduleResolution node --resolveJsonModule --esModuleInterop --skipLibCheck`, { cwd: RADICE, stdio: "inherit" });
 const require = createRequire(import.meta.url);
 const motore = require(`${BUILD}/src/lib/engine.js`);
 const ind = require(`${BUILD}/src/lib/indirizzario.js`);
 
-const CSV = process.argv[2] ? join(process.cwd(), process.argv[2]) : join(RADICE, "data/calibrazione/dataset-fz-2026-09-05.csv");
-const righe = readFileSync(CSV, "utf8").split(/\r?\n/).filter((r) => r.trim());
-const testata = righe.shift().split(";").map((s) => s.trim());
-const col = (r, n) => (r[testata.indexOf(n)] ?? "").trim();
-const siNo = (v) => /^(si|sì|s|true|1|x)$/i.test(v);
+const archivio = caricaAnnunci(process.argv[2] ? join(process.cwd(), process.argv[2]) : undefined);
+console.log(`lotti: ${archivio.lotti.join(", ")} · ${archivio.duplicati} duplicati fra lotti tolti`);
 
 const A = [];
 let senzaCivico = 0, nonRisolti = 0;
-for (const riga of righe) {
-  const r = riga.split(";");
-  const indirizzo = col(r, "indirizzo");
+for (const r of archivio.annunci) {
+  const indirizzo = r.indirizzo;
   if (!indirizzo) continue;
   const ris = ind.risolvi(indirizzo);
   let lon, lat, preciso;
   if (ris.esito === "civico") { lon = ris.lon; lat = ris.lat; preciso = true; }
   else if (ris.esito === "civico-assente" || ris.esito === "via") { lon = ris.via.lon; lat = ris.via.lat; preciso = false; senzaCivico++; }
   else { nonRisolti++; continue; }
-  const zona = col(r, "zona") || (ris.esito === "civico" ? ris.zona : ris.via.zona);
-  const mq = Number(col(r, "mq")), prezzo = Number(col(r, "prezzo_richiesto"));
-  if (!(mq > 0) || !(prezzo > 0)) continue;
-  const input = { zona, tipo: col(r, "tipo") || "civ", mq, stato: col(r, "stato") || "abit", piano: col(r, "piano") || "1-2",
-    ascensore: siNo(col(r, "ascensore")), classe: (col(r, "classe") || "D").toUpperCase()[0], balconi: Number(col(r, "balconi")) || 0,
-    cantina: siNo(col(r, "cantina")), box: col(r, "box") || "nessuno", epoca: null, affaccio: null, metro: null };
+  const zona = r.zona || (ris.esito === "civico" ? ris.zona : ris.via.zona);
+  const mq = Number(r.mq), prezzo = Number(r.prezzo_richiesto);
+  const input = inputDaRiga(r, zona);
   let s; try { s = motore.stima(input); } catch { continue; }
-  A.push({ id: col(r, "id"), indirizzo, lon, lat, preciso, zona, mq, prezzo, input, stima: s.pubblica, e: Math.log(prezzo / s.pubblica) });
+  A.push({ id: r.id, indirizzo, lon, lat, preciso, zona, mq, prezzo, input, stima: s.pubblica, e: Math.log(prezzo / s.pubblica) });
 }
 console.log(`annunci ${A.length} · al civico ${A.filter(a => a.preciso).length} · solo via ${senzaCivico} · non risolti ${nonRisolti}`);
 

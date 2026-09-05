@@ -1,9 +1,9 @@
 /**
  * Annunci di Milano dall'API ufficiale di Idealista, nel formato di
- * data/calibrazione/annunci.csv.
+ * data/annunci/.
  *
- *   npm run idealista            → data/calibrazione/idealista-AAAA-MM-GG.csv
- *   npm run calibra data/calibrazione/idealista-AAAA-MM-GG.csv
+ *   npm run idealista            → data/annunci/AAAA-MM-GG-idealista.csv
+ *   npm run calibra data/annunci/AAAA-MM-GG-idealista.csv   (solo quel lotto: test fuori campione)
  *
  * Serve una chiave: ci si registra su https://developers.idealista.com, si
  * ottengono apikey e secret e si mettono in .env.local come
@@ -128,7 +128,7 @@ for (const [nome, centro] of Object.entries(CENTRI)) {
   console.log(`${nome}: ${lista.length} annunci ricevuti`);
 }
 
-const out = join(RADICE, `data/calibrazione/idealista-${oggi}.csv`);
+const out = join(RADICE, `data/annunci/${oggi}-idealista.csv`);
 writeFileSync(out, righe.join("\n"));
 console.log(`\n${righe.length - 1} annunci di Milano scritti in ${out} (${fuori} fuori Milano o senza zona OMI, scartati)`);
 console.log("Rileggili prima di usarli: lo stato 'abit'/'otti' e' dedotto dal testo, il tipo e' sempre 'civ'.");

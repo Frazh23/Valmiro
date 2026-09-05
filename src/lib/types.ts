@@ -53,6 +53,8 @@ export type Stima = {
   baseOmi: number;
   sigma: number;
   affidabilita: "Alta" | "Media" | "Bassa";
+  /** presente quando il modello sa di essere debole (oggi: segmento di pregio) */
+  avvertenza?: string;
   dettaglio: Voce[];
   semestre: string;
   fonte: string;

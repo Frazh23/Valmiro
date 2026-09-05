@@ -75,6 +75,12 @@ export const PARAMETRI = {
   livello: { B: 1.05, C: 1.05, D: 1.0, E: 1.0, R: 1.0 } as Record<string, number>,
   /* "da ristrutturare": il mercato lo prezza a -5% dal normale, non a -10% */
   scontoRist: 0.95,
+  /* Segmento di pregio: sui 70 annunci "signorile" del 5/9/2026 la dispersione
+     e' del 19% contro il 10% del resto, e la mediana sta +14% sopra la stima.
+     Le fasce OMI "signorile" hanno un tetto che il mercato del pregio supera.
+     Non si corregge il livello (l'etichetta del portale non e' la categoria
+     A/1): si allarga l'intervallo e lo si dice. */
+  incertezzaSig: 0.07,
 };
 
 const fasciaDi = (zona: string) => (ZONE[zona]?.f as string) || "D";
@@ -146,10 +152,15 @@ export function stima(i: Input): Stima {
   const dispersione = s.semiBanda / s.mediaN;
   const sigmaStato = { rist: 0.03, abit: 0.012, otti: 0, nuov: 0 }[i.stato];
   const affinate = [i.epoca, i.affaccio, i.metro].filter(Boolean).length;
-  const sigma = Math.max(
+  const sigmaBase = Math.max(
     0.03,
     Math.min(0.13, 0.045 + dispersione * 0.35 + sigmaStato + (i.mq > 160 ? 0.015 : 0) - affinate * 0.008)
   );
+  const pregio = i.tipo === "sig";
+  const sigma = pregio ? Math.min(0.2, sigmaBase + PARAMETRI.incertezzaSig) : sigmaBase;
+  const avvertenza = pregio
+    ? "Segmento di pregio: le quotazioni ufficiali «signorile» hanno un tetto che il mercato supera regolarmente. Sugli annunci di confronto la stima è risultata bassa in mediana del 14%: prendila come punto di partenza, non come prezzo."
+    : undefined;
 
   const voce = (nome: string, coeff: number): Voce => ({
     voce: nome, effetto: coeff - 1, euro: grezzo * (coeff - 1),
@@ -177,6 +188,7 @@ export function stima(i: Input): Stima {
     baseOmi: base,
     sigma,
     affidabilita: sigma <= 0.075 ? "Alta" : sigma <= 0.105 ? "Media" : "Bassa",
+    avvertenza,
     dettaglio,
     semestre: SEMESTRE,
     fonte: FONTE,

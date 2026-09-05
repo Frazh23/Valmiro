@@ -430,6 +430,7 @@ function Risultato({
         </dl>
 
         {insight && <p className="v-insight">{insight}</p>}
+        {stima.avvertenza && <p className="v-note">{stima.avvertenza}</p>}
       </section>
 
       {/* 02 — come si posiziona */}

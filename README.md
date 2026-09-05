@@ -55,7 +55,7 @@ tests/engine.test.mjs            invarianti sui dati e sulle geometrie
    posizione dentro la zona, che non cambia ristrutturando: lo comprimiamo con
    `COMPRESSIONE_STATO = 0.7` come riferimento storico; **tarato il 5/9/2026 su 201 annunci
    reali**: 0,45 in centro e semicentro (B, C), 0,70 in periferia (D, E), livello +5% in B/C,
-   sconto "da ristrutturare" 0,95. Vedi `PARAMETRI` in `engine.ts` e `data/calibrazione/`.
+   sconto "da ristrutturare" 0,95. Vedi `PARAMETRI` in `engine.ts` e `data/annunci/`.
 3. **Aggiornamento a oggi.** `INDICE_ISTAT` porta la base, che esce con mesi di ritardo,
    al trimestre corrente. Va aggiornato ogni trimestre dai dati Istat.
 4. **Coefficienti** su piano, ascensore, classe energetica, luminosità e — se l'utente
@@ -100,7 +100,7 @@ si lasciano i vecchi. Ti dà storico, ricostruzione delle stime passate e rollba
 1. **Salvare ogni stima** nella tabella `stime`, con indirizzo, caratteristiche e prezzo
    esposto dichiarato. È il dataset proprietario: cresce da solo e nessuno può comprarlo.
 2. **Tarare** `COMPRESSIONE_STATO` e i coefficienti su 40-50 annunci milanesi reali
-   (strumento pronto: `npm run calibra`, annunci in `data/calibrazione/`, vedi il README lì),
+   (strumento pronto: `npm run calibra`, annunci in `data/annunci/`, vedi il README lì),
    misurando lo scarto medio. Con OMI più coefficienti, un errore del 10-12% è onesto.
 3. **Passare a un geocoder a consumo** quando il traffico supera i limiti di Nominatim.
    Si cambia solo `src/lib/geocode.ts`.

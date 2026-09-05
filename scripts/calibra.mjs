@@ -3,7 +3,7 @@
  *
  *   npm run calibra
  *
- * Legge data/calibrazione/annunci.csv, passa ogni annuncio nel motore vero
+ * Legge l'archivio data/annunci/ (o il file indicato), passa ogni annuncio nel motore vero
  * (compilato al volo da src/lib, nessuna copia della logica) e confronta il
  * prezzo che il motore suggerirebbe di chiedere con quello chiesto davvero.
  * Poi prova a muovere i due parametri esposti dal motore — compressioneStato
@@ -13,13 +13,11 @@
  */
 
 import { execSync } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
+import { RADICE, caricaAnnunci, inputDaRiga } from "./annunci.mjs";
 
-const RADICE = join(dirname(fileURLToPath(import.meta.url)), "..");
-const CSV = process.argv[2] ? join(process.cwd(), process.argv[2]) : join(RADICE, "data/calibrazione/annunci.csv");
+const CSV = process.argv[2] ? join(process.cwd(), process.argv[2]) : undefined;
 const BUILD = join(RADICE, ".calibrazione/build");
 
 // ---------------------------------------------------------------- motore
@@ -38,46 +36,24 @@ const indirizzario = require(join(BUILD, "src/lib/indirizzario.js"));
 
 // ---------------------------------------------------------------- lettura
 
-if (!existsSync(CSV)) { console.error(`manca ${CSV}`); process.exit(1); }
-const righe = readFileSync(CSV, "utf8").split(/\r?\n/).filter((r) => r.trim());
-const testata = righe.shift().split(";").map((s) => s.trim());
-const colonna = (r, nome) => (r[testata.indexOf(nome)] ?? "").trim();
-const siNo = (v) => /^(si|sì|s|true|1|x)$/i.test(v);
-const oNull = (v) => (v ? v : null);
+const archivio = caricaAnnunci(CSV);
+console.log(`lotti: ${archivio.lotti.join(", ")} · ${archivio.annunci.length} annunci (${archivio.duplicati} duplicati fra lotti, ${archivio.scartati} senza metri o prezzo)`);
 
 const annunci = [];
 const scartati = [];
-for (const riga of righe) {
-  const r = riga.split(";");
-  const id = colonna(r, "id");
-  const indirizzo = colonna(r, "indirizzo");
-  let zona = colonna(r, "zona");
-  if (!zona && indirizzo) {
-    const ris = indirizzario.risolvi(indirizzo);
+for (const r of archivio.annunci) {
+  const id = r.id;
+  let zona = r.zona;
+  if (!zona && r.indirizzo) {
+    const ris = indirizzario.risolvi(r.indirizzo);
     zona = ris.esito === "civico" ? ris.zona : ris.esito === "via" ? ris.via.zona : "";
   }
-  const mq = Number(colonna(r, "mq"));
-  const prezzo = Number(colonna(r, "prezzo_richiesto"));
-  const venduto = Number(colonna(r, "prezzo_venduto")) || null;
-  if (!zona || !(mq > 0) || !(prezzo > 0)) { scartati.push({ id, motivo: !zona ? "zona non risolta" : "mq o prezzo mancanti" }); continue; }
+  const prezzo = Number(r.prezzo_richiesto);
+  const venduto = Number(r.prezzo_venduto) || null;
+  if (!zona) { scartati.push({ id, motivo: "zona non risolta" }); continue; }
   // una zona scritta a mano puo' non esistere fra quelle quotate: si scarta e si dice, non si esplode
   try { motore.scala(zona, "civ"); } catch { scartati.push({ id, motivo: `zona ${zona} non quotata` }); continue; }
-  annunci.push({
-    id, zona, prezzo, venduto, fonte: colonna(r, "fonte"),
-    input: {
-      zona, tipo: colonna(r, "tipo") || "civ", mq,
-      stato: colonna(r, "stato") || "abit",
-      piano: colonna(r, "piano") || "1-2",
-      ascensore: siNo(colonna(r, "ascensore")),
-      classe: (colonna(r, "classe") || "D").toUpperCase()[0],
-      balconi: Number(colonna(r, "balconi")) || 0,
-      cantina: siNo(colonna(r, "cantina")),
-      box: colonna(r, "box") || "nessuno",
-      epoca: oNull(colonna(r, "epoca")),
-      affaccio: oNull(colonna(r, "affaccio")),
-      metro: oNull(colonna(r, "metro")),
-    },
-  });
+  annunci.push({ id, zona, prezzo, venduto, fonte: r.fonte, input: inputDaRiga(r, zona) });
 }
 
 for (const s of scartati) console.log(`  scartato ${s.id}: ${s.motivo}`);

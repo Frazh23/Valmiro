@@ -233,7 +233,7 @@ Il livello visuale vive in tre posti e in nessun altro:
 - `docs/taratura.md` — come sono stati ottenuti i numeri dichiarati, e cosa misurano.
 - `docs/verifica.md` — il protocollo per un campione di verifica indipendente; i rapporti finiscono in `docs/verifiche/`.
 - `docs/build.md` — dove si compila e il registro delle build; `docs/verifica-browser.md` — i casi da ripetere sul dominio dopo ogni deploy.
-- `.github/workflows/build.yml` — typecheck, test e build di produzione a ogni push.
+- `docs/github-actions-build.yml` — typecheck, test e build di produzione a ogni push, da installare in `.github/workflows/` (il token del push non ha lo scope `workflow`).
 
 ## Comandi
 

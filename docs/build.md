@@ -9,7 +9,7 @@ del binario SWC per la piattaforma. Tre ambienti lo hanno:
 
 | Ambiente | Chi lo lancia | Registro |
 |---|---|---|
-| **GitHub Actions** (`.github/workflows/build.yml`) | ogni push su `main` e ogni pull request: `npm ci`, `npm run typecheck`, `npm test`, `npm run build` su Ubuntu, Node 22 | scheda *Actions* del repository: commit, esito, log completo |
+| **GitHub Actions** (`docs/github-actions-build.yml`, da installare in `.github/workflows/build.yml`) | ogni push su `main` e ogni pull request: `npm ci`, `npm run typecheck`, `npm test`, `npm run build` su Ubuntu, Node 22 | scheda *Actions* del repository: commit, esito, log completo. **Non ancora attivo**: il token usato per il push non ha lo scope `workflow`; si installa dal sito di GitHub o dopo aver esteso il token |
 | **Vercel** | ogni push su `main`: la build di produzione che va online | pannello Vercel → Deployments: commit, esito, log |
 | **Il Mac di Francesco** | `npm run build` nel Terminale, nella cartella del progetto | questa tabella, a mano |
 

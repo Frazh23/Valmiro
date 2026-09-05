@@ -9,7 +9,7 @@ del binario SWC per la piattaforma. Tre ambienti lo hanno:
 
 | Ambiente | Chi lo lancia | Registro |
 |---|---|---|
-| **GitHub Actions** (`docs/github-actions-build.yml`, da installare in `.github/workflows/build.yml`) | ogni push su `main` e ogni pull request: `npm ci`, `npm run typecheck`, `npm test`, `npm run build` su Ubuntu, Node 22 | scheda *Actions* del repository: commit, esito, log completo. **Non ancora attivo**: il token usato per il push non ha lo scope `workflow`; si installa dal sito di GitHub o dopo aver esteso il token |
+| **GitHub Actions** (`.github/workflows/build.yml`, installato dal sito il 5/9/2026; copia in `docs/github-actions-build.yml`) | ogni push su `main` e ogni pull request: `npm ci`, `npm run typecheck`, `npm test`, `npm run build` su Ubuntu, Node 22 | scheda *Actions* del repository: commit, esito, log completo. Attivo dal commit `52454df` |
 | **Vercel** | ogni push su `main`: la build di produzione che va online | pannello Vercel → Deployments: commit, esito, log |
 | **Il Mac di Francesco** | `npm run build` nel Terminale, nella cartella del progetto | questa tabella, a mano |
 
@@ -28,4 +28,5 @@ i casi essenziali ripetuti sul dominio pubblico (`docs/verifica-browser.md` elen
 | Data | Commit | Ambiente | typecheck | test | build | Note |
 |---|---|---|---|---|---|---|
 | 2026-09-05 | `701eb9c` | VM bridge (tsc + test) | ok | 57/57 | non eseguibile | Vercel ha compilato e pubblicato il commit: i casi 1–3 sono stati riprodotti da Francesco sul sito pubblico |
-| 2026-09-05 | `78ef3be` | VM bridge (tsc + test) | ok | 62/62 | non eseguibile qui | build affidata a GitHub Actions e Vercel al push; esito da annotare qui dopo il deploy |
+| 2026-09-05 | `78ef3be` | VM bridge (tsc + test) | ok | 62/62 | non eseguibile qui | pushato come `c58bcf8`; Vercel ha compilato e pubblicato: i casi 1–4 di `docs/verifica-browser.md` ripetuti su valmiro.it il 5/9/2026, tutti superati |
+| 2026-09-05 | `52454df` | GitHub Actions, build #1 (ubuntu, Node 22) | ok | ok | **ok** | prima build riproducibile con `npm ci`: typecheck, test e `next build` in 56 s |

@@ -22,6 +22,8 @@ export type Zona = {
 export type Input = {
   zona: string;
   tipo: Tipo;
+  /** categoria catastale dichiarata dall'utente (A/2, A/3...): da qui deriva `tipo`. Solo informativa per il motore. */
+  categoria?: string | null;
   mq: number;
   balconi?: number;
   cantina?: boolean;

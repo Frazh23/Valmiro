@@ -21,6 +21,7 @@ const Mappa = dynamic(() => import("@/components/Mappa"), {
 import { eur, num } from "@/lib/formato";
 import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
 import { RISTRUTTURAZIONE, scala } from "@/lib/engine";
+import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
 import { salvaStima, salvaStimaAccount } from "@/lib/storage";
 import { useSessione } from "@/lib/sessione";
 import { FONTI, type FonteIndirizzo, type Input, type Scelta, type Stato, type Stima, type Tipo } from "@/lib/types";
@@ -36,6 +37,17 @@ const TIPI: { id: Tipo; t: string }[] = [
   { id: "eco", t: "Economico" }, { id: "vil", t: "Villa" },
 ];
 const PIANI = ["terra", "rialzato", "1-2", "3-5", "6+", "ultimo"] as const;
+
+/** Cosa succede alla stima con quella categoria, detto in una riga. */
+function tipologiaNota(c: Categoria, tipo: Tipo, zona: Record<string, any>) {
+  const cat = CATEGORIE.find((x) => x.id === c);
+  const nome = TIPI.find((t) => t.id === tipo)?.t.toLowerCase();
+  if (!cat) return "";
+  const quotata = zona[tipo] && Object.keys(zona[tipo]).length > 0;
+  if (!quotata) return `${cat.nome}: tipologia «${nome}», che in questa zona l'OMI non quota. Usiamo le quotazioni civili.`;
+  const nota = cat.nota.charAt(0).toUpperCase() + cat.nota.slice(1);
+  return `${cat.nome}: usiamo le quotazioni OMI «${nome}» della zona. ${nota}.`;
+}
 const CLASSI = ["A", "B", "C", "D", "E", "F", "G"] as const;
 
 type Esito = { stima: Stima; prospetti: Record<string, Prospetto> };
@@ -258,60 +270,79 @@ function Valuta() {
                          onChange={(e) => set({ ascensore: e.target.checked })} />
                 </label>
 
-                <details className="v-more">
-                  <summary>Altri dettagli — restringono l&apos;intervallo</summary>
-                  <div className="v-more__in">
-                    <div className="v-field">
-                      <span className="v-field__lbl">Tipologia quotata in zona {i.zona}</span>
-                      <div className="v-choices v-choices--4">
-                        {TIPI.map((t) => {
-                          const ok = zona[t.id] && Object.keys(zona[t.id]).length > 0;
-                          return (
-                            <button key={t.id} className="v-choice" aria-pressed={i.tipo === t.id}
-                                    disabled={!ok} onClick={() => set({ tipo: t.id })}>
-                              <b>{t.t}</b><small>{ok ? "quotata" : "non quotata qui"}</small>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div className="v-row2">
-                      <label className="v-field">
-                        <span className="v-field__lbl">Balconi e terrazzi</span>
-                        <input className="v-input" type="number" inputMode="numeric" placeholder="0"
-                               value={i.balconi || ""} onChange={(e) => set({ balconi: Number(e.target.value) })} />
-                        <span className="v-field__hint">Contano al 25%</span>
-                      </label>
-                      <label className="v-field">
-                        <span className="v-field__lbl">Luminosità</span>
-                        <select className="v-select" value={i.luce}
-                                onChange={(e) => set({ luce: e.target.value as Input["luce"] })}>
-                          <option value="scarsa">scarsa</option>
-                          <option value="media">media</option>
-                          <option value="ottima">ottima</option>
-                        </select>
-                      </label>
-                    </div>
-                    <label className="v-toggle">
-                      <span>Cantina o soffitta<small>Aggiunge 2,5 mq commerciali</small></span>
-                      <input type="checkbox" checked={!!i.cantina}
-                             onChange={(e) => set({ cantina: e.target.checked })} />
-                    </label>
-                    <div className="v-field">
-                      <span className="v-field__lbl">
-                        Posto auto{zona.box ? ` · box quotato ${eur(zona.box[0])}–${eur(zona.box[1])} €/mq` : ""}
-                      </span>
-                      <div className="v-choices v-choices--4">
-                        {([["nessuno", "Nessuno"], ["posto", "Posto auto"], ["box", "Box"]] as const).map(([id, t]) => (
-                          <button key={id} className="v-choice" aria-pressed={i.box === id}
-                                  onClick={() => set({ box: id })}>
-                            <b>{t}</b>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                {/* La categoria catastale decide la tipologia OMI, che in centro vale un
+                    quinto del prezzo. Sta sulla visura e sul rogito: chi possiede la casa
+                    la ha. Chi non la sa resta su "civile", la piu' comune. */}
+                <label className="v-field">
+                  <span className="v-field__lbl">Categoria catastale</span>
+                  <select className="v-select" value={i.categoria || ""}
+                          onChange={(e) => {
+                            const c = (e.target.value || null) as Categoria | null;
+                            const t = tipoDaCategoria(c);
+                            set({ categoria: c, ...(t ? { tipo: t } : {}) });
+                          }}>
+                    <option value="">Non la so — uso «civile», la più comune</option>
+                    {CATEGORIE.map((c) => (
+                      <option key={c.id} value={c.id}>{c.id} · {c.nome}</option>
+                    ))}
+                  </select>
+                  <span className="v-field__hint">
+                    {i.categoria
+                      ? tipologiaNota(i.categoria as Categoria, i.tipo, zona)
+                      : "È scritta sulla visura catastale e nel rogito, alla voce «Categoria». Sposta la stima anche del 20%."}
+                  </span>
+                </label>
+
+                <div className="v-field">
+                  <span className="v-field__lbl">Tipologia OMI in zona {i.zona}</span>
+                  <span className="v-field__hint">Derivata dalla categoria catastale; se la cambi a mano, la categoria viene azzerata.</span>
+                  <div className="v-choices v-choices--4">
+                    {TIPI.map((t) => {
+                      const ok = zona[t.id] && Object.keys(zona[t.id]).length > 0;
+                      return (
+                        <button key={t.id} className="v-choice" aria-pressed={i.tipo === t.id}
+                                disabled={!ok} onClick={() => set({ tipo: t.id, categoria: null })}>
+                          <b>{t.t}</b><small>{ok ? "quotata" : "non quotata qui"}</small>
+                        </button>
+                      );
+                    })}
                   </div>
-                </details>
+                </div>
+                <div className="v-row2">
+                  <label className="v-field">
+                    <span className="v-field__lbl">Balconi e terrazzi</span>
+                    <input className="v-input" type="number" inputMode="numeric" placeholder="0"
+                           value={i.balconi || ""} onChange={(e) => set({ balconi: Number(e.target.value) })} />
+                    <span className="v-field__hint">Contano al 25%</span>
+                  </label>
+                  <label className="v-field">
+                    <span className="v-field__lbl">Luminosità</span>
+                    <select className="v-select" value={i.luce}
+                            onChange={(e) => set({ luce: e.target.value as Input["luce"] })}>
+                      <option value="scarsa">scarsa</option>
+                      <option value="media">media</option>
+                      <option value="ottima">ottima</option>
+                    </select>
+                  </label>
+                </div>
+                <label className="v-toggle">
+                  <span>Cantina o soffitta<small>Aggiunge 2,5 mq commerciali</small></span>
+                  <input type="checkbox" checked={!!i.cantina}
+                         onChange={(e) => set({ cantina: e.target.checked })} />
+                </label>
+                <div className="v-field">
+                  <span className="v-field__lbl">
+                    Posto auto{zona.box ? ` · box quotato ${eur(zona.box[0])}–${eur(zona.box[1])} €/mq` : ""}
+                  </span>
+                  <div className="v-choices v-choices--4">
+                    {([["nessuno", "Nessuno"], ["posto", "Posto auto"], ["box", "Box"]] as const).map(([id, t]) => (
+                      <button key={id} className="v-choice" aria-pressed={i.box === id}
+                              onClick={() => set({ box: id })}>
+                        <b>{t}</b>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 {avviso && <p className="v-note">{avviso}</p>}
               </div>

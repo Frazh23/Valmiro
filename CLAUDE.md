@@ -26,6 +26,7 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 | Quotazioni, zone, nomi | `src/lib/data.ts`, `data/*.json` | rigenerati da `scripts/ingest-omi.mjs` |
 | Point-in-polygon, geocoding | `src/lib/geo.ts`, `src/lib/geocode.ts` | — |
 | Calibrazione del motore | `scripts/calibra.mjs`, `data/calibrazione/` | propone, non scrive: i parametri cambiano con un commit |
+| Categoria catastale -> tipologia OMI | `src/lib/catasto.ts` | la mappa A/1..A/11 e' documentata riga per riga |
 | Indirizzario di Milano | `src/lib/indirizzario.ts`, `data/vie-milano.json`, `data/civici-milano.json` | rigenerati da `scripts/ingest-civici.mjs` |
 | API | `src/app/api/estimate`, `src/app/api/geocode`, `src/app/api/vie` | contratto stabile |
 | Supabase, sessione, profili | `src/lib/supabase.ts`, `src/lib/sessione.ts` | non riscrivere |

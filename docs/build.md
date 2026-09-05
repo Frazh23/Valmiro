@@ -28,4 +28,4 @@ i casi essenziali ripetuti sul dominio pubblico (`docs/verifica-browser.md` elen
 | Data | Commit | Ambiente | typecheck | test | build | Note |
 |---|---|---|---|---|---|---|
 | 2026-09-05 | `701eb9c` | VM bridge (tsc + test) | ok | 57/57 | non eseguibile | Vercel ha compilato e pubblicato il commit: i casi 1–3 sono stati riprodotti da Francesco sul sito pubblico |
-| 2026-09-05 | `1dcd8dc` | VM bridge (tsc + test) | ok | 62/62 | non eseguibile qui | build affidata a GitHub Actions e Vercel al push; esito da annotare qui dopo il deploy |
+| 2026-09-05 | `78ef3be` | VM bridge (tsc + test) | ok | 62/62 | non eseguibile qui | build affidata a GitHub Actions e Vercel al push; esito da annotare qui dopo il deploy |

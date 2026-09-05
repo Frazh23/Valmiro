@@ -676,3 +676,7 @@ button { font: inherit; letter-spacing: inherit; }
 .v-history__anno { font-size: 11px; fill: var(--ink-ghost); letter-spacing: .04em; }
 .v-factor--sub { border-top: 1px solid var(--line-strong); }
 .v-factor--sub .v-factor__n { color: var(--ink); }
+
+/* ---------- incolla l'annuncio / e' caro o no ---------- */
+.v-textarea { resize: vertical; min-height: 140px; font-size: var(--t-body); line-height: 1.5; }
+.v-asking { display: grid; gap: var(--s-2); }

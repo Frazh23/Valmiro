@@ -27,6 +27,7 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 | Point-in-polygon, geocoding | `src/lib/geo.ts`, `src/lib/geocode.ts` | — |
 | Calibrazione del motore | `scripts/calibra.mjs`, `scripts/comparabili.mjs`, `scripts/annunci.mjs`, `data/annunci/` | propone, non scrive: i parametri cambiano con un commit; l'archivio cresce per lotti, non si riscrive |
 | Canoni di locazione e storico | `src/lib/affitto.ts`, `data/locazioni-omi-*.json`, `data/omi-storico.json` | rigenerati da `scripts/ingest-storico.mjs`; non toccano la stima del valore |
+| Lettura del testo di un annuncio | `src/lib/annuncio.ts` | espressioni regolari nel browser, niente rete, niente modelli; ogni campo e' un suggerimento da confermare |
 | Categoria catastale -> tipologia OMI | `src/lib/catasto.ts` | la mappa A/1..A/11 e' documentata riga per riga |
 | Indirizzario di Milano | `src/lib/indirizzario.ts`, `data/vie-milano.json`, `data/civici-milano.json` | rigenerati da `scripts/ingest-civici.mjs` |
 | API | `src/app/api/estimate`, `src/app/api/geocode`, `src/app/api/vie` | contratto stabile |

@@ -24,6 +24,8 @@ export type Input = {
   tipo: Tipo;
   /** categoria catastale dichiarata dall'utente (A/2, A/3...): da qui deriva `tipo`. Solo informativa per il motore. */
   categoria?: string | null;
+  /** prezzo chiesto in un annuncio, se chi valuta ne ha uno sotto mano: solo per il confronto */
+  prezzoRichiesto?: number | null;
   mq: number;
   balconi?: number;
   cantina?: boolean;

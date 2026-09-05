@@ -23,6 +23,8 @@ import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
 import { RISTRUTTURAZIONE, scala } from "@/lib/engine";
 import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
 import { rendita, andamento } from "@/lib/affitto";
+import { leggiAnnuncio, type Letto } from "@/lib/annuncio";
+import AskingPrice from "@/components/sistema/AskingPrice";
 import RentalYield from "@/components/sistema/RentalYield";
 import ZoneHistory from "@/components/sistema/ZoneHistory";
 import { salvaStima, salvaStimaAccount } from "@/lib/storage";
@@ -76,6 +78,10 @@ function Valuta() {
   const [esito, setEsito] = useState<Esito | null>(null);
   const [salvata, setSalvata] = useState(false);
   const [mappaAperta, setMappaAperta] = useState(false);
+  const [testoAnnuncio, setTestoAnnuncio] = useState("");
+  const [letto, setLetto] = useState<Letto | null>(null);
+  const [annuncioNota, setAnnuncioNota] = useState<string | null>(null);
+  const [qIniziale, setQIniziale] = useState("");
 
   const [i, setI] = useState<Input>({
     zona: "", tipo: "civ", mq: 0, balconi: 0, cantina: false, box: "nessuno",
@@ -102,6 +108,33 @@ function Valuta() {
   function scegliIndirizzo(s: Scelta) {
     set({ zona: s.zona }); setIndirizzo(s.etichetta); setFonte(s.fonte);
     setAvviso(null); setVista("casa");
+  }
+
+  /* Il testo incollato viene letto qui, nel browser: non parte verso nessun
+     server. Solo l'indirizzo, se c'e', va a /api/geocode come farebbe la ricerca. */
+  async function leggiTesto() {
+    const r = leggiAnnuncio(testoAnnuncio);
+    if (!r.trovati.length) { setAnnuncioNota("Nel testo non ho riconosciuto né metri, né prezzo, né indirizzo. Prova a incollare tutta la scheda dell'annuncio, non solo il titolo."); return; }
+    set({
+      ...(r.mq ? { mq: r.mq } : {}), ...(r.piano ? { piano: r.piano } : {}),
+      ...(r.ascensore !== undefined ? { ascensore: r.ascensore } : {}),
+      ...(r.stato ? { stato: r.stato } : {}), ...(r.classe ? { classe: r.classe } : {}),
+      ...(r.balconi !== undefined ? { balconi: r.balconi } : {}),
+      ...(r.cantina ? { cantina: true } : {}), ...(r.box ? { box: r.box } : {}),
+      prezzoRichiesto: r.prezzo ?? null,
+    });
+    setLetto(r);
+    if (!r.indirizzo) { setAnnuncioNota("Ho letto i dati della casa ma non l'indirizzo: cercalo qui sopra e i dati restano."); return; }
+    try {
+      const g = await fetch(`/api/geocode?q=${encodeURIComponent(r.indirizzo)}`).then((x) => x.json());
+      const c = g?.candidati?.[0];
+      if (g?.trovato && c?.zona && ZONE[c.zona]) {
+        scegliIndirizzo({ zona: c.zona, etichetta: c.etichetta, descrizione: c.descrizione, fonte: c.fonte, preciso: !!c.preciso });
+        return;
+      }
+    } catch {}
+    setQIniziale(r.indirizzo);
+    setAnnuncioNota(`Ho letto «${r.indirizzo}» ma non l'ho trovato in anagrafe: correggilo qui sopra e i dati restano.`);
   }
 
   /* Tre chiamate parallele: la stima e' identica in tutte e tre, cambia solo il
@@ -183,9 +216,26 @@ function Valuta() {
                   Via e civico. Milano è divisa in 42 zone omogenee: è lì che si formano i prezzi.
                 </p>
               </div>
-              <AddressSearch onScegli={scegliIndirizzo} azione="Continua" autoFocus />
+              <AddressSearch key={qIniziale} onScegli={scegliIndirizzo} azione="Continua" autoFocus valoreIniziale={qIniziale} />
+              <details className="v-more" style={{ marginTop: "var(--s-7)" }}>
+                <summary>Stai valutando un annuncio? Incolla il testo</summary>
+                <div className="v-more__in">
+                  <p className="v-small">
+                    Copia la scheda dell&apos;annuncio, tutta: indirizzo, metri, piano, stato, classe, prezzo. La leggiamo
+                    qui nel tuo browser, non la inviamo a nessuno, e precompiliamo il modulo. I link non li apriamo:
+                    i portali non permettono la lettura automatica.
+                  </p>
+                  <textarea className="v-input v-textarea" rows={7} value={testoAnnuncio}
+                            onChange={(e) => setTestoAnnuncio(e.target.value)}
+                            placeholder="Trilocale in via Savona 35, 85 m², 2° piano con ascensore, buono stato, classe D, € 450.000…" />
+                  <div className="v-actions">
+                    <button className="v-btn" disabled={testoAnnuncio.trim().length < 20} onClick={leggiTesto}>Leggi l&apos;annuncio</button>
+                  </div>
+                  {annuncioNota && <p className="v-note">{annuncioNota}</p>}
+                </div>
+              </details>
               <details
-                className="v-more" style={{ marginTop: "var(--s-7)" }}
+                className="v-more" style={{ marginTop: "var(--s-5)" }}
                 onToggle={(e) => setMappaAperta((e.currentTarget as HTMLDetailsElement).open)}
               >
                 <summary>Non trovi l&apos;indirizzo? Indica il punto sulla mappa</summary>
@@ -226,6 +276,12 @@ function Valuta() {
                   <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
                     Zona dedotta dal nome del quartiere, non da coordinate. Se non è quella giusta,
                     cambia indirizzo o indica il punto sulla mappa.
+                  </p>
+                )}
+                {letto && (
+                  <p className="v-note" style={{ marginTop: "var(--s-4)" }}>
+                    Dall&apos;annuncio ho letto: {letto.trovati.join(", ")}. Sono già nel modulo: controllali,
+                    un annuncio dice «ristrutturato» più spesso di quanto lo sia.
                   </p>
                 )}
               </div>
@@ -347,6 +403,13 @@ function Valuta() {
                   </div>
                 </div>
 
+                <div className="v-field">
+                  <span className="v-field__lbl">Prezzo richiesto, se c&apos;è un annuncio</span>
+                  <input className="v-input" type="number" inputMode="numeric" placeholder="450000"
+                         value={i.prezzoRichiesto || ""} onChange={(e) => set({ prezzoRichiesto: Number(e.target.value) || null })} />
+                  <span className="v-field__hint">Facoltativo. Lo confrontiamo con la stima per dirti se è caro o no.</span>
+                </div>
+
                 {avviso && <p className="v-note">{avviso}</p>}
               </div>
 
@@ -399,6 +462,9 @@ function Risultato({
   const tacche = stima.affidabilita === "Alta" ? 3 : stima.affidabilita === "Media" ? 2 : 1;
   const affitto = rendita(input, stima);
   const storia = andamento(input.zona);
+  /* I capitoli si numerano da soli: alcuni compaiono solo quando hanno qualcosa da dire. */
+  let capitolo = 1;
+  const cap = () => String(++capitolo).padStart(2, "0");
 
   return (
     <>
@@ -438,11 +504,24 @@ function Risultato({
         {stima.avvertenza && <p className="v-note">{stima.avvertenza}</p>}
       </section>
 
-      {/* 02 — come si posiziona */}
+      {/* e' caro o no? — solo se c'e' un prezzo chiesto da confrontare */}
+      {input.prezzoRichiesto ? (
+        <section className="v-wrap v-chapter">
+          <Reveal>
+            <div className="v-chapter__head">
+              <span className="v-numeral">{cap()}</span>
+              <h2 className="v-h2">È caro o no?</h2>
+            </div>
+            <AskingPrice richiesto={input.prezzoRichiesto} stima={stima} />
+          </Reveal>
+        </section>
+      ) : null}
+
+      {/* come si posiziona */}
       <section className="v-wrap v-chapter">
         <Reveal>
           <div className="v-chapter__head">
-            <span className="v-numeral">02</span>
+            <span className="v-numeral">{cap()}</span>
             <h2 className="v-h2">Come si posiziona nella zona</h2>
           </div>
           <MarketRange zona={input.zona} tipo={input.tipo} euroMq={stima.euroMq} />
@@ -453,7 +532,7 @@ function Risultato({
       <section className="v-wrap v-chapter">
         <Reveal>
           <div className="v-chapter__head">
-            <span className="v-numeral">03</span>
+            <span className="v-numeral">{cap()}</span>
             <h2 className="v-h2">Perché vale questa cifra</h2>
           </div>
           <FactorExplanation stima={stima} />
@@ -468,7 +547,7 @@ function Risultato({
       <section className="v-wrap v-chapter">
         <Reveal>
           <div className="v-chapter__head">
-            <span className="v-numeral">04</span>
+            <span className="v-numeral">{cap()}</span>
             <h2 className="v-h2">Il quartiere</h2>
           </div>
           <p className="v-lead v-measure">
@@ -485,7 +564,7 @@ function Risultato({
       <section className="v-wrap v-chapter">
         <Reveal>
           <div className="v-chapter__head">
-            <span className="v-numeral">05</span>
+            <span className="v-numeral">{cap()}</span>
             <h2 className="v-h2">Quanto potrebbe valere ristrutturata</h2>
           </div>
           <p className="v-lead v-measure" style={{ marginBottom: "clamp(28px,4vw,44px)" }}>
@@ -506,7 +585,7 @@ function Risultato({
         <section className="v-wrap v-chapter">
           <Reveal>
             <div className="v-chapter__head">
-              <span className="v-numeral">06</span>
+              <span className="v-numeral">{cap()}</span>
               <h2 className="v-h2">Se la affitti</h2>
             </div>
             <p className="v-lead v-measure" style={{ marginBottom: "clamp(28px,4vw,44px)" }}>
@@ -524,7 +603,7 @@ function Risultato({
         <section className="v-wrap v-chapter">
           <Reveal>
             <div className="v-chapter__head">
-              <span className="v-numeral">07</span>
+              <span className="v-numeral">{cap()}</span>
               <h2 className="v-h2">La zona dal 2014</h2>
             </div>
             <ZoneHistory a={storia} zona={input.zona} />
@@ -536,7 +615,7 @@ function Risultato({
       <section className="v-wrap v-chapter">
         <Reveal>
           <div className="v-chapter__head">
-            <span className="v-numeral">08</span>
+            <span className="v-numeral">{cap()}</span>
             <h2 className="v-h2">Tieni la stima</h2>
           </div>
           <p className="v-lead v-measure">

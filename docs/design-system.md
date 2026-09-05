@@ -72,7 +72,7 @@ esiste lì, prima si aggiunge lì. Nessun valore letterale nei componenti.
 - Nel modulo di valutazione non esistono sezioni a scomparsa: tutto quello che
   si chiede serve alla stima, quindi si mostra di seguito. «Altri dettagli» e'
   stato tolto per questo. Un `<details>` resta accettabile solo per una via
-  alternativa (la mappa quando l'indirizzo non si trova), mai per un dato.
+  alternativa (incollare un annuncio, la mappa quando l'indirizzo non si trova), mai per un dato.
 - Il mobile si progetta a parte: verticale, tocco ampio, tipografia grande,
   pochissimi grafici. Mai una dashboard compressa.
 

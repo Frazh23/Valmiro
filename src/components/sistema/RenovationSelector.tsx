@@ -108,7 +108,7 @@ export default function RenovationSelector({
           ))}
         </div>
 
-        <p className="v-eyebrow">{p ? "Valore atteso dopo i lavori" : "Valore stimato oggi"}{stima.simulazione ? " · simulazione, piano terra ipotizzato" : ""}</p>
+        <p className="v-eyebrow">{p ? "Valore atteso dopo i lavori" : "Valore stimato oggi"}{stima.simulazione || stima.ipotesi?.length ? " · scenario, non valutazione" : ""}</p>
         <p className="v-reno__value" aria-live="polite"><NumeroAnimato valore={valore} /> €</p>
         {p && (
           <>

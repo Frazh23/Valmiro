@@ -38,8 +38,11 @@ export type Confronto = {
   totale?: Componente;
   /** vero quando il box e' incluso ma il suo prezzo non e' scritto: il totale non si confronta */
   totaleNonDisponibile: boolean;
-  /** con una simulazione di piano non si esprime nessun giudizio caro/conveniente */
+  /** con una simulazione — di piano o con dati incompleti — non si esprime nessun giudizio
+      caro/conveniente, nessuna offerta, nessun prezzo di pubblicazione */
   giudizioSospeso: boolean;
+  /** perche' e' sospeso, in parole, quando lo e' */
+  motivoSospensione: string | null;
   /** la ragione, in parole, per chi legge */
   nota: string | null;
 };
@@ -52,14 +55,18 @@ const comp = (nome: Componente["nome"], richiesto: number | null, valore: Compon
 export function confronto(i: Input, s: Stima): Confronto {
   const richiestoCasa = i.prezzoRichiesto && i.prezzoRichiesto > 0 ? i.prezzoRichiesto : null;
   const tutto = { centro: s.centro, min: s.min, max: s.max, pubblica: s.pubblica };
-  const giudizioSospeso = !!s.simulazione;
+  const giudizioSospeso = !!s.simulazione || !!(s.ipotesi && s.ipotesi.length);
+  const motivoSospensione = !giudizioSospeso ? null
+    : s.simulazione && s.ipotesi?.length ? "la simulazione ipotizza un piano terra e usa dati non confermati"
+    : s.simulazione ? "la simulazione non è una valutazione del piano dichiarato"
+    : "il calcolo usa dati non confermati, che sono ipotesi e non fatti";
   const boxIncluso = !!i.boxSeparato?.incluso && s.valoreBox > 0;
 
   if (!boxIncluso) {
     return {
       principale: comp("totale", richiestoCasa, tutto),
       totaleNonDisponibile: false,
-      giudizioSospeso,
+      giudizioSospeso, motivoSospensione,
       nota: i.boxSeparato && !i.boxSeparato.incluso
         ? "Il box offerto a parte non è nella valutazione né nel prezzo: il confronto riguarda la sola abitazione."
         : null,
@@ -80,14 +87,14 @@ export function confronto(i: Input, s: Stima): Confronto {
       principale, box,
       totale: comp("totale", richiestoCasa + prezzoBox, tutto),
       totaleNonDisponibile: false,
-      giudizioSospeso,
+      giudizioSospeso, motivoSospensione,
       nota: "Il box è venduto a parte: abitazione, box e totale sono confrontati ciascuno con il proprio valore.",
     };
   }
   return {
     principale, box,
     totaleNonDisponibile: true,
-    giudizioSospeso,
+    giudizioSospeso, motivoSospensione,
     nota: prezzoBox
       ? "Il box è venduto a parte e ha un prezzo; manca quello dell'abitazione, quindi il totale non si confronta."
       : "Il box è venduto a parte e l'annuncio non ne scrive il prezzo: il confronto è sulla sola abitazione. Per confrontare il totale inserisci il prezzo del box. Il suo valore stimato non fa da prezzo.",

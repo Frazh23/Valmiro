@@ -28,7 +28,9 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 | Calibrazione del motore | `scripts/calibra.mjs`, `scripts/comparabili.mjs`, `scripts/annunci.mjs`, `data/annunci/` | propone, non scrive: i parametri cambiano con un commit; l'archivio cresce per lotti, non si riscrive |
 | Verifica indipendente | `scripts/verifica.mjs`, `docs/verifica.md`, `data/annunci/parametri-congelati.json`, `docs/verifiche/` | lotti `-verifica` separati dalla taratura; il modello si congela prima; la verifica non sceglie coefficienti |
 | Il modulo della casa: nuovo immobile / aggiorna | `src/lib/modulo.ts` | puro e testato; un nuovo import riparte da zero e segna cio' che il testo non dichiara; l'indirizzo non decide se e' la stessa casa |
-| Cosa confrontare con cosa (prezzo vs valore) | `src/lib/confronto.ts` | abitazione, box a parte e totale ciascuno contro il proprio valore; con una simulazione di piano nessun giudizio |
+| Cosa confrontare con cosa (prezzo vs valore) | `src/lib/confronto.ts` | abitazione, box a parte e totale ciascuno contro il proprio valore; in uno scenario (piano o dati incompleti) nessun giudizio, offerta o prezzo di pubblicazione |
+| Provenienza dei dati | `src/lib/provenienza.ts` | annuncio / utente / ipotesi / sconosciuto per campo; stato, piano e ascensore sono materiali: senza conferma il motore rifiuta, con `simulazioneDati` elenca le ipotesi in `Stima.ipotesi` |
+| Build e registro | `.github/workflows/build.yml`, `docs/build.md`, `docs/verifica-browser.md` | la build di produzione gira su GitHub Actions e Vercel; qui non si puo' |
 | Canoni di locazione e storico | `src/lib/affitto.ts`, `data/locazioni-omi-*.json`, `data/omi-storico.json` | rigenerati da `scripts/ingest-storico.mjs`; non toccano la stima del valore |
 | Lettura del testo di un annuncio | `src/lib/annuncio.ts` | espressioni regolari nel browser, niente rete, niente modelli; ogni campo e' un suggerimento da confermare; distingue presenza, assenza dichiarata («senza») e silenzio, e dice cio' che non puo' rappresentare (seminterrato, classe n.d., box a parte) |
 | Ristrutturazione per interventi | `src/lib/ristrutturazione.ts` | catalogo, pacchetti, stato atteso: i prezzi unitari hanno la fonte in commento |
@@ -48,6 +50,9 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 - L'intento (`Input.intento`: compro | vendo) cambia parole e strumenti, mai il valore: il motore lo ignora.
 - Un piano non quotato (`Input.pianoDichiarato`) fa rifiutare la stima (rotta: 422) finche' chi valuta non chiede `simulazionePiano`; allora `Stima.simulazione` e' presente e l'interfaccia non esprime giudizi sul prezzo. Non chiamarla mai «tetto».
 - `Input.prezzoRichiesto` e' sempre e solo il prezzo dell'abitazione; il prezzo del box a parte sta in `Input.boxSeparato.prezzo`. Non sommarli: passa da `confronto()`.
+- `Stima.euroMq` e' della sola abitazione (confrontabile con l'OMI); `euroMqTotale` ha il box dentro e non si confronta con niente.
+- Un predefinito non e' un dato: `Input.provenienza` lo dice campo per campo. Con ipotesi materiali (stato, piano, ascensore) il motore rifiuta finche' non arriva `simulazioneDati`; allora `Stima.ipotesi` va mostrato accanto al numero e nessun giudizio sul prezzo. Non inventare una percentuale di affidabilita' per i dati mancanti.
+- Il limite sul seminterrato e' del modello («non dispone di un trattamento validato»), non della banca dati OMI: non attribuirlo all'OMI senza una fonte.
 - Geocodifica: `GET /api/geocode?q=…`. Prova nell'ordine anagrafe comunale, geocoder, dizionario dei quartieri, e dichiara quale ha risposto in `metodo`.
 - Suggerimenti mentre si scrive: `GET /api/vie?q=…`. È roba nostra: si può chiamare a ogni tasto.
 

@@ -35,6 +35,7 @@ frazionamenti e annunci senza metratura.
 |---|---|---|
 | `id` | testo libero | univoco, es. `imm-001` |
 | `fonte` | `immobiliare`, `idealista`, `casa`, `agenzia`, `altro` | |
+| `rif` | testo libero, facoltativo | il codice dell'annuncio sul portale (es. il numero nell'URL): con `fonte` identifica l'annuncio e serve alla verifica per riconoscere le ripubblicazioni (`docs/verifica.md`) |
 | `data` | `AAAA-MM-GG` | quando l'hai letto |
 | `indirizzo` | `Via Savona 35` | via e civico come nell'annuncio; se manca il civico, solo la via |
 | `zona` | `C18` | facoltativa: se vuota la ricava lo script dall'indirizzo |

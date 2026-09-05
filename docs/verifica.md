@@ -23,12 +23,22 @@ queste condizioni si sta ancora tarando, con un nome diverso.
 - Un lotto nato come verifica non cambia mai ruolo. Se lo si vuole usare per tarare, lo si
   copia con un altro nome e si accetta che da quel momento serve un *nuovo* lotto di verifica.
 - **Duplicati e ripubblicazioni, anche fra portali.** Lo stesso appartamento compare su più
-  portali, spesso con metri arrotondati e prezzo ritoccato. Prima di misurare,
-  `scripts/verifica.mjs` toglie dal lotto di verifica ogni annuncio che è "la stessa casa"
-  di un annuncio di taratura o di un altro annuncio di verifica: stesso indirizzo
-  (normalizzato: senza «via», accenti, punteggiatura), metri entro il 3%, prezzo entro il
-  2%. È una regola prudente: preferisce escludere un vicino di casa vero che tenere un
-  duplicato. Il rapporto dice quanti ne ha esclusi.
+  portali, spesso con metri arrotondati e prezzo ritoccato, e torna sullo stesso portale
+  ribassato. Prima di misurare, `scripts/verifica.mjs` toglie dal lotto di verifica ogni
+  annuncio che è "la stessa casa" di un annuncio di taratura o di un altro annuncio di
+  verifica, su due livelli:
+  1. **identificativo**: stessa `fonte` e stesso `rif` (il riferimento dell'annuncio sul
+     portale, colonna facoltativa dell'archivio; `npm run idealista` lo compila);
+  2. **somiglianza**: stesso indirizzo (normalizzato: senza «via», accenti, punteggiatura),
+     metri entro il 3%, prezzo entro il 2%.
+  Questo filtro è un primo passaggio, **non una garanzia**: la stessa casa può tornare con
+  un prezzo ribassato del 5% o con i metri "commerciali" al posto dei "calpestabili". Per
+  questo il rapporto elenca, uno per uno, i **possibili duplicati da rivedere a mano**
+  (stesso indirizzo e metri o prezzo entro il 10%), tenuti nel campione finché qualcuno non
+  li rilegge: se uno è la stessa casa, si toglie dal CSV e si rilancia. Gli **immobili
+  diversi nello stesso stabile** (stesso indirizzo, metri lontani) restano nel campione
+  come case distinte e il rapporto ne dà il conto: sono legittimi, ma condividono zona e
+  palazzo, quindi non sono osservazioni del tutto indipendenti.
 - Gli annunci senza indirizzo risolvibile in una zona OMI non entrano: non si stimano.
 
 ### 2. Il modello si fissa prima di guardare i dati
@@ -81,12 +91,19 @@ citare un numero nella pagina servono almeno 100 annunci misurati e copertura di
 fasce B, C, D, E con almeno 15 annunci ciascuna: altrimenti si cita il totale e si dice quali
 fasce mancano.
 
+## Stato
+
+**Protocollo predisposto; validazione indipendente non ancora eseguita.** Questa dicitura
+resta nella pagina del risultato e nel README finché `docs/verifiche/` non contiene un
+rapporto su un lotto reale.
+
 ## Il piano concreto con l'API di Idealista
 
 1. Oggi: `npm run verifica -- --congela` al commit del motore corrente. Commit.
 2. All'arrivo delle chiavi: `npm run idealista -- --verifica` scarica il lotto in
-   `data/annunci/AAAA-MM-GG-idealista-verifica.csv`: il lotto nasce già con il suo ruolo.
-   Nessuno apre il file per "dare un'occhiata" al motore prima della misura.
+   `data/annunci/AAAA-MM-GG-idealista-verifica.csv`, con la colonna `rif` compilata con il
+   codice dell'annuncio sul portale: il lotto nasce già con il suo ruolo. Nessuno apre il
+   file per "dare un'occhiata" al motore prima della misura.
 3. `npm run verifica` → `docs/verifiche/AAAA-MM-GG.md`. I numeri di quel rapporto
    sostituiscono nella pagina quelli di taratura, con la dicitura «campione di verifica
    indipendente, prezzi richiesti».

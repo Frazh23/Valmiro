@@ -736,3 +736,9 @@ button { font: inherit; letter-spacing: inherit; }
 /* la limitazione di una stima salvata, nella lista legacy di /stime */
 .riga-stima small.avviso { color: var(--neg); }
 .v-field__hint--conferma::before { content: "○ "; }
+/* Lo stato di un dato non confermato, con i due gesti espliciti, sotto il campo. */
+.v-conferma { display: grid; gap: var(--s-2); margin-top: var(--s-2); }
+.v-conferma__azioni { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+.v-btn--xs { padding: 6px 12px; font-size: 13px; min-height: 0; }
+.v-ipotesi { margin: var(--s-3) 0 0; padding-left: 1.2em; font-size: 14px; display: grid; gap: 4px; }
+.v-promemoria { margin: 0 0 var(--s-5); padding: var(--s-3) var(--s-4); border-left: 3px solid var(--neg); color: var(--ink-soft); max-width: 60ch; }

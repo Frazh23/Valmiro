@@ -65,13 +65,18 @@ export default function Stime() {
                 {/* la limitazione viaggia con la stima: chi la rilegge fra un mese la trova qui, non solo nella pagina del risultato */}
                 {s.stima.simulazione && (
                   <small className="avviso">
-                    Simulazione che ipotizza un piano terra: il piano dichiarato è {s.stima.simulazione.pianoDichiarato}, che il modello non quota. Non è una valutazione di quel piano.
+                    Simulazione che ipotizza un piano terra: il piano dichiarato è {s.stima.simulazione.pianoDichiarato}, per cui il modello non ha un trattamento validato. Non è una valutazione di quel piano.
+                  </small>
+                )}
+                {s.stima.ipotesi && s.stima.ipotesi.length > 0 && (
+                  <small className="avviso">
+                    Simulazione con dati incompleti: {s.stima.ipotesi.map((x) => x.split(" — ")[0]).join("; ")}. Ipotesi, non fatti.
                   </small>
                 )}
               </div>
               <div className="valore">
                 {eur(s.stima.min)}–{eur(s.stima.max)} €
-                <small>{eur(s.stima.euroMq)} €/mq · {s.stima.simulazione ? "simulazione, non una valutazione" : `affidabilità ${s.stima.affidabilita.toLowerCase()}`}</small>
+                <small>{eur(s.stima.euroMq)} €/mq · {s.stima.simulazione || s.stima.ipotesi?.length ? "simulazione, non una valutazione" : `affidabilità ${s.stima.affidabilita.toLowerCase()}`}</small>
               </div>
               <button className="ghost" onClick={() => elimina(s.id)}>Elimina</button>
             </div>

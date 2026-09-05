@@ -91,3 +91,53 @@ test("con la simulazione richiesta: stesso numero del piano terra, ma dichiarato
   assert.equal(c.giudizioSospeso, true);
   assert.equal(giudizio(c, sim.sigma), null, "nessun «caro» o «conveniente» su una simulazione");
 });
+
+test("il metro quadro e' quello della sola abitazione: il box non lo gonfia, e il totale con il box sta a parte", () => {
+  const con = M.stima(CASA_TERRA);
+  const senza = M.stima({ ...CASA_TERRA, box: "nessuno", boxSeparato: null });
+  assert.ok(Math.abs(con.euroMq - senza.euroMq) < 1e-6, "stesso euro/mq con e senza box");
+  assert.ok(con.euroMqTotale > con.euroMq, "il totale con il box e' un altro numero, dichiarato come tale");
+  assert.ok(Math.abs(con.euroMqTotale * con.superficieCommerciale - (con.euroMq * con.superficieCommerciale + con.valoreBox)) < 1);
+});
+
+/* Dati non confermati: il caso Farini 81 importato e valutato subito. */
+const FARINI = {
+  zona: "C15", tipo: "civ", mq: 55, superficie: "commerciale", pertinenzeIncluse: true, stato: "abit", piano: "1-2", ascensore: true,
+  classe: "nd", cantina: false, box: "nessuno", boxSeparato: null, prezzoRichiesto: 265000, epoca: null, affaccio: null, metro: null,
+  provenienza: { mq: "annuncio", stato: "ipotesi", piano: "ipotesi", ascensore: "ipotesi", pertinenze: "ipotesi", box: "ipotesi" },
+};
+
+test("con stato, piano o ascensore non confermati il motore non stima: un predefinito non e' un fatto", () => {
+  assert.throws(() => M.stima(FARINI), /Mancano conferme su stato conservativo, piano, ascensore/);
+  const soloPiano = { ...FARINI, provenienza: { ...FARINI.provenienza, stato: "utente", ascensore: "utente" } };
+  assert.throws(() => M.stima(soloPiano), /Mancano conferme su piano:/);
+  const tutto = { ...FARINI, provenienza: { ...FARINI.provenienza, stato: "utente", piano: "utente", ascensore: "utente" } };
+  const s = M.stima(tutto);
+  assert.equal(s.ipotesi, undefined, "pertinenze e box ai predefiniti non sono materiali: la stima c'e' e non e' uno scenario");
+  assert.equal(s.noteDati.length, 2, "ma i predefiniti senza effetto si annotano");
+  const ancoraSim = M.stima({ ...tutto, simulazioneDati: true });
+  assert.equal(ancoraSim.ipotesi, undefined, "una richiesta di simulazione rimasta accesa non fa scenario se non ci sono ipotesi materiali");
+  assert.equal(confronto(tutto, s).giudizioSospeso, false);
+  const legacy = { ...FARINI, provenienza: undefined };
+  assert.equal(M.stima(legacy).centro, s.centro, "un modulo senza provenienza e' trattato come confermato: le stime salvate prima non cambiano");
+});
+
+test("«non lo so» e' un'ipotesi dichiarata: blocca come un predefinito, e nella simulazione si legge come tale", () => {
+  const i = { ...FARINI, provenienza: { ...FARINI.provenienza, stato: "sconosciuto", piano: "utente", ascensore: "utente" } };
+  assert.throws(() => M.stima(i), /stato conservativo/);
+  const s = M.stima({ ...i, simulazioneDati: true });
+  assert.ok(s.ipotesi.some((x) => /stato conservativo: abitabile — non lo sai/.test(x)));
+});
+
+test("simulazione con dati incompleti: stesso numero, ipotesi elencate accanto, nessun giudizio, offerta o prezzo di pubblicazione, sigma intatto", () => {
+  const sim = M.stima({ ...FARINI, simulazioneDati: true });
+  const pieno = M.stima({ ...FARINI, provenienza: undefined });
+  assert.equal(sim.centro, pieno.centro);
+  assert.equal(sim.sigma, pieno.sigma, "nessuna percentuale inventata per i dati mancanti");
+  assert.deepEqual(sim.ipotesi.map((x) => x.split(":")[0]), ["stato conservativo", "piano", "ascensore", "balconi, terrazzi e cantina", "box o posto auto"]);
+  assert.match(sim.ipotesi[0], /abitabile — predefinito, non confermato/);
+  const c = confronto({ ...FARINI, simulazioneDati: true }, sim);
+  assert.equal(c.giudizioSospeso, true);
+  assert.match(c.motivoSospensione, /dati non confermati/);
+  assert.equal(giudizio(c, sim.sigma), null);
+});

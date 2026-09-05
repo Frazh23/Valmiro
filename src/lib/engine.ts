@@ -1,5 +1,6 @@
 import { ZONE, INDICE_ISTAT, SEMESTRE, FONTE } from "./data";
 import type { Input, Stima, Tipo, Stato, Voce, FasceOmi, PianoNonQuotato } from "./types";
+import { ipotesiMateriali, ipotesiDi, descriviIpotesi, DATI_NON_CONFERMATI } from "./provenienza";
 
 /* --------------------------------------------------------------------------
    Motore di stima.
@@ -176,7 +177,7 @@ const arrotonda = (x: number) => Math.round(x / 1000) * 1000;
 
 /** Il messaggio con cui il motore rifiuta un piano che non quota: lo legge anche l'interfaccia. */
 export const PIANO_NON_VALUTABILE = (p: PianoNonQuotato) =>
-  `Per il piano ${p} non è disponibile una valutazione attendibile: le quotazioni OMI partono dal piano terra e il motore non ha un coefficiente per questo piano. Si può chiedere una simulazione che ipotizza un piano terra, sapendo che non è una valutazione del ${p}.`;
+  `Per il piano ${p} non è disponibile una valutazione attendibile: il modello attuale non dispone di un trattamento validato per questo piano. Si può chiedere una simulazione che ipotizza un piano terra, sapendo che non è una valutazione del ${p}.`;
 
 export function stima(input: Input): Stima {
   const z = ZONE[input.zona];
@@ -193,10 +194,24 @@ export function stima(input: Input): Stima {
     if (!input.simulazionePiano) throw new Error(PIANO_NON_VALUTABILE(input.pianoDichiarato));
     simulazione = {
       pianoDichiarato: input.pianoDichiarato, pianoIpotizzato: "terra",
-      testo: `Simulazione che ipotizza un piano terra. Il piano dichiarato è «${input.pianoDichiarato}», che il modello non quota: questo numero non è una valutazione del ${input.pianoDichiarato}, non è un tetto e non dice se il prezzo è caro o conveniente.`,
+      testo: `Simulazione che ipotizza un piano terra. Il piano dichiarato è «${input.pianoDichiarato}», per cui il modello attuale non dispone di un trattamento validato: questo numero non è una valutazione del ${input.pianoDichiarato}, non è un tetto e non dice se il prezzo è caro o conveniente.`,
     };
     i = { ...input, piano: "terra" };
   }
+
+  /* Dati non confermati. Un predefinito non e' un fatto: se un campo che muove il valore e'
+     ancora un'ipotesi, il motore si ferma. Su richiesta esplicita calcola comunque e mette
+     le ipotesi accanto al numero: e' una simulazione, non una valutazione. L'incertezza
+     (sigma) non cambia: non abbiamo misurato quanto valgano questi buchi, e inventare una
+     percentuale sarebbe peggio che dirlo. */
+  const materiali = ipotesiMateriali(input);
+  if (materiali.length && !input.simulazioneDati) throw new Error(DATI_NON_CONFERMATI(materiali));
+  /* e' uno scenario solo se c'e' almeno un'ipotesi materiale; allora si elencano tutte, anche quelle
+     senza effetto. Se le ipotesi rimaste non muovono il valore, la stima e' una stima e le si annota. */
+  const ipotesi = materiali.length ? ipotesiDi(input).map(descriviIpotesi) : undefined;
+  const noteDati = !materiali.length && ipotesiDi(input).length
+    ? ipotesiDi(input).map((x) => `${descriviIpotesi(x)}; al valore predefinito non sposta il valore`)
+    : undefined;
 
   const sc = superficieCommerciale(i);
   const base = baseOmi(i.zona, i.tipo, i.stato) * INDICE_ISTAT * (PARAMETRI.livello[fasciaDi(i.zona)] ?? 1);
@@ -285,7 +300,8 @@ export function stima(input: Input): Stima {
     centro: arrotonda(totale),
     pubblica: arrotonda(totale * (1 + COEFF.margineTrattativa)),
     offerta: arrotonda(totale * (1 - COEFF.margineTrattativa)),
-    euroMq: totale / sc,
+    euroMq: soloCasa / sc,
+    euroMqTotale: totale / sc,
     superficieCommerciale: sc,
     baseOmi: base,
     sigma,
@@ -299,6 +315,8 @@ export function stima(input: Input): Stima {
       pubblica: arrotonda(soloCasa * (1 + COEFF.margineTrattativa)),
     },
     simulazione,
+    ipotesi,
+    noteDati,
     dettaglio,
     semestre: SEMESTRE,
     fonte: FONTE,

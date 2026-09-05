@@ -104,7 +104,8 @@ const classe = (x) => (x.energyCertification?.[0] || "").toUpperCase().match(/[A
 // ------------------------------------------------------------ esecuzione
 const CENTRI = { centro: "45.4642,9.1900", nord: "45.5000,9.1800", sud: "45.4350,9.2000" };
 const tok = await token();
-const righe = ["id;fonte;data;indirizzo;zona;tipo;mq;stato;piano;ascensore;classe;balconi;cantina;box;epoca;affaccio;metro;prezzo_richiesto;prezzo_venduto;note"];
+/* `rif` e' il codice dell'annuncio sul portale: con `fonte` identifica la casa anche se ripubblicata (docs/verifica.md) */
+const righe = ["id;fonte;data;indirizzo;zona;tipo;mq;stato;piano;ascensore;classe;balconi;cantina;box;epoca;affaccio;metro;prezzo_richiesto;prezzo_venduto;note;rif"];
 const oggi = new Date().toISOString().slice(0, 10);
 const visti = new Set();
 let fuori = 0;
@@ -126,7 +127,7 @@ for (const [nome, centro] of Object.entries(CENTRI)) {
       `ide-${x.propertyCode}`, "idealista", oggi,
       (x.address || "").replace(/;/g, ","), zona, "civ", Math.round(x.size), stato(x), piano(x),
       x.hasLift ? "si" : "no", classe(x), "", "", x.parkingSpace?.hasParkingSpace && x.parkingSpace?.isParkingSpaceIncludedInPrice ? "box" : "nessuno",
-      "", "", "", Math.round(x.price), "", note.replace(/;/g, ","),
+      "", "", "", Math.round(x.price), "", note.replace(/;/g, ","), String(x.propertyCode),
     ].join(";"));
   }
   console.log(`${nome}: ${lista.length} annunci ricevuti`);

@@ -50,14 +50,14 @@ export default function AskingPrice({ input, stima, intento }: { input: Input; s
             {g.testo}
           </p>
         ) : (
-          <p className="v-history__lead"><b>Nessun giudizio</b>: la simulazione non è una valutazione del piano dichiarato</p>
+          <p className="v-history__lead"><b>Nessun giudizio</b>: {c.motivoSospensione}</p>
         )}
         {righe}
         {c.nota && <p className="v-note" style={{ marginTop: "var(--s-4)" }}>{c.nota}</p>}
         {c.giudizioSospeso ? (
           <p className="v-body v-measure" style={{ marginTop: "var(--s-5)" }}>
-            Il valore della simulazione è <b>{eur(P.valore.centro)} €</b>, fra {eur(P.valore.min)} e {eur(P.valore.max)} €, ma ipotizza un piano
-            terra al posto del piano dichiarato: non dice se il prezzo è caro o conveniente, e non ne ricaviamo un&apos;offerta.
+            Il valore della simulazione è <b>{eur(P.valore.centro)} €</b>, fra {eur(P.valore.min)} e {eur(P.valore.max)} €, ma {c.motivoSospensione}:
+            non dice se il prezzo è caro o conveniente, e non ne ricaviamo un&apos;offerta.
           </p>
         ) : (
           <>
@@ -90,7 +90,7 @@ export default function AskingPrice({ input, stima, intento }: { input: Input; s
               rispetto al valore stimato {cosa} di {eur(P.valore.centro)} €
             </p>
           ) : (
-            <p className="v-history__lead"><b>Nessun giudizio</b>: la simulazione non è una valutazione del piano dichiarato</p>
+            <p className="v-history__lead"><b>Nessun giudizio</b>: {c.motivoSospensione}</p>
           )}
         </>
       ) : (
@@ -101,7 +101,7 @@ export default function AskingPrice({ input, stima, intento }: { input: Input; s
       )}
       <dl className="v-facts v-facts--tight">
         <div className="v-fact"><dt>Valore {c.giudizioSospeso ? "della simulazione" : "stimato"}{P.nome === "abitazione" ? ", abitazione" : ""}</dt><dd>{eur(P.valore.centro)} €</dd></div>
-        <div className="v-fact"><dt>Prezzo di pubblicazione possibile{P.nome === "abitazione" ? ", abitazione" : ""}</dt><dd>{eur(P.valore.pubblica)} €</dd></div>
+        <div className="v-fact"><dt>Prezzo di pubblicazione possibile{P.nome === "abitazione" ? ", abitazione" : ""}</dt><dd>{c.giudizioSospeso ? "non disponibile in uno scenario" : `${eur(P.valore.pubblica)} €`}</dd></div>
       </dl>
       {righe}
       {c.nota && <p className="v-note" style={{ marginTop: "var(--s-4)" }}>{c.nota}</p>}
@@ -111,7 +111,7 @@ export default function AskingPrice({ input, stima, intento }: { input: Input; s
         richiesti dei 201 annunci milanesi usati per tararlo (settembre 2026). Non è una percentuale di trattativa misurata su
         compravendite e non è un consiglio: chi ha fretta parte più vicino al valore, chi può aspettare lascia spazio alla trattativa.
         {c.giudizioSospeso
-          ? " In una simulazione di piano nessuno dei due numeri vale per il piano dichiarato."
+          ? ` In uno scenario il prezzo di pubblicazione non si indica: ${c.motivoSospensione}.`
           : P.richiesto
           ? P.richiesto > P.valore.max
             ? " Il prezzo che avevi in mente è sopra il massimo dell'intervallo di stima: il rischio è restare a lungo sul mercato."

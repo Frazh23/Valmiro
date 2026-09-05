@@ -24,7 +24,8 @@ import { scala, PIANO_NON_VALUTABILE } from "@/lib/engine";
 import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
 import { rendita, andamento } from "@/lib/affitto";
 import { leggiAnnuncio, type Letto } from "@/lib/annuncio";
-import { INPUT_INIZIALE, NOME_CAMPO, applicaLettura, type CampoConfermabile, type ModoImport } from "@/lib/modulo";
+import { INPUT_INIZIALE, applicaLettura, type ModoImport } from "@/lib/modulo";
+import { NOME_CAMPO, MATERIALI, ipotesiDi, ipotesiMateriali, valoreInParole, descriviIpotesi, DATI_NON_CONFERMATI, type Campo } from "@/lib/provenienza";
 import { LAVORI_INIZIALI, type SceltaLavori } from "@/lib/ristrutturazione";
 import AskingPrice from "@/components/sistema/AskingPrice";
 import RentalYield from "@/components/sistema/RentalYield";
@@ -109,8 +110,6 @@ function Valuta() {
   const [qIniziale, setQIniziale] = useState("");
   /* cose lette dall'annuncio che il modulo non rappresenta e va detto */
   const [avvisiAnnuncio, setAvvisiAnnuncio] = useState<string[]>([]);
-  /* campi che l'ultimo annuncio importato non dichiara: stanno al predefinito finche' chi legge non li tocca */
-  const [daConfermare, setDaConfermare] = useState<CampoConfermabile[]>([]);
   /* in aggiornamento: che cosa e' cambiato rispetto a prima, in parole */
   const [modifiche, setModifiche] = useState<string[] | null>(null);
   /* pacchetto e personalizzazioni della ristrutturazione: appartengono all'immobile */
@@ -118,11 +117,39 @@ function Valuta() {
 
   const [i, setI] = useState<Input>(INPUT_INIZIALE);
   const set = (p: Partial<Input>) => setI((v) => ({ ...v, ...p }));
-  /* toccare un campo lo conferma: non e' piu' un predefinito ereditato */
-  const tocca = (c: CampoConfermabile) => setDaConfermare((v) => (v.includes(c) ? v.filter((x) => x !== c) : v));
-  const conferma = (c: CampoConfermabile) => daConfermare.includes(c)
-    ? <span className="v-field__hint v-field__hint--conferma">Non dichiarato nell&apos;annuncio: è il valore predefinito, confermalo o correggilo.</span>
-    : null;
+  /* La provenienza di ogni campo vive nel modulo (Input.provenienza): cambiare o confermare un
+     valore lo rende «utente»; «non lo so» lo rende «sconosciuto», che per il calcolo resta
+     un'ipotesi dichiarata. Un predefinito non confermato e' «ipotesi» e non diventa un fatto. */
+  const segna = (c: Campo, p: "utente" | "sconosciuto") => setI((v) => {
+    const n: Input = { ...v, provenienza: { ...v.provenienza, [c]: p } };
+    /* quando non restano ipotesi materiali, la richiesta di simulazione non ha piu' oggetto */
+    if (!ipotesiMateriali(n).length) n.simulazioneDati = false;
+    return n;
+  });
+  const tocca = (c: Campo) => segna(c, "utente");
+  const prov = (c: Campo) => i.provenienza?.[c];
+  const daConfermare = (Object.keys(NOME_CAMPO) as Campo[]).filter((c) => prov(c) === "ipotesi" || prov(c) === "sconosciuto");
+  /* Sotto ogni campo non confermato: lo stato del dato e i due gesti espliciti. Riselezionare
+     un'opzione gia' attiva conferma anch'esso, ma il bottone toglie l'ambiguita'. */
+  const conferma = (c: Campo) => {
+    const p = prov(c);
+    if (p !== "ipotesi" && p !== "sconosciuto") return null;
+    if (c === "mq" && !(i.mq > 0)) return null; /* senza metri il messaggio e' un altro: «manca la superficie» */
+    const materiale = MATERIALI.includes(c);
+    return (
+      <div className="v-conferma" role="group" aria-label={`Stato del dato: ${NOME_CAMPO[c]}`}>
+        <span className={"v-field__hint" + (p === "ipotesi" ? " v-field__hint--conferma" : "")}>
+          {p === "ipotesi"
+            ? <>{letto ? "Non dichiarato nell'annuncio" : "Non ancora confermato"}: «{valoreInParole(i, c)}» è il valore predefinito, non un dato{materiale ? " — senza conferma non c'è valutazione" : ""}.</>
+            : <>Non lo sai: il calcolo userà «{valoreInParole(i, c)}» come ipotesi dichiarata, e lo scriverà accanto al numero.</>}
+        </span>
+        <span className="v-conferma__azioni">
+          <button type="button" className="v-btn v-btn--quiet v-btn--xs" onClick={() => tocca(c)}>Confermo questo valore</button>
+          {p === "ipotesi" && <button type="button" className="v-btn v-btn--bare v-btn--xs" onClick={() => segna(c, "sconosciuto")}>Non lo so</button>}
+        </span>
+      </div>
+    );
+  };
   const boxSeparato = i.boxSeparato ?? null;
   const zona = i.zona ? ZONE[i.zona] : null;
   const intento: Intento | undefined = i.intento;
@@ -171,7 +198,6 @@ function Valuta() {
     setI(a.input);
     setLetto(r);
     setAvvisiAnnuncio(a.avvisi);
-    setDaConfermare(a.daConfermare);
     setModifiche(modo === "aggiorna" ? a.modifiche : null);
     setAnnuncioNota(null);
     setAvviso(null);
@@ -246,7 +272,7 @@ function Valuta() {
   /* Una sola frase di mercato, costruita sui numeri gia' calcolati. */
   const insight = useMemo(() => {
     /* in una simulazione di piano non si giudica la posizione nella zona: il piano vero non e' quotato */
-    if (!esito || !i.zona || esito.stima.simulazione) return null;
+    if (!esito || !i.zona || esito.stima.simulazione || esito.stima.ipotesi?.length) return null;
     const s = scala(i.zona, i.tipo);
     const mediana = s.mediaN * INDICE_ISTAT;
     const scarto = (esito.stima.euroMq - mediana) / mediana;
@@ -433,8 +459,8 @@ function Valuta() {
                       ? " I metri del terrazzo non erano scritti: se li conosci e non sono già nella superficie, inseriscili qui sotto."
                       : ""}
                     {daConfermare.length > 0 && (
-                      <> <b>Non dice</b>: {daConfermare.map((c) => NOME_CAMPO[c]).join(", ")}. Nel modulo stanno ai valori
-                      predefiniti, che non sono dati della casa: confermali o correggili, sono segnati uno per uno.</>
+                      <> <b>Non dice</b>: {daConfermare.map((c) => NOME_CAMPO[c]).join(", ")}{letto.classe ? "" : ", classe energetica"}. Nel modulo stanno ai valori
+                      predefiniti, che non sono dati della casa: confermali, correggili o segna «non lo so», campo per campo.</>
                     )}
                   </p>
                 )}
@@ -549,8 +575,8 @@ function Valuta() {
                 {i.pianoDichiarato && (
                   <div className={"v-note" + (pianoBloccato ? " v-note--errore" : "")} role={pianoBloccato ? "alert" : undefined}>
                     <p style={{ margin: 0 }}>
-                      <b>Piano {i.pianoDichiarato}: non è disponibile una valutazione attendibile.</b> Le quotazioni OMI partono dal
-                      piano terra e il motore non ha un coefficiente per questo piano. Il piano dichiarato resta scritto qui e nella stima salvata.
+                      <b>Piano {i.pianoDichiarato}: non è disponibile una valutazione attendibile.</b> Il modello attuale non dispone
+                      di un trattamento validato per questo piano. Il piano dichiarato resta scritto qui e nella stima salvata.
                     </p>
                     <label className="v-toggle" style={{ marginTop: "var(--s-3)" }}>
                       <span>Simulazione che ipotizza un piano terra<small>Uno scenario, non una valutazione del {i.pianoDichiarato}: il piano terra vale di più, ma di quanto il modello non lo sa. Il risultato lo dice in ogni pagina e non giudica se il prezzo è caro o conveniente.</small></span>
@@ -679,6 +705,23 @@ function Valuta() {
                   </span>
                 </div>
 
+                {ipotesiMateriali(i).length > 0 && i.mq > 0 && (
+                  <div className={"v-note" + (i.simulazioneDati ? "" : " v-note--errore")} role={i.simulazioneDati ? undefined : "alert"}>
+                    <p style={{ margin: 0 }}>
+                      <b>Dati non confermati: {ipotesiMateriali(i).map((x) => NOME_CAMPO[x.campo]).join(", ")}.</b> Sono predefiniti o «non lo so»,
+                      non fatti della casa: finché restano così non c&apos;è una valutazione. Confermali qui sopra, oppure chiedi una simulazione.
+                    </p>
+                    <label className="v-toggle" style={{ marginTop: "var(--s-3)" }}>
+                      <span>Simulazione con dati incompleti<small>Il calcolo usa le ipotesi elencate e le scrive accanto al numero. Niente giudizi caro/conveniente, niente offerte, niente prezzo di pubblicazione: sono ipotesi, e l&apos;incertezza dichiarata non le copre.</small></span>
+                      <input type="checkbox" checked={!!i.simulazioneDati} onChange={(e) => set({ simulazioneDati: e.target.checked })} />
+                    </label>
+                    {i.simulazioneDati && (
+                      <ul className="v-ipotesi">
+                        {ipotesiDi(i).map((x) => <li key={x.campo}>{descriviIpotesi(x)}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                )}
                 {avviso && <p className="v-note">{avviso}</p>}
               </div>
 
@@ -686,6 +729,7 @@ function Valuta() {
                 <button className="v-btn v-btn--accent v-btn--lg"
                         onClick={() => erroriAttivi.length ? setAvviso(`Correggi prima: ${erroriAttivi.join(" ")}`)
                                      : pianoBloccato ? setAvviso(PIANO_NON_VALUTABILE(i.pianoDichiarato!))
+                                     : ipotesiMateriali(i).length && !i.simulazioneDati && i.mq > 0 ? setAvviso(DATI_NON_CONFERMATI(ipotesiMateriali(i)))
                                      : i.mq > 0 ? (setAvviso(null), setVista("calcolo"))
                                      : setAvviso("Manca la superficie: senza metri quadri non c'è stima.")}>
                   Valuta
@@ -740,23 +784,38 @@ function Risultato({
   const cap = () => String(++capitolo).padStart(2, "0");
   const mostraConfronto = intento === "vendo" || !!input.prezzoRichiesto;
   const simulazione = stima.simulazione;
+  const ipotesi = stima.ipotesi && stima.ipotesi.length ? stima.ipotesi : null;
+  /* uno scenario, di piano o con dati incompleti: le parole cambiano in ogni capitolo */
+  const scenario = !!simulazione || !!ipotesi;
+  const etichettaScenario = simulazione && ipotesi ? "Simulazione: piano terra ipotizzato, dati incompleti"
+    : simulazione ? "Simulazione che ipotizza un piano terra" : ipotesi ? "Simulazione con dati incompleti" : null;
+  /* la riga breve da ripetere dove un capitolo puo' essere letto da solo */
+  const promemoria = scenario ? (
+    <p className="v-small v-promemoria">
+      <b>Scenario, non valutazione.</b>
+      {simulazione ? ` Ipotizza un piano terra al posto del ${simulazione.pianoDichiarato} dichiarato.` : ""}
+      {ipotesi ? ` Usa dati non confermati: ${ipotesi.map((x) => x.split(" — ")[0]).join("; ")}.` : ""}
+    </p>
+  ) : null;
   const boxAParte = !!input.boxSeparato?.incluso && stima.valoreBox > 0;
 
   return (
     <>
       {/* 01 — quanto vale */}
       <section className="v-wrap v-result__hero">
-        <p className="v-eyebrow">{indirizzo}{simulazione ? " · simulazione che ipotizza un piano terra" : ""}</p>
+        <p className="v-eyebrow">{indirizzo}{etichettaScenario ? ` · ${etichettaScenario.toLowerCase()}` : ""}</p>
         <p className="v-value">
           <span className="v-value__cur">€</span><NumeroAnimato valore={stima.centro} durata={1100} />
         </p>
         <p className="v-value__span">
-          {simulazione ? "Intervallo della simulazione" : "Intervallo realistico"} {eur(stima.min)} – {eur(stima.max)} €
+          {scenario ? "Intervallo della simulazione" : "Intervallo realistico"} {eur(stima.min)} – {eur(stima.max)} €
         </p>
         {boxAParte && (
           <p className="v-small" style={{ marginTop: "var(--s-2)" }}>
             Di cui abitazione <b>{eur(stima.abitazione.centro)} €</b> ({eur(stima.abitazione.min)} – {eur(stima.abitazione.max)} €)
-            e box venduto a parte <b>{eur(stima.valoreBox)} €</b>: due valori distinti, sommati qui sopra.
+            e box venduto a parte <b>{eur(stima.valoreBox)} €</b>: due valori distinti, sommati qui sopra. Il metro quadro e il confronto
+            con le quotazioni OMI riguardano la sola abitazione; con il box dentro sarebbero {eur(stima.euroMqTotale)} €/mq, un numero che
+            non si confronta con niente.
           </p>
         )}
         <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
@@ -767,11 +826,21 @@ function Risultato({
             <b>Non è una valutazione del {simulazione.pianoDichiarato}.</b> {simulazione.testo} Il piano dichiarato è salvato con la stima.
           </p>
         )}
+        {ipotesi && (
+          <div className="v-note v-note--errore" role="note" style={{ marginTop: "var(--s-4)" }}>
+            <p style={{ margin: 0 }}>
+              <b>Simulazione con dati incompleti.</b> Questo numero usa ipotesi che nessuno ha confermato; le trovi qui, accanto al valore,
+              e nella stima salvata. Finché restano ipotesi non ci sono giudizi sul prezzo, offerte né prezzo di pubblicazione.
+              L&apos;incertezza indicata è quella del modello a dati noti: non copre queste ipotesi.
+            </p>
+            <ul className="v-ipotesi">{ipotesi.map((x, n) => <li key={n}>{x}</li>)}</ul>
+          </div>
+        )}
         <div style={{ marginTop: "var(--s-4)" }}>{switchIntento}</div>
 
         <dl className="v-facts">
           <div className="v-fact">
-            <dt>Al metro quadro</dt>
+            <dt>Al metro quadro{boxAParte ? " · abitazione" : ""}</dt>
             <dd>{eur(stima.euroMq)} €</dd>
           </div>
           <div className="v-fact">
@@ -785,7 +854,7 @@ function Risultato({
                 <span className="v-conf__bars" aria-hidden="true">
                   {[1, 2, 3].map((n) => <i key={n} className={n <= tacche ? "on" : ""} />)}
                 </span>
-                <span className="v-conf__lbl">{simulazione ? "Simulazione" : stima.affidabilita} · ± {num(stima.sigma * 100, 1)}%</span>
+                <span className="v-conf__lbl">{scenario ? "Simulazione" : stima.affidabilita} · ± {num(stima.sigma * 100, 1)}%</span>
               </span>
             </dd>
           </div>
@@ -801,7 +870,7 @@ function Risultato({
           <Reveal>
             <div className="v-chapter__head">
               <span className="v-numeral">{cap()}</span>
-              <h2 className="v-h2">{T.confronto}</h2>
+              <h2 className="v-h2">{scenario ? "Prezzi e valori dello scenario" : T.confronto}</h2>
             </div>
             <AskingPrice input={input} stima={stima} intento={intento} />
           </Reveal>
@@ -834,6 +903,7 @@ function Risultato({
             Tre pacchetti per partire, poi ogni intervento si tiene, si toglie, si segna come già fatto o si sostituisce
             con un preventivo. Il valore atteso dipende dai lavori che restano, non dal nome del pacchetto.
           </p>
+          {promemoria}
           <RenovationSelector input={input} stima={stima} primaCasa={primaCasa} onPrimaCasa={onPrimaCasa} intento={intento} lavori={lavori} onLavori={onLavori} />
         </Reveal>
       </section>
@@ -851,6 +921,7 @@ function Risultato({
               casa con le stesse proporzioni del prezzo: le caratteristiche che la fanno valere di più la fanno
               anche affittare di più.
             </p>
+            {promemoria}
             <RentalYield r={affitto} zona={input.zona} />
           </Reveal>
         </section>
@@ -867,6 +938,7 @@ function Risultato({
               Qui non ci sono dati ufficiali: è uno scenario, con le ipotesi in vista. Muovile e guarda
               dove sta il pareggio con il contratto lungo, che è il numero che conta.
             </p>
+            {promemoria}
             <ShortRent lungo={affitto} stima={stima} />
           </Reveal>
         </section>
@@ -931,11 +1003,25 @@ function Risultato({
             </p>
             {simulazione && (
               <p className="v-small v-measure">
-                <b>Simulazione.</b> Il piano dichiarato è «{simulazione.pianoDichiarato}», che il modello non quota. Tutti i numeri di questa
-                pagina — valore, lavori, affitti — ipotizzano un piano terra su richiesta esplicita e non valgono per il piano vero;
-                non sono un tetto e non danno un giudizio sul prezzo. La stima è salvata con questa avvertenza.
+                <b>Simulazione.</b> Il piano dichiarato è «{simulazione.pianoDichiarato}», per cui il modello attuale non dispone di un
+                trattamento validato. Tutti i numeri di questa pagina — valore, lavori, affitti — ipotizzano un piano terra su richiesta
+                esplicita e non valgono per il piano vero; non sono un tetto e non danno un giudizio sul prezzo. La stima è salvata con questa avvertenza.
               </p>
             )}
+            {stima.noteDati && stima.noteDati.length > 0 && (
+              <p className="v-small v-measure">
+                <b>Dati al predefinito.</b> {stima.noteDati.join("; ")}. Non cambiano il valore, ma non sono dati della casa.
+              </p>
+            )}
+            {ipotesi && (
+              <p className="v-small v-measure">
+                <b>Dati non confermati.</b> Il calcolo usa, su richiesta esplicita, questi valori non confermati: {ipotesi.join("; ")}.
+                Sono ipotesi, non fatti della casa; la provenienza di ogni dato (annuncio, utente, predefinito, «non lo so») è salvata con la stima.
+              </p>
+            )}
+            <p className="v-small v-measure">
+              <b>Validazione.</b> Protocollo predisposto (<code>docs/verifica.md</code>); validazione indipendente non ancora eseguita.
+            </p>
             {boxAParte && (
               <p className="v-small v-measure">
                 <b>Box a parte.</b> L&apos;annuncio vende il box separatamente e lo hai incluso: il suo valore ({eur(stima.valoreBox)} €) è tenuto
@@ -961,7 +1047,7 @@ function Risultato({
             </p>
           </div>
           <p className="v-disclaimer" style={{ marginTop: "var(--s-6)" }}>
-            Stima automatica indicativa{simulazione ? `, qui come simulazione che ipotizza un piano terra al posto del ${simulazione.pianoDichiarato} dichiarato` : ""}.
+            Stima automatica indicativa{etichettaScenario ? `, qui come ${etichettaScenario.toLowerCase()}` : ""}.
             Non costituisce perizia né valutazione ai sensi degli standard estimativi. Fonte: {stima.fonte}.
           </p>
         </Reveal>

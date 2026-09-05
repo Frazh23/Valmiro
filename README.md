@@ -64,7 +64,8 @@ tests/*.test.mjs                 invarianti sui dati: quotazioni, geometrie, ind
    compravendite) e perché manca ancora un campione di verifica indipendente. Il protocollo per
    ottenerlo — lotti `-verifica` separati, duplicati tolti anche fra portali, modello congelato
    prima di guardare i dati, nessun coefficiente scelto sulla verifica — è in **`docs/verifica.md`**
-   (`npm run verifica -- --congela`, poi `npm run verifica`).
+   (`npm run verifica -- --congela`, poi `npm run verifica`). **Stato: protocollo predisposto;
+   validazione indipendente non ancora eseguita.**
 3. **Aggiornamento a oggi.** `INDICE_ISTAT` porta la base, che esce con mesi di ritardo,
    al trimestre corrente. Va aggiornato ogni trimestre dai dati Istat.
 3b. **Classe energetica sconosciuta.** «Non la conosco» è un'opzione vera: nessun
@@ -110,9 +111,24 @@ confronto (`src/lib/confronto.ts`) mette ciascuna componente contro il proprio v
 il prezzo del box si giudica la sola abitazione e il totale è dichiarato non confrontabile; il
 valore stimato del box non fa mai da prezzo. Vale per i due percorsi e per le stime salvate.
 
+**Provenienza dei dati.** Ogni campo del modulo sa da dove viene (`Input.provenienza`,
+`src/lib/provenienza.ts`): dichiarato nell'annuncio, confermato dall'utente, predefinito non
+confermato (ipotesi) o «non lo so». Stato, piano e ascensore sono *materiali*: finché uno è
+un'ipotesi il motore rifiuta di stimare e il modulo mostra, campo per campo, «Confermo questo
+valore» e «Non lo so». Su richiesta esplicita («Simulazione con dati incompleti») calcola
+comunque, elenca le ipotesi accanto al numero (`Stima.ipotesi`), le salva con la stima e non
+esprime giudizi, offerte né prezzo di pubblicazione. L'incertezza dichiarata non cambia: non è
+stata misurata una percentuale per i dati mancanti, e non se ne inventa una. La classe «non la
+conosco» non è un'ipotesi: nessun aggiustamento, e il dettaglio lo scrive.
+
+**Metro quadro.** `Stima.euroMq` è il valore della sola abitazione diviso per i metri
+commerciali: è il numero confrontabile con l'OMI residenziale, usato dal posizionamento in
+zona e dai canoni. Il box, se c'è, sta in `valoreBox`; `euroMqTotale` (con il box dentro) si
+mostra solo per dire quanto pesa e non si confronta con niente.
+
 **Piano non quotato (seminterrato, interrato).** Il piano dichiarato resta scritto
-(`Input.pianoDichiarato`) e il motore rifiuta di stimare: non c'è una valutazione attendibile,
-e nessun «tetto». Chi vuole può chiedere in modo esplicito una *simulazione che ipotizza un
+(`Input.pianoDichiarato`) e il motore rifiuta di stimare: il modello attuale non dispone di un
+trattamento validato per quel piano, e nessun «tetto». Chi vuole può chiedere in modo esplicito una *simulazione che ipotizza un
 piano terra* (`Input.simulazionePiano`): il risultato porta `Stima.simulazione`, lo dice in
 ogni capitolo e nelle stime salvate, e non esprime giudizi caro/conveniente né offerte.
 
@@ -216,6 +232,8 @@ Il livello visuale vive in tre posti e in nessun altro:
 - `docs/workflow.md` — il ciclo Claude ↔ v0 ↔ GitHub ↔ Vercel, i rami, la lista di revisione.
 - `docs/taratura.md` — come sono stati ottenuti i numeri dichiarati, e cosa misurano.
 - `docs/verifica.md` — il protocollo per un campione di verifica indipendente; i rapporti finiscono in `docs/verifiche/`.
+- `docs/build.md` — dove si compila e il registro delle build; `docs/verifica-browser.md` — i casi da ripetere sul dominio dopo ogni deploy.
+- `.github/workflows/build.yml` — typecheck, test e build di produzione a ogni push.
 
 ## Comandi
 

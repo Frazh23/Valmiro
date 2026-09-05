@@ -103,7 +103,7 @@ export function leggiAnnuncio(testo: string): Letto {
   // ---- piano: il seminterrato non e' fra quelli quotati dal modello, e lo si dice
   if (/seminterrato|interrato|sottotetto non abitabile/.test(l) && !/piano\s+terra/.test(l)) {
     out.pianoNonSupportato = /seminterrato/.test(l) ? "seminterrato" : "interrato";
-    out.avvisi.push(`piano ${out.pianoNonSupportato}: il modello quota dal piano terra in su e non ha un coefficiente per questo piano. Resta scritto nel modulo; senza una simulazione chiesta da te non c'è valutazione`);
+    out.avvisi.push(`piano ${out.pianoNonSupportato}: il modello attuale non dispone di un trattamento validato per questo piano. Resta scritto nel modulo; senza una simulazione chiesta da te non c'è valutazione`);
   } else if (/\battico\b|ultimo piano/.test(l)) out.piano = "ultimo";
   else if (/piano\s+rialzato|\brialzato\b/.test(l)) out.piano = "rialzato";
   else if (/piano\s+terra|\bpianterreno\b|\bpiano\s+t\b/.test(l)) out.piano = "terra";

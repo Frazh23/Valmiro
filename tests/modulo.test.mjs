@@ -19,7 +19,8 @@ const SECONDO = "Appartamento in vendita in Via Carlo Farini 81, Milano. Superfi
 /** Il modulo dopo il primo annuncio, con il box incluso da chi legge: e' il caso segnalato. */
 function primoImmobile() {
   const a = applicaLettura({ ...INPUT_INIZIALE, intento: "compro" }, leggiAnnuncio(PRIMO), "nuovo");
-  const i = { ...a.input, zona: "D10", box: "box", boxSeparato: { ...a.input.boxSeparato, incluso: true } };
+  /* come farebbe la pagina: includere il box e' una scelta di chi legge, e la provenienza lo dice */
+  const i = { ...a.input, zona: "D10", box: "box", boxSeparato: { ...a.input.boxSeparato, incluso: true }, provenienza: { ...a.input.provenienza, box: "utente" } };
   assert.equal(i.stato, "rist");
   assert.equal(i.pianoDichiarato, "seminterrato");
   assert.equal(i.ascensore, false);
@@ -91,4 +92,25 @@ test("due immobili diversi allo stesso indirizzo restano due immobili: l'indiriz
   const aggiornato = applicaLettura(prima, leggiAnnuncio(stessoCivico), "aggiorna").input;
   assert.equal(aggiornato.box, "box", "in aggiornamento il box resta: il testo non ne parla");
   assert.ok(differenze(prima, aggiornato).some((m) => m.startsWith("piano: seminterrato → 3-5")));
+});
+
+test("la provenienza segue ogni campo: annuncio, ipotesi (predefinito), utente; un nuovo import azzera le conferme", () => {
+  const a = applicaLettura({ ...INPUT_INIZIALE, intento: "compro" }, leggiAnnuncio(SECONDO), "nuovo");
+  assert.equal(a.input.provenienza.mq, "annuncio");
+  assert.equal(a.input.provenienza.stato, "ipotesi");
+  assert.equal(a.input.provenienza.piano, "ipotesi");
+  assert.equal(a.input.provenienza.ascensore, "ipotesi");
+  assert.equal(a.input.provenienza.classe, undefined, "la classe «non la conosco» e' un'ignoranza dichiarata, non un'ipotesi");
+  assert.equal(a.input.simulazioneDati, false);
+  const b = applicaLettura(INPUT_INIZIALE, leggiAnnuncio(PRIMO), "nuovo");
+  for (const c of ["mq", "stato", "piano", "ascensore", "pertinenze", "box"]) assert.equal(b.input.provenienza[c], "annuncio", c);
+  /* chi legge conferma stato e piano, poi importa un altro immobile: le conferme non passano */
+  const confermato = { ...a.input, provenienza: { ...a.input.provenienza, stato: "utente", piano: "utente" } };
+  const c = applicaLettura(confermato, leggiAnnuncio(SECONDO), "nuovo");
+  assert.equal(c.input.provenienza.stato, "ipotesi", "una conferma data su un'altra casa non vale per questa");
+  /* in aggiornamento le conferme restano, e cio' che il testo dichiara diventa «annuncio» */
+  const d = applicaLettura(confermato, leggiAnnuncio("Ribassato: ora 250.000 euro, 3° piano con ascensore."), "aggiorna");
+  assert.equal(d.input.provenienza.stato, "utente");
+  assert.equal(d.input.provenienza.piano, "annuncio");
+  assert.equal(d.input.provenienza.ascensore, "annuncio");
 });

@@ -1,8 +1,10 @@
 export type Fascia = "B" | "C" | "D" | "E" | "R";
 export type Stato = "rist" | "abit" | "otti" | "nuov";
 export type Tipo = "civ" | "sig" | "eco" | "vil";
+import type { Provenienze } from "./provenienza";
+
 export type Piano = "terra" | "rialzato" | "1-2" | "3-5" | "6+" | "ultimo";
-/** Piani che esistono ma che il modello non quota: l'OMI parte dal piano terra. */
+/** Piani che esistono ma per cui il modello non ha un trattamento validato: niente coefficiente, niente stima. */
 export type PianoNonQuotato = "seminterrato" | "interrato";
 export const PIANI_NON_QUOTATI: readonly PianoNonQuotato[] = ["seminterrato", "interrato"];
 export type Classe = "A" | "B" | "C" | "D" | "E" | "F" | "G";
@@ -64,6 +66,14 @@ export type Input = {
       del piano dichiarato non quotato. Il risultato porta `Stima.simulazione` e non e' una
       valutazione del piano vero. */
   simulazionePiano?: boolean;
+  /** da dove viene ogni campo: annuncio, utente, ipotesi (predefinito non confermato), sconosciuto
+      («non lo so»). Assente = tutto confermato (moduli precedenti al 6/9/2026, chiamate dirette).
+      Vedi provenienza.ts. */
+  provenienza?: Provenienze;
+  /** chi valuta chiede in modo esplicito una simulazione con dati incompleti: il motore calcola con
+      le ipotesi in uso e le elenca in `Stima.ipotesi`; senza questo campo, con ipotesi materiali
+      non confermate, il motore rifiuta. */
+  simulazioneDati?: boolean;
   ascensore: boolean;
   /** "nd": classe non conosciuta. Nessun aggiustamento, e il dettaglio lo dice; non e' una D mascherata */
   classe: Classe | "nd";
@@ -84,7 +94,6 @@ export type Stima = {
   pubblica: number;
   /** @deprecated simmetrico di `pubblica`, non e' un dato di mercato: l'interfaccia non lo usa piu' */
   offerta: number;
-  euroMq: number;
   superficieCommerciale: number;
   baseOmi: number;
   sigma: number;
@@ -99,6 +108,18 @@ export type Stima = {
   /** presente quando il piano dichiarato non e' quotato e chi valuta ha chiesto una
       simulazione: il risultato ipotizza `pianoIpotizzato` e non vale per il piano vero */
   simulazione?: { pianoDichiarato: PianoNonQuotato; pianoIpotizzato: Piano; testo: string };
+  /** presente quando il calcolo usa dati non confermati su richiesta esplicita (simulazione con
+      dati incompleti): ogni riga e' un'ipotesi in parole, da mostrare accanto al numero */
+  ipotesi?: string[];
+  /** predefiniti non confermati che non spostano il valore (pertinenze comprese, nessun box): non fanno
+      della stima uno scenario, ma si dicono */
+  noteDati?: string[];
+  /** euro al metro quadro commerciale della sola abitazione: e' il numero da confrontare con le
+      quotazioni OMI residenziali. Il box, se c'e', sta in `valoreBox` e non entra qui. */
+  euroMq: number;
+  /** euro al metro quadro con il box dentro, diviso per i soli metri dell'abitazione: non e'
+      confrontabile con l'OMI, si mostra solo se serve dire quanto pesa il box */
+  euroMqTotale: number;
   dettaglio: Voce[];
   semestre: string;
   fonte: string;

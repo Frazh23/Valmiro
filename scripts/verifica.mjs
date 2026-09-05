@@ -9,8 +9,13 @@
  * 1. Taratura e verifica sono lotti diversi. Un lotto e' di verifica se il suo nome
  *    contiene «-verifica» (es. 2026-10-01-idealista-verifica.csv). Tutti gli altri sono
  *    di taratura. Prima di misurare si tolgono dal campione di verifica gli annunci che
- *    sono la stessa casa di un annuncio di taratura, anche se ripubblicati da un altro
- *    portale con qualche ritocco: stesso indirizzo, metri entro il 3%, prezzo entro il 2%.
+ *    sono la stessa casa di un annuncio di taratura: stesso identificativo del portale
+ *    (colonna `rif`, fonte + riferimento), oppure stesso indirizzo con metri entro il 3%
+ *    e prezzo entro il 2%. Quel filtro e' un primo passaggio, non una garanzia: la stessa
+ *    casa puo' tornare con prezzo ribassato o metri diversi. Per questo il rapporto elenca
+ *    anche i «possibili duplicati da rivedere a mano» (stesso indirizzo, metri entro il 10%
+ *    o prezzo entro il 10%) e tiene separati gli «immobili diversi nello stesso stabile»
+ *    (stesso indirizzo, metri lontani): quelli restano nel campione, e si vede quanti sono.
  * 2. Il modello si fissa prima. `--congela` scrive in data/annunci/parametri-congelati.json
  *    i parametri e i coefficienti del motore con un'impronta. La misura rifiuta di partire
  *    se l'impronta attuale e' diversa: significa che qualcuno ha toccato il motore dopo
@@ -101,22 +106,34 @@ if (!verificaGrezza.length) {
   process.exit(1);
 }
 
-/** Stessa casa ripubblicata? Indirizzo uguale (normalizzato), metri entro il 3%, prezzo entro il 2%. */
+/** Identita' e somiglianza fra annunci. Tre livelli, dal certo al dubbio. */
 const norm = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\b(via|viale|piazza|piazzale|corso|largo|v\.le|p\.zza|c\.so)\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
-function stessaCasa(a, b) {
-  if (!a.indirizzo || !b.indirizzo || norm(a.indirizzo) !== norm(b.indirizzo)) return false;
-  const mq = Math.abs(Number(a.mq) - Number(b.mq)) / Number(b.mq);
-  const pr = Math.abs(Number(a.prezzo_richiesto) - Number(b.prezzo_richiesto)) / Number(b.prezzo_richiesto);
-  return mq <= 0.03 && pr <= 0.02;
-}
-const esclusi = { taratura: 0, interni: 0 };
+const stessoIndirizzo = (a, b) => !!a.indirizzo && !!b.indirizzo && norm(a.indirizzo) === norm(b.indirizzo);
+const scarto = (a, b, campo) => Math.abs(Number(a[campo]) - Number(b[campo])) / Number(b[campo]);
+/** stesso identificativo sul portale: fonte + riferimento (colonna `rif`, facoltativa) */
+const stessoRif = (a, b) => !!a.rif && !!b.rif && a.fonte === b.fonte && String(a.rif).trim() === String(b.rif).trim();
+/** stessa casa, con buona sicurezza: stesso rif, oppure stesso indirizzo con metri entro il 3% e prezzo entro il 2% */
+const stessaCasa = (a, b) => stessoRif(a, b) || (stessoIndirizzo(a, b) && scarto(a, b, "mq") <= 0.03 && scarto(a, b, "prezzo_richiesto") <= 0.02);
+/** forse la stessa casa, ribassata o rimisurata: stesso indirizzo e metri entro il 10% o prezzo entro il 10% */
+const forseStessaCasa = (a, b) => !stessaCasa(a, b) && stessoIndirizzo(a, b) && (scarto(a, b, "mq") <= 0.10 || scarto(a, b, "prezzo_richiesto") <= 0.10);
+/** un altro appartamento nello stesso palazzo: stesso indirizzo, metri lontani */
+const stessoStabile = (a, b) => stessoIndirizzo(a, b) && scarto(a, b, "mq") > 0.10;
+
+const esclusi = { taratura: 0, interni: 0, perRif: 0 };
+const daRivedere = [];   // possibili duplicati tenuti nel campione, da controllare a mano
+const stessoPalazzo = new Set();
 const verifica = [];
 for (const r of verificaGrezza) {
-  if (taratura.some((t) => stessaCasa(r, t))) { esclusi.taratura++; continue; }
+  const t = taratura.find((x) => stessaCasa(r, x));
+  if (t) { esclusi.taratura++; if (stessoRif(r, t)) esclusi.perRif++; continue; }
   if (verifica.some((v) => stessaCasa(r, v))) { esclusi.interni++; continue; }
+  const dubbio = taratura.find((x) => forseStessaCasa(r, x)) || verifica.find((v) => forseStessaCasa(r, v));
+  if (dubbio) daRivedere.push({ r, con: dubbio });
+  if (taratura.some((x) => stessoStabile(r, x)) || verifica.some((v) => stessoStabile(r, v))) stessoPalazzo.add(r.id);
   verifica.push(r);
 }
-console.log(`tolti ${esclusi.taratura} annunci gia' presenti in taratura (anche ripubblicati) e ${esclusi.interni} ripubblicazioni interne al lotto`);
+console.log(`tolti ${esclusi.taratura} annunci gia' presenti in taratura (${esclusi.perRif} per identificativo, gli altri per indirizzo, metri e prezzo) e ${esclusi.interni} ripubblicazioni interne al lotto`);
+console.log(`${daRivedere.length} possibili duplicati da rivedere a mano (tenuti nel campione) · ${stessoPalazzo.size} immobili con un altro appartamento dello stesso stabile nell'archivio (tenuti: sono case diverse)`);
 
 // ---------------------------------------------------------------- misura
 
@@ -162,7 +179,10 @@ Protocollo: docs/verifica.md. Modello congelato il ${congelato.data} (commit ${c
 ## Campione
 
 - lotti di verifica: ${[...new Set(verifica.map((r) => r.lotto))].join(", ")}
-- annunci nei lotti: ${verificaGrezza.length}; esclusi perche' gia' in taratura (stessa casa, anche ripubblicata): ${esclusi.taratura}; ripubblicazioni interne: ${esclusi.interni}; senza zona o zona non quotata: ${scartati.length}
+- annunci nei lotti: ${verificaGrezza.length}; esclusi perche' gia' in taratura (stessa casa, anche ripubblicata): ${esclusi.taratura} (${esclusi.perRif} riconosciuti dall'identificativo del portale); ripubblicazioni interne: ${esclusi.interni}; senza zona o zona non quotata: ${scartati.length}
+- **possibili duplicati da rivedere a mano** (stesso indirizzo, metri o prezzo entro il 10%, tenuti nel campione): ${daRivedere.length}${daRivedere.length ? "\n" + daRivedere.map(({ r, con }) => `  - ${r.id} (${r.indirizzo}, ${r.mq} mq, ${Number(r.prezzo_richiesto).toLocaleString("it-IT")} €) ~ ${con.id} in ${con.lotto} (${con.mq} mq, ${Number(con.prezzo_richiesto).toLocaleString("it-IT")} €)`).join("\n") : ""}
+- immobili diversi nello stesso stabile di un altro annuncio (stesso indirizzo, metri lontani): ${stessoPalazzo.size}, tenuti nel campione come case distinte
+- il filtro indirizzo/metri/prezzo e' un primo passaggio, non una garanzia: prima di citare il rapporto, i possibili duplicati vanno riletti; se uno e' la stessa casa si toglie e si rilancia
 - **annunci misurati: ${usati.length}**
 - date degli annunci: ${date.length ? `${date[0]} – ${date[date.length - 1]}` : "non indicate"}
 - quotazioni OMI ${dati.SEMESTRE}, indice Istat ${dati.INDICE_ISTAT}

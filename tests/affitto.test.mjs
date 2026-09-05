@@ -34,13 +34,13 @@ test("il rendimento lordo di zona sta fra il 2% e l'8% ovunque", () => {
   }
 });
 
-test("lo storico copre tutte le zone, dal 2° semestre 2014 salvo le quattro nate nel 2024", () => {
+test("lo storico copre tutte le zone, dal 2° semestre 2014 salvo le quattro nate nel 2024, senza buchi", () => {
   const nuove = [];
   for (const z of Object.keys(ZONE)) {
     const s = STORICO.zone[z];
     assert.ok(s && s.serie.length, `zona ${z} senza storico`);
     if (s.dal !== "2014-2") nuove.push(z);
-    else assert.equal(s.serie.length, 22, `zona ${z}: ${s.serie.length} semestri invece di 22 (manca solo il 2025-1, mai fornito)`);
+    else assert.equal(s.serie.length, 23, `zona ${z}: ${s.serie.length} semestri invece di 23 (dal 2014-2 al 2025-2, uno ogni semestre)`);
     for (let i = 1; i < s.serie.length; i++) assert.ok(s.serie[i].s > s.serie[i - 1].s, `zona ${z}: serie non ordinata`);
   }
   assert.deepEqual(nuove.sort(), ["D37", "D38", "D39", "D40"]);
@@ -91,7 +91,7 @@ test("al pareggio l'affitto breve rende esattamente quanto il 4+4", () => {
 test("l'andamento di una zona storica parte dal 2014-2 e quello di una nuova lo dice", () => {
   const c18 = affitto.andamento("C18");
   assert.equal(c18.dal, "2014-2");
-  assert.equal(c18.punti.length, 22);
+  assert.equal(c18.punti.length, 23);
   assert.ok(c18.variazione > 0);
   const d37 = affitto.andamento("D37");
   assert.equal(d37.nuova, true);

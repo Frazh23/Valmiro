@@ -67,10 +67,14 @@ if (nonLorde.length) throw new Error(`${nonLorde.length} righe residenziali con 
 
 /** Le descrizioni curate di oggi restano; per una zona nuova si prende quella dell'Agenzia, in minuscolo.
     "Precedente" e' l'ultimo file di quotazioni presente in data/ che non sia questo semestre. */
-const precedente = (() => {
-  const f = readdirSync(DATI).filter((n) => /^quotazioni-omi-\d{4}-\d\.json$/.test(n) && !n.includes(SEM)).sort().pop();
-  return f ? JSON.parse(readFileSync(join(DATI, f), "utf8")) : {};
-})();
+const semestriInCasa = readdirSync(DATI).map((n) => n.match(/^quotazioni-omi-(\d{4}-\d)\.json$/)?.[1]).filter(Boolean).sort();
+/* Un semestre piu' vecchio di quello in produzione serve allo storico, non al
+   sito: si archiviano quotazioni e canoni e si riempie il buco nella serie,
+   ma perimetri e file correnti non si toccano. Il confronto e' con il
+   semestre subito precedente, se c'e'. */
+const ARRETRATO = semestriInCasa.some((x) => x > SEM);
+const semPrecedente = semestriInCasa.filter((x) => x < SEM).pop();
+const precedente = semPrecedente ? JSON.parse(readFileSync(join(DATI, `quotazioni-omi-${semPrecedente}.json`), "utf8")) : {};
 const titolo = (s) => s.toLowerCase().replace(/^'|'$/g, "").replace(/\s*-\s*/g, " · ").replace(/\s*,\s*/g, ", ").replace(/(^|[\s·,(])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
 
 const descrizioni = {};
@@ -182,9 +186,10 @@ for (const z of zoneQuotate) {
   if (s.serie.some((p) => p.s === SEM)) continue;
   s.serie.push({ s: SEM, c, l: l || [null, null] });
   s.serie.sort((a, b) => (a.s < b.s ? -1 : 1));
+  s.dal = s.serie[0].s;
   aggiunti++;
 }
-storico.meta = { ...storico.meta, semestre: SEM, generato: new Date().toISOString().slice(0, 10) };
+storico.meta = { ...storico.meta, semestre: ARRETRATO ? storico.meta.semestre : SEM, generato: new Date().toISOString().slice(0, 10) };
 
 // ------------------------------------------------------------------ confronto
 
@@ -231,12 +236,12 @@ const vecchieZone = new Set(Object.keys(precedente));
 const nuoveZone = zoneQuotate.filter((z) => !vecchieZone.has(z));
 const mancanti = [...vecchieZone].filter((z) => !zoneQuotate.includes(z));
 
-console.log(`\nFORNITURA ${valori.etichetta} · ${righeUsate} righe residenziali usate · ${zoneQuotate.length} zone quotate · ${Object.keys(perimetri).length} perimetri`);
+console.log(`\nFORNITURA ${valori.etichetta}${ARRETRATO ? " (semestre arretrato: va solo in archivio e nello storico)" : ""} · ${righeUsate} righe residenziali usate · ${zoneQuotate.length} zone quotate · ${Object.keys(perimetri).length} perimetri`);
 console.log(`zone nuove: ${nuoveZone.length ? nuoveZone.join(", ") : "nessuna"} · zone mancanti: ${mancanti.length ? mancanti.join(", ") : "nessuna"}`);
 const senzaPerimetro = zoneQuotate.filter((z) => !perimetri[z]);
 if (senzaPerimetro.length) console.log(`ATTENZIONE zone quotate senza perimetro nel KML: ${senzaPerimetro.join(", ")}`);
 
-console.log("\nabitazioni civili, stato normale: mediana euro/mq e canone, prima -> dopo");
+console.log(`\nabitazioni civili, stato normale: mediana euro/mq, ${semPrecedente || "?"} -> ${SEM}`);
 const variazioni = [];
 for (const z of zoneQuotate) {
   const p = precedente[z]?.civ?.NORMALE || precedente[z]?.civ?.OTTIMO;
@@ -251,7 +256,7 @@ if (variazioni.length) {
   console.log(`  mediana della variazione: ${(s[s.length >> 1] * 100).toFixed(1)}%`);
 }
 
-if (vecchioGeo) {
+if (vecchioGeo && !ARRETRATO) {
   console.log("\nperimetri: zone il cui confine si e' spostato (griglia 40 m)");
   let spostate = 0;
   for (const f of vecchioGeo.features) {
@@ -270,10 +275,13 @@ if (vecchioGeo) {
 
 writeFileSync(join(DATI, `quotazioni-omi-${SEM}.json`), JSON.stringify(quotazioni));
 writeFileSync(join(DATI, `locazioni-omi-${SEM}.json`), JSON.stringify(locazioni));
-writeFileSync(join(DATI, `zone-omi-milano-${SEM}.geojson`), JSON.stringify(geojson));
-writeFileSync(join(DATI, "zone-omi.json"), JSON.stringify(geojson));
-writeFileSync(join(DATI, "zone-omi-semplificate.json"), JSON.stringify(semplificate));
 writeFileSync(storicoFile, JSON.stringify(storico));
-
-console.log(`\nscritti: quotazioni-omi-${SEM}.json, locazioni-omi-${SEM}.json, zone-omi-milano-${SEM}.geojson, zone-omi.json, zone-omi-semplificate.json (${vertici} vertici), omi-storico.json (+${aggiunti} zone al ${SEM})`);
-console.log(`ORA: in src/lib/data.ts e src/lib/affitto.ts punta gli import ai file ${SEM}, aggiorna SEMESTRE e INDICE_ISTAT, poi npm test`);
+if (ARRETRATO) {
+  console.log(`\nscritti: quotazioni-omi-${SEM}.json, locazioni-omi-${SEM}.json, omi-storico.json (+${aggiunti} zone al ${SEM}). Perimetri e file correnti non toccati: in produzione resta il ${semestriInCasa[semestriInCasa.length - 1]}.`);
+} else {
+  writeFileSync(join(DATI, `zone-omi-milano-${SEM}.geojson`), JSON.stringify(geojson));
+  writeFileSync(join(DATI, "zone-omi.json"), JSON.stringify(geojson));
+  writeFileSync(join(DATI, "zone-omi-semplificate.json"), JSON.stringify(semplificate));
+  console.log(`\nscritti: quotazioni-omi-${SEM}.json, locazioni-omi-${SEM}.json, zone-omi-milano-${SEM}.geojson, zone-omi.json, zone-omi-semplificate.json (${vertici} vertici), omi-storico.json (+${aggiunti} zone al ${SEM})`);
+  console.log(`ORA: in src/lib/data.ts e src/lib/affitto.ts punta gli import ai file ${SEM}, aggiorna SEMESTRE e INDICE_ISTAT, poi npm test`);
+}

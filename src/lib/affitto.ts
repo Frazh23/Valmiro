@@ -113,9 +113,8 @@ export function andamento(zona: string): Andamento | null {
   if (!z || !z.serie.length) return null;
   const punti = z.serie.map((p) => ({ s: p.s, prezzo: (p.c[0] + p.c[1]) / 2, canone: p.l[0] && p.l[1] ? (p.l[0] + p.l[1]) / 2 : NaN }));
   const primo = punti[0], ultimo = punti[punti.length - 1];
-  /* "due anni fa" per etichetta, non per posizione: la serie puo' avere un
-     buco (il 1° semestre 2025 non e' mai stato fornito) e contare quattro
-     punti indietro sposterebbe il confronto senza dirlo */
+  /* "due anni fa" per etichetta, non per posizione: se un semestre mancasse,
+     contare quattro punti indietro sposterebbe il confronto senza dirlo */
   const etichettaDueAnni = `${Number(ultimo.s.slice(0, 4)) - 2}${ultimo.s.slice(4)}`;
   const dueAnni = punti.find((p) => p.s === etichettaDueAnni) || null;
   return {

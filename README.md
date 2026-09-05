@@ -33,7 +33,7 @@ data/                            i dati veri, versionati con il codice
   zone-omi-semplificate.json     stessi poligoni a 3.818 vertici, per la mappa nel browser
   quotazioni-omi-2025-2.json     42 zone × 4 tipologie × 2 stati + box (2024-2 resta per confronto)
   locazioni-omi-2025-2.json      i canoni, stesso tracciato
-  fornitura/2025-2/              la fornitura QIP dell'Agenzia com'e' arrivata: VALORI, ZONE, KML
+  fornitura/AAAA-S/              le forniture QIP dell'Agenzia com'e' arrivate: VALORI, ZONE, KML
   nomi-zone.json                 275 tra vie, piazze e quartieri → zona (euristica)
 src/lib/engine.ts                il motore: modulo puro, nessuna rete, nessun database
 src/lib/geo.ts                   point-in-polygon, coordinate → zona
@@ -94,7 +94,8 @@ npm run ingest-fornitura data/fornitura/2025-2/QIP_2025-2_VALORI.csv data/fornit
 
 Scrive quotazioni, canoni, perimetri (interi e semplificati) e aggiunge il semestre allo
 storico; stampa zone nuove o mancanti, quanto si sono mosse le quotazioni e quali
-perimetri sono cambiati. Se un perimetro è cambiato, rigenera anche l'indirizzario
+perimetri sono cambiati. Un semestre **più vecchio** di quello in produzione va solo in
+archivio e nello storico: perimetri e file correnti non si toccano. Se un perimetro è cambiato, rigenera anche l'indirizzario
 (`npm run ingest-civici`), perché la zona di ogni civico è calcolata una volta sola. Poi
 `SEMESTRE`, `INDICE_ISTAT` (la base Istat cambia con il semestre) e, in
 `src/lib/affitto.ts`, l'import dei canoni e `SEMESTRE_LOCAZIONI`. Infine `npm run

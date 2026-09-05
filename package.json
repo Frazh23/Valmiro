@@ -14,7 +14,8 @@
     "idealista": "node scripts/idealista.mjs",
     "load-db": "node scripts/load-postgis.mjs",
     "typecheck": "tsc --noEmit",
-    "comparabili": "node scripts/comparabili.mjs"
+    "comparabili": "node scripts/comparabili.mjs",
+    "ingest-storico": "node scripts/ingest-storico.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

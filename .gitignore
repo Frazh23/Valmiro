@@ -26,3 +26,6 @@ data/*.zip
 data/civici-grezzi*
 data/hero-src/
 .calibrazione/
+
+# sorgente OMI storica (3 MB): si scarica dal portale, si rigenera con ingest-storico
+data/ds1996*

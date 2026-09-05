@@ -658,3 +658,19 @@ button { font: inherit; letter-spacing: inherit; }
 .v-prose p { font-size: var(--t-body-lg); line-height: 1.55; color: var(--ink-soft); max-width: 62ch; margin: 0 0 var(--s-4); }
 .v-prose p b { color: var(--ink); font-weight: 550; }
 .v-prose a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- se la affitti ---------- */
+.v-rent__main { display: grid; gap: var(--s-2); }
+.v-value--sm { font-size: clamp(2.25rem, 5vw, 3.5rem); }
+.v-facts--tight { margin-top: var(--s-6); }
+
+/* ---------- la zona dal 2014 ---------- */
+.v-history { max-width: 640px; }
+.v-history__lead { font-size: var(--t-body-lg); color: var(--ink-soft); margin: 0 0 var(--s-4); }
+.v-history__lead b { font-family: var(--font-editorial); font-variation-settings: var(--voce-editorial); font-weight: 600; font-size: var(--t-h2); letter-spacing: var(--track-serif); margin-right: var(--s-2); }
+.v-history__lead b.pos { color: var(--pos); }
+.v-history__lead b.neg { color: var(--neg); }
+.v-history__svg { display: block; width: 100%; height: auto; overflow: visible; }
+.v-history__lbl { font-size: 12px; fill: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.v-history__lbl--strong { fill: var(--ink); font-weight: 600; }
+.v-history__anno { font-size: 11px; fill: var(--ink-ghost); letter-spacing: .04em; }

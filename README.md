@@ -41,9 +41,11 @@ src/app/api/estimate/route.ts    POST /api/estimate
 src/app/page.tsx                 il flusso a cinque passi
 src/components/Mappa.tsx         mappa delle zone disegnata dai poligoni, click → zona
 scripts/ingest-omi.mjs           aggiornamento automatico via API CKAN del Comune
+src/lib/affitto.ts               canone e rendita dai canoni OMI; andamento della zona dal 2014
+scripts/ingest-storico.mjs       dal riepilogo OMI 2004-2024 ai canoni e allo storico per zona
 scripts/load-postgis.mjs         caricamento in Postgres, opzionale
 db/schema.sql                    schema con storico dei semestri e tabella delle stime
-tests/engine.test.mjs            invarianti sui dati e sulle geometrie
+tests/*.test.mjs                 invarianti sui dati: quotazioni, geometrie, indirizzario, canoni, storico
 ```
 
 ## Come funziona la stima

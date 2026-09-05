@@ -122,6 +122,7 @@ const main = async () => {
     JSON.stringify(zoneOut, null, 0));
   log(`scritte ${Object.keys(zoneOut).length} zone da ${usate} righe`);
   log(`ORA: aggiorna l'import e SEMESTRE in src/lib/data.ts, poi rilancia i test`);
+  log(`E POI: scarica il riepilogo storico (DS1996) e lancia npm run ingest-storico, che rigenera canoni e andamento`);
 };
 
 main().catch((e) => { console.error("[ingest] FALLITO:", e.message); process.exit(1); });

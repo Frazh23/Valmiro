@@ -22,6 +22,9 @@ import { eur, num } from "@/lib/formato";
 import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
 import { RISTRUTTURAZIONE, scala } from "@/lib/engine";
 import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
+import { rendita, andamento } from "@/lib/affitto";
+import RentalYield from "@/components/sistema/RentalYield";
+import ZoneHistory from "@/components/sistema/ZoneHistory";
 import { salvaStima, salvaStimaAccount } from "@/lib/storage";
 import { useSessione } from "@/lib/sessione";
 import { FONTI, type FonteIndirizzo, type Input, type Scelta, type Stato, type Stima, type Tipo } from "@/lib/types";
@@ -394,6 +397,8 @@ function Risultato({
   onModifica: () => void;
 }) {
   const tacche = stima.affidabilita === "Alta" ? 3 : stima.affidabilita === "Media" ? 2 : 1;
+  const affitto = rendita(input, stima);
+  const storia = andamento(input.zona);
 
   return (
     <>
@@ -496,11 +501,42 @@ function Risultato({
         </Reveal>
       </section>
 
-      {/* 06 — chiusura */}
+      {/* 06 — se la affitti */}
+      {affitto && (
+        <section className="v-wrap v-chapter">
+          <Reveal>
+            <div className="v-chapter__head">
+              <span className="v-numeral">06</span>
+              <h2 className="v-h2">Se la affitti</h2>
+            </div>
+            <p className="v-lead v-measure" style={{ marginBottom: "clamp(28px,4vw,44px)" }}>
+              L&apos;Agenzia delle Entrate pubblica anche i canoni di locazione della zona. Li portiamo su questa
+              casa con le stesse proporzioni del prezzo: le caratteristiche che la fanno valere di più la fanno
+              anche affittare di più.
+            </p>
+            <RentalYield r={affitto} zona={input.zona} />
+          </Reveal>
+        </section>
+      )}
+
+      {/* 07 — la zona dal 2014 */}
+      {storia && (
+        <section className="v-wrap v-chapter">
+          <Reveal>
+            <div className="v-chapter__head">
+              <span className="v-numeral">07</span>
+              <h2 className="v-h2">La zona dal 2014</h2>
+            </div>
+            <ZoneHistory a={storia} zona={input.zona} />
+          </Reveal>
+        </section>
+      )}
+
+      {/* 08 — chiusura */}
       <section className="v-wrap v-chapter">
         <Reveal>
           <div className="v-chapter__head">
-            <span className="v-numeral">06</span>
+            <span className="v-numeral">08</span>
             <h2 className="v-h2">Tieni la stima</h2>
           </div>
           <p className="v-lead v-measure">

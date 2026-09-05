@@ -1,5 +1,5 @@
 import { ZONE, INDICE_ISTAT, SEMESTRE, FONTE } from "./data";
-import type { Input, Stima, Tipo, Stato, Voce, FasceOmi } from "./types";
+import type { Input, Stima, Tipo, Stato, Voce, FasceOmi, PianoNonQuotato } from "./types";
 
 /* --------------------------------------------------------------------------
    Motore di stima.
@@ -174,10 +174,29 @@ export function superficieCommerciale(i: Input) {
 
 const arrotonda = (x: number) => Math.round(x / 1000) * 1000;
 
-export function stima(i: Input): Stima {
-  const z = ZONE[i.zona];
-  if (!z) throw new Error(`Zona OMI sconosciuta: ${i.zona}`);
-  if (!(i.mq > 0)) throw new Error("Superficie mancante o non valida");
+/** Il messaggio con cui il motore rifiuta un piano che non quota: lo legge anche l'interfaccia. */
+export const PIANO_NON_VALUTABILE = (p: PianoNonQuotato) =>
+  `Per il piano ${p} non è disponibile una valutazione attendibile: le quotazioni OMI partono dal piano terra e il motore non ha un coefficiente per questo piano. Si può chiedere una simulazione che ipotizza un piano terra, sapendo che non è una valutazione del ${p}.`;
+
+export function stima(input: Input): Stima {
+  const z = ZONE[input.zona];
+  if (!z) throw new Error(`Zona OMI sconosciuta: ${input.zona}`);
+  if (!(input.mq > 0)) throw new Error("Superficie mancante o non valida");
+
+  /* Un piano non quotato non si traduce in silenzio in un altro. Senza la richiesta
+     esplicita di una simulazione il motore si ferma; con la richiesta, calcola come
+     se fosse piano terra e lo scrive nel risultato, che non e' una valutazione del
+     piano vero e non va letto come un tetto: e' un'ipotesi, non un limite dimostrato. */
+  let simulazione: Stima["simulazione"];
+  let i = input;
+  if (input.pianoDichiarato) {
+    if (!input.simulazionePiano) throw new Error(PIANO_NON_VALUTABILE(input.pianoDichiarato));
+    simulazione = {
+      pianoDichiarato: input.pianoDichiarato, pianoIpotizzato: "terra",
+      testo: `Simulazione che ipotizza un piano terra. Il piano dichiarato è «${input.pianoDichiarato}», che il modello non quota: questo numero non è una valutazione del ${input.pianoDichiarato}, non è un tetto e non dice se il prezzo è caro o conveniente.`,
+    };
+    i = { ...input, piano: "terra" };
+  }
 
   const sc = superficieCommerciale(i);
   const base = baseOmi(i.zona, i.tipo, i.stato) * INDICE_ISTAT * (PARAMETRI.livello[fasciaDi(i.zona)] ?? 1);
@@ -244,7 +263,7 @@ export function stima(i: Input): Stima {
     dettaglio.push({ voce: "Balconi, terrazzi e cantina già compresi nella superficie commerciale inserita", effetto: 0, euro: 0, nota: true });
   }
   dettaglio.push(
-    voce(`Piano ${i.piano}`, k.piano),
+    voce(simulazione ? `Piano terra · ipotesi della simulazione, il piano dichiarato è ${simulazione.pianoDichiarato}` : `Piano ${i.piano}`, k.piano),
     voce(i.ascensore ? "Ascensore presente" : "Senza ascensore", k.ascensore),
     i.classe === "nd"
       ? { voce: "Classe energetica non dichiarata · nessun aggiustamento", effetto: 0, euro: 0, nota: true }
@@ -255,6 +274,10 @@ export function stima(i: Input): Stima {
   if (i.affaccio) dettaglio.push(voce(`Affaccio ${i.affaccio}`, k.affaccio));
   if (i.metro) dettaglio.push(voce(`Metropolitana ${i.metro}`, k.metro));
   if (extra) dettaglio.push({ voce: i.box === "box" ? "Box auto" : "Posto auto", effetto: 0, euro: extra });
+
+  /* La sola abitazione: il totale meno il box, con la stessa incertezza. Serve quando il
+     box e' venduto a parte e il prezzo chiesto riguarda solo la casa. */
+  const soloCasa = totale - extra;
 
   return {
     min: arrotonda(totale * (1 - sigma)),
@@ -268,6 +291,14 @@ export function stima(i: Input): Stima {
     sigma,
     affidabilita: sigma <= 0.075 ? "Alta" : sigma <= 0.105 ? "Media" : "Bassa",
     avvertenza,
+    valoreBox: Math.round(extra),
+    abitazione: {
+      centro: arrotonda(soloCasa),
+      min: arrotonda(soloCasa * (1 - sigma)),
+      max: arrotonda(soloCasa * (1 + sigma)),
+      pubblica: arrotonda(soloCasa * (1 + COEFF.margineTrattativa)),
+    },
+    simulazione,
     dettaglio,
     semestre: SEMESTRE,
     fonte: FONTE,

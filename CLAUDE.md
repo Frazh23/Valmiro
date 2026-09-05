@@ -26,6 +26,9 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 | Quotazioni, zone, nomi | `src/lib/data.ts`, `data/*.json` | rigenerati da `scripts/ingest-fornitura.mjs` (fornitura QIP dell'Agenzia) o `scripts/ingest-omi.mjs` (CKAN del Comune) |
 | Point-in-polygon, geocoding | `src/lib/geo.ts`, `src/lib/geocode.ts` | — |
 | Calibrazione del motore | `scripts/calibra.mjs`, `scripts/comparabili.mjs`, `scripts/annunci.mjs`, `data/annunci/` | propone, non scrive: i parametri cambiano con un commit; l'archivio cresce per lotti, non si riscrive |
+| Verifica indipendente | `scripts/verifica.mjs`, `docs/verifica.md`, `data/annunci/parametri-congelati.json`, `docs/verifiche/` | lotti `-verifica` separati dalla taratura; il modello si congela prima; la verifica non sceglie coefficienti |
+| Il modulo della casa: nuovo immobile / aggiorna | `src/lib/modulo.ts` | puro e testato; un nuovo import riparte da zero e segna cio' che il testo non dichiara; l'indirizzo non decide se e' la stessa casa |
+| Cosa confrontare con cosa (prezzo vs valore) | `src/lib/confronto.ts` | abitazione, box a parte e totale ciascuno contro il proprio valore; con una simulazione di piano nessun giudizio |
 | Canoni di locazione e storico | `src/lib/affitto.ts`, `data/locazioni-omi-*.json`, `data/omi-storico.json` | rigenerati da `scripts/ingest-storico.mjs`; non toccano la stima del valore |
 | Lettura del testo di un annuncio | `src/lib/annuncio.ts` | espressioni regolari nel browser, niente rete, niente modelli; ogni campo e' un suggerimento da confermare; distingue presenza, assenza dichiarata («senza») e silenzio, e dice cio' che non puo' rappresentare (seminterrato, classe n.d., box a parte) |
 | Ristrutturazione per interventi | `src/lib/ristrutturazione.ts` | catalogo, pacchetti, stato atteso: i prezzi unitari hanno la fonte in commento |
@@ -43,6 +46,8 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 - Stima: `POST /api/estimate` con un `Input` (vedi `src/lib/types.ts`).
 - Ristrutturazione: `prospettoRistrutturazione(input, pacchetto, primaCasa, scelte)` da `src/lib/ristrutturazione.ts`, calcolata nel browser (il modulo è puro) perché cambia a ogni scelta; la rotta la accetta anche con `{ ristrutturazione, primaCasa, scelte }`.
 - L'intento (`Input.intento`: compro | vendo) cambia parole e strumenti, mai il valore: il motore lo ignora.
+- Un piano non quotato (`Input.pianoDichiarato`) fa rifiutare la stima (rotta: 422) finche' chi valuta non chiede `simulazionePiano`; allora `Stima.simulazione` e' presente e l'interfaccia non esprime giudizi sul prezzo. Non chiamarla mai «tetto».
+- `Input.prezzoRichiesto` e' sempre e solo il prezzo dell'abitazione; il prezzo del box a parte sta in `Input.boxSeparato.prezzo`. Non sommarli: passa da `confronto()`.
 - Geocodifica: `GET /api/geocode?q=…`. Prova nell'ordine anagrafe comunale, geocoder, dizionario dei quartieri, e dichiara quale ha risposto in `metodo`.
 - Suggerimenti mentre si scrive: `GET /api/vie?q=…`. È roba nostra: si può chiamare a ogni tasto.
 

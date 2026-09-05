@@ -60,11 +60,18 @@ export default function Stime() {
                 <small>
                   {s.input.intento === "compro" ? "da comprare · " : s.input.intento === "vendo" ? "da vendere · " : ""}
                   zona {s.zona} · {s.descrizioneZona} · {s.input.mq} mq · {new Date(s.creataIl).toLocaleDateString("it-IT")}
+                  {s.input.boxSeparato?.incluso ? " · box venduto a parte incluso nel valore" : ""}
                 </small>
+                {/* la limitazione viaggia con la stima: chi la rilegge fra un mese la trova qui, non solo nella pagina del risultato */}
+                {s.stima.simulazione && (
+                  <small className="avviso">
+                    Simulazione che ipotizza un piano terra: il piano dichiarato è {s.stima.simulazione.pianoDichiarato}, che il modello non quota. Non è una valutazione di quel piano.
+                  </small>
+                )}
               </div>
               <div className="valore">
                 {eur(s.stima.min)}–{eur(s.stima.max)} €
-                <small>{eur(s.stima.euroMq)} €/mq · affidabilità {s.stima.affidabilita.toLowerCase()}</small>
+                <small>{eur(s.stima.euroMq)} €/mq · {s.stima.simulazione ? "simulazione, non una valutazione" : `affidabilità ${s.stima.affidabilita.toLowerCase()}`}</small>
               </div>
               <button className="ghost" onClick={() => elimina(s.id)}>Elimina</button>
             </div>

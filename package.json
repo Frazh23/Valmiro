@@ -15,6 +15,7 @@
     "load-db": "node scripts/load-postgis.mjs",
     "typecheck": "tsc --noEmit",
     "comparabili": "node scripts/comparabili.mjs",
+    "verifica": "node scripts/verifica.mjs",
     "ingest-storico": "node scripts/ingest-storico.mjs",
     "ingest-fornitura": "node scripts/ingest-fornitura.mjs"
   },

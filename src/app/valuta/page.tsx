@@ -20,17 +20,20 @@ const Mappa = dynamic(() => import("@/components/Mappa"), {
 });
 import { eur, num } from "@/lib/formato";
 import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
-import { scala } from "@/lib/engine";
+import { scala, PIANO_NON_VALUTABILE } from "@/lib/engine";
 import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
 import { rendita, andamento } from "@/lib/affitto";
 import { leggiAnnuncio, type Letto } from "@/lib/annuncio";
+import { INPUT_INIZIALE, NOME_CAMPO, applicaLettura, type CampoConfermabile, type ModoImport } from "@/lib/modulo";
+import { LAVORI_INIZIALI, type SceltaLavori } from "@/lib/ristrutturazione";
 import AskingPrice from "@/components/sistema/AskingPrice";
 import RentalYield from "@/components/sistema/RentalYield";
 import ZoneHistory from "@/components/sistema/ZoneHistory";
 import ShortRent from "@/components/sistema/ShortRent";
 import { salvaStima, salvaStimaAccount } from "@/lib/storage";
 import { useSessione } from "@/lib/sessione";
-import { FONTI, type FonteIndirizzo, type Input, type Intento, type Scelta, type Stato, type Stima, type Tipo } from "@/lib/types";
+import { FONTI, PIANI_NON_QUOTATI, type FonteIndirizzo, type Input, type Intento, type PianoNonQuotato, type Scelta, type Stato, type Stima, type Tipo } from "@/lib/types";
+
 
 const STATI: { id: Stato; t: string; d: string }[] = [
   { id: "rist", t: "Da ristrutturare", d: "Impianti e finiture da rifare" },
@@ -104,18 +107,23 @@ function Valuta() {
   const [letto, setLetto] = useState<Letto | null>(null);
   const [annuncioNota, setAnnuncioNota] = useState<string | null>(null);
   const [qIniziale, setQIniziale] = useState("");
-  /* cose lette dall'annuncio che il modulo non rappresenta e va detto: il piano seminterrato */
+  /* cose lette dall'annuncio che il modulo non rappresenta e va detto */
   const [avvisiAnnuncio, setAvvisiAnnuncio] = useState<string[]>([]);
-  /* box in vendita a parte: fuori dal prezzo dell'abitazione finche' chi legge non lo include */
-  const [boxSeparato, setBoxSeparato] = useState<{ prezzo: number | null; incluso: boolean } | null>(null);
+  /* campi che l'ultimo annuncio importato non dichiara: stanno al predefinito finche' chi legge non li tocca */
+  const [daConfermare, setDaConfermare] = useState<CampoConfermabile[]>([]);
+  /* in aggiornamento: che cosa e' cambiato rispetto a prima, in parole */
+  const [modifiche, setModifiche] = useState<string[] | null>(null);
+  /* pacchetto e personalizzazioni della ristrutturazione: appartengono all'immobile */
+  const [lavori, setLavori] = useState<SceltaLavori>(LAVORI_INIZIALI);
 
-  const [i, setI] = useState<Input>({
-    zona: "", tipo: "civ", mq: 0, superficie: "commerciale", pertinenzeIncluse: true,
-    mqBalconi: 0, mqTerrazzi: 0, cantina: false, box: "nessuno",
-    stato: "abit", piano: "1-2", ascensore: true, classe: "nd", luce: "media",
-    epoca: null, affaccio: null, metro: null, prezzoRichiesto: null,
-  });
+  const [i, setI] = useState<Input>(INPUT_INIZIALE);
   const set = (p: Partial<Input>) => setI((v) => ({ ...v, ...p }));
+  /* toccare un campo lo conferma: non e' piu' un predefinito ereditato */
+  const tocca = (c: CampoConfermabile) => setDaConfermare((v) => (v.includes(c) ? v.filter((x) => x !== c) : v));
+  const conferma = (c: CampoConfermabile) => daConfermare.includes(c)
+    ? <span className="v-field__hint v-field__hint--conferma">Non dichiarato nell&apos;annuncio: è il valore predefinito, confermalo o correggilo.</span>
+    : null;
+  const boxSeparato = i.boxSeparato ?? null;
   const zona = i.zona ? ZONE[i.zona] : null;
   const intento: Intento | undefined = i.intento;
   const T = TESTI[intento || "vendo"];
@@ -151,28 +159,35 @@ function Valuta() {
 
   /* Il testo incollato viene letto qui, nel browser: non parte verso nessun
      server. Solo l'indirizzo, se c'e', va a /api/geocode come farebbe la ricerca. */
-  async function leggiTesto() {
+  /* C'e' gia' un immobile nel modulo? Allora un nuovo testo puo' essere un'altra casa
+     o la stessa riletta: lo decide chi legge, con due bottoni diversi. L'indirizzo non
+     basta a dirlo: due case allo stesso civico sono due case. */
+  const haImmobile = i.mq > 0 || letto !== null || esito !== null;
+
+  async function leggiTesto(modo: ModoImport) {
     const r = leggiAnnuncio(testoAnnuncio);
     if (!r.trovati.length) { setAnnuncioNota("Nel testo non ho riconosciuto né metri, né prezzo, né indirizzo. Prova a incollare tutta la scheda dell'annuncio, non solo il titolo."); return; }
-    set({
-      ...(r.mq ? { mq: r.mq, superficie: "commerciale", pertinenzeIncluse: true } : {}),
-      ...(r.piano ? { piano: r.piano } : {}),
-      /* un piano che il modello non quota: si sceglie «terra» in chiaro e l'avviso resta in vista */
-      ...(r.pianoNonSupportato ? { piano: "terra" } : {}),
-      ...(r.ascensore !== undefined ? { ascensore: r.ascensore } : {}),
-      ...(r.stato ? { stato: r.stato } : {}), ...(r.classe ? { classe: r.classe } : {}),
-      /* i metri delle pertinenze solo se l'annuncio li scrive: la presenza da sola non e' un numero;
-         un'assenza dichiarata azzera; il silenzio lascia com'era */
-      ...(r.mqBalconi ? { mqBalconi: r.mqBalconi } : r.presenze.balcone === "no" ? { mqBalconi: 0 } : {}),
-      ...(r.mqTerrazzi ? { mqTerrazzi: r.mqTerrazzi } : r.presenze.terrazzo === "no" ? { mqTerrazzi: 0 } : {}),
-      ...(r.presenze.cantina !== "?" ? { cantina: r.presenze.cantina === "si" } : {}),
-      ...(r.box ? { box: r.box } : {}),
-      prezzoRichiesto: r.prezzo ?? null,
-    });
+    const a = applicaLettura(i, r, modo);
+    setI(a.input);
     setLetto(r);
-    setAvvisiAnnuncio(r.avvisi);
-    setBoxSeparato(r.boxSeparato ? { prezzo: r.boxSeparato.prezzo, incluso: false } : null);
-    if (!r.indirizzo) { setAnnuncioNota("Ho letto i dati della casa ma non l'indirizzo: cercalo qui sopra e i dati restano."); return; }
+    setAvvisiAnnuncio(a.avvisi);
+    setDaConfermare(a.daConfermare);
+    setModifiche(modo === "aggiorna" ? a.modifiche : null);
+    setAnnuncioNota(null);
+    setAvviso(null);
+    /* una nuova valutazione va salvata: quella di prima riguardava altri dati */
+    setSalvata(false);
+    setEsito(null);
+    if (modo === "nuovo") {
+      /* un altro immobile: niente di quello di prima sopravvive, nemmeno indirizzo, avvisi e scelte sui lavori */
+      setIndirizzo(""); setFonte("dizionario"); setQIniziale("");
+      setLavori(LAVORI_INIZIALI); setPrimaCasa(true);
+    }
+    if (!r.indirizzo) {
+      if (modo === "aggiorna" && i.zona) { setVista("casa"); return; }
+      setAnnuncioNota("Ho letto i dati della casa ma non l'indirizzo: cercalo qui sopra e i dati restano.");
+      return;
+    }
     try {
       const g = await fetch(`/api/geocode?q=${encodeURIComponent(r.indirizzo)}`).then((x) => x.json());
       const c = g?.candidati?.[0];
@@ -184,6 +199,26 @@ function Valuta() {
     setQIniziale(r.indirizzo);
     setAnnuncioNota(`Ho letto «${r.indirizzo}» ma non l'ho trovato in anagrafe: correggilo qui sopra e i dati restano.`);
   }
+
+  /* I bottoni del testo incollato: uno solo se il modulo e' vuoto, due se c'e' gia' una casa. */
+  const bottoniLettura = (
+    <div className="v-actions">
+      {haImmobile ? (
+        <>
+          <button className="v-btn" disabled={testoAnnuncio.trim().length < 20} onClick={() => leggiTesto("nuovo")}>Importa un nuovo immobile</button>
+          <button className="v-btn v-btn--quiet" disabled={testoAnnuncio.trim().length < 20} onClick={() => leggiTesto("aggiorna")}>Aggiorna questo immobile</button>
+        </>
+      ) : (
+        <button className="v-btn" disabled={testoAnnuncio.trim().length < 20} onClick={() => leggiTesto("nuovo")}>Leggi l&apos;annuncio</button>
+      )}
+    </div>
+  );
+  const notaLettura = haImmobile ? (
+    <p className="v-small">
+      <b>Nuovo immobile</b>: il modulo riparte da zero e ciò che il testo non dice resta da confermare.
+      <b> Aggiorna</b>: cambia solo ciò che il testo dichiara, e ti mostro cosa è cambiato.
+    </p>
+  ) : null;
 
   /* La stima passa dalla rotta: e' il contratto pubblico del motore. I prospetti di
      ristrutturazione si calcolano nel browser, perche' cambiano a ogni scelta. */
@@ -210,7 +245,8 @@ function Valuta() {
 
   /* Una sola frase di mercato, costruita sui numeri gia' calcolati. */
   const insight = useMemo(() => {
-    if (!esito || !i.zona) return null;
+    /* in una simulazione di piano non si giudica la posizione nella zona: il piano vero non e' quotato */
+    if (!esito || !i.zona || esito.stima.simulazione) return null;
     const s = scala(i.zona, i.tipo);
     const mediana = s.mediaN * INDICE_ISTAT;
     const scarto = (esito.stima.euroMq - mediana) / mediana;
@@ -230,17 +266,24 @@ function Valuta() {
     mqBalconi: (i.mqBalconi ?? 0) < 0 ? "I metri dei balconi non possono essere negativi." : null,
     mqTerrazzi: (i.mqTerrazzi ?? 0) < 0 ? "I metri dei terrazzi non possono essere negativi." : null,
     prezzo: (i.prezzoRichiesto ?? 0) < 0 ? "Il prezzo non può essere negativo." : null,
+    prezzoBox: (i.boxSeparato?.prezzo ?? 0) < 0 ? "Il prezzo del box non può essere negativo." : null,
   };
   const erroriAttivi = Object.values(errori).filter(Boolean) as string[];
 
-  /* Il box a parte entra nella valutazione e nel prezzo confrontato insieme, o in nessuno dei due. */
+  /* Il box a parte entra nella valutazione o no. Il suo prezzo resta nel suo campo: non si
+     somma mai a quello dell'abitazione, e' il confronto a decidere cosa mettere contro cosa. */
   function includiBox(incluso: boolean) {
     if (!boxSeparato) return;
-    const prezzoBox = boxSeparato.prezzo || 0;
-    const baseRichiesto = (i.prezzoRichiesto || 0) - (boxSeparato.incluso ? prezzoBox : 0);
-    set({ box: incluso ? "box" : "nessuno", prezzoRichiesto: baseRichiesto ? baseRichiesto + (incluso ? prezzoBox : 0) : null });
-    setBoxSeparato({ ...boxSeparato, incluso });
+    set({ box: incluso ? "box" : "nessuno", boxSeparato: { ...boxSeparato, incluso } });
+    tocca("box");
   }
+  /* Il piano dal menu: uno quotato, oppure uno che il modello non quota, che resta scritto. */
+  function scegliPiano(v: string) {
+    tocca("piano");
+    if ((PIANI_NON_QUOTATI as readonly string[]).includes(v)) set({ pianoDichiarato: v as PianoNonQuotato, piano: "terra", simulazionePiano: false });
+    else set({ piano: v as Input["piano"], pianoDichiarato: null, simulazionePiano: false });
+  }
+  const pianoBloccato = !!i.pianoDichiarato && !i.simulazionePiano;
 
   /* Il bottone per cambiare intento, sempre a portata: cambia le parole, non i dati. */
   const switchIntento = intento && (
@@ -304,9 +347,8 @@ function Valuta() {
                   <textarea className="v-input v-textarea" rows={6} value={testoAnnuncio}
                             onChange={(e) => setTestoAnnuncio(e.target.value)}
                             placeholder="Trilocale in via Savona 35, 85 m², 2° piano con ascensore, buono stato, classe D, balcone 6 m², € 450.000…" />
-                  <div className="v-actions">
-                    <button className="v-btn" disabled={testoAnnuncio.trim().length < 20} onClick={leggiTesto}>Leggi l&apos;annuncio</button>
-                  </div>
+                  {bottoniLettura}
+                  {notaLettura}
                   <p className="v-small">
                     Lo leggiamo qui nel tuo browser, non lo inviamo a nessuno. I link non li apriamo: i portali non permettono la lettura automatica.
                   </p>
@@ -326,9 +368,8 @@ function Valuta() {
                     </p>
                     <textarea className="v-input v-textarea" rows={6} value={testoAnnuncio}
                               onChange={(e) => setTestoAnnuncio(e.target.value)} />
-                    <div className="v-actions">
-                      <button className="v-btn" disabled={testoAnnuncio.trim().length < 20} onClick={leggiTesto}>Leggi l&apos;annuncio</button>
-                    </div>
+                    {bottoniLettura}
+                    {notaLettura}
                     {annuncioNota && <p className="v-note">{annuncioNota}</p>}
                   </div>
                 </details>
@@ -391,6 +432,16 @@ function Valuta() {
                       : letto.terrazzo && !letto.mqTerrazzi
                       ? " I metri del terrazzo non erano scritti: se li conosci e non sono già nella superficie, inseriscili qui sotto."
                       : ""}
+                    {daConfermare.length > 0 && (
+                      <> <b>Non dice</b>: {daConfermare.map((c) => NOME_CAMPO[c]).join(", ")}. Nel modulo stanno ai valori
+                      predefiniti, che non sono dati della casa: confermali o correggili, sono segnati uno per uno.</>
+                    )}
+                  </p>
+                )}
+                {modifiche !== null && (
+                  <p className="v-note" style={{ marginTop: "var(--s-3)" }}>
+                    <b>Immobile aggiornato.</b>{" "}
+                    {modifiche.length ? <>Cambiano: {modifiche.join("; ")}. Il resto è rimasto com&apos;era.</> : "Il testo non cambia nessun dato: il modulo è rimasto com'era."}
                   </p>
                 )}
               </div>
@@ -401,7 +452,7 @@ function Valuta() {
                   <div className="v-row2">
                     <input className={"v-input" + (errori.mq ? " v-input--errore" : "")} type="number" inputMode="numeric" min={0} placeholder="93"
                            aria-invalid={!!errori.mq}
-                           value={i.mq || ""} onChange={(e) => set({ mq: numero(e.target.value) })} />
+                           value={i.mq || ""} onChange={(e) => { tocca("mq"); set({ mq: numero(e.target.value) }); }} />
                     <select className="v-select" value={i.superficie || "commerciale"}
                             onChange={(e) => set({ superficie: e.target.value as Input["superficie"] })}>
                       <option value="commerciale">metri commerciali</option>
@@ -409,6 +460,7 @@ function Valuta() {
                     </select>
                   </div>
                   {errori.mq && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.mq}</span>}
+                  {conferma("mq")}
                   <span className="v-field__hint">
                     {i.superficie === "calpestabile"
                       ? "La calpestabile è la superficie interna, senza muri. L'OMI ragiona in commerciale, muri compresi: aggiungiamo il 12%, che è una media, e le pertinenze qui sotto."
@@ -420,9 +472,10 @@ function Valuta() {
                   <label className="v-toggle">
                     <span>Balconi, terrazzi e cantina sono già compresi in questi metri<small>Negli annunci quasi sempre sì. Se togli la spunta, li aggiungiamo noi dai campi qui sotto.</small></span>
                     <input type="checkbox" checked={i.pertinenzeIncluse !== false}
-                           onChange={(e) => set({ pertinenzeIncluse: e.target.checked })} />
+                           onChange={(e) => { tocca("pertinenze"); set({ pertinenzeIncluse: e.target.checked }); }} />
                   </label>
                 )}
+                {conferma("pertinenze")}
 
                 {pertinenzeDaChiedere && (
                   <>
@@ -431,7 +484,7 @@ function Valuta() {
                         <span className="v-field__lbl">Balconi, m²</span>
                         <input className={"v-input" + (errori.mqBalconi ? " v-input--errore" : "")} type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
                                aria-invalid={!!errori.mqBalconi}
-                               value={i.mqBalconi || ""} onChange={(e) => set({ mqBalconi: numero(e.target.value) })} />
+                               value={i.mqBalconi || ""} onChange={(e) => { tocca("pertinenze"); set({ mqBalconi: numero(e.target.value) }); }} />
                         {errori.mqBalconi && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.mqBalconi}</span>}
                         <span className="v-field__hint">Sporgono dalla facciata, di solito stretti: si sta in piedi, non a tavola.</span>
                       </label>
@@ -439,7 +492,7 @@ function Valuta() {
                         <span className="v-field__lbl">Terrazzi, m²</span>
                         <input className={"v-input" + (errori.mqTerrazzi ? " v-input--errore" : "")} type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
                                aria-invalid={!!errori.mqTerrazzi}
-                               value={i.mqTerrazzi || ""} onChange={(e) => set({ mqTerrazzi: numero(e.target.value) })} />
+                               value={i.mqTerrazzi || ""} onChange={(e) => { tocca("pertinenze"); set({ mqTerrazzi: numero(e.target.value) }); }} />
                         {errori.mqTerrazzi && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.mqTerrazzi}</span>}
                         <span className="v-field__hint">Sopra un altro locale o in arretramento, abbastanza larghi da viverci.</span>
                       </label>
@@ -450,7 +503,7 @@ function Valuta() {
                     </p>
                     <label className="v-toggle">
                       <span>Cantina o soffitta<small>Aggiunge 2,5 m² commerciali: il 25% di una cantina da 10 m², come nel DPR 138/1998</small></span>
-                      <input type="checkbox" checked={!!i.cantina} onChange={(e) => set({ cantina: e.target.checked })} />
+                      <input type="checkbox" checked={!!i.cantina} onChange={(e) => { tocca("pertinenze"); set({ cantina: e.target.checked }); }} />
                     </label>
                   </>
                 )}
@@ -460,43 +513,58 @@ function Valuta() {
                   <div className="v-choices">
                     {STATI.map((s) => (
                       <button key={s.id} className="v-choice" aria-pressed={i.stato === s.id}
-                              onClick={() => set({ stato: s.id })}>
+                              onClick={() => { tocca("stato"); set({ stato: s.id }); }}>
                         <b>{s.t}</b><small>{s.d}</small>
                       </button>
                     ))}
                   </div>
+                  {conferma("stato")}
                 </div>
 
                 <div className="v-row2">
                   <label className="v-field">
                     <span className="v-field__lbl">Piano</span>
-                    <select className="v-select" value={i.piano}
-                            onChange={(e) => set({ piano: e.target.value as Input["piano"] })}>
+                    <select className={"v-select" + (pianoBloccato ? " v-input--errore" : "")} value={i.pianoDichiarato ?? i.piano}
+                            aria-invalid={pianoBloccato}
+                            onChange={(e) => scegliPiano(e.target.value)}>
                       {PIANI.map((p) => <option key={p} value={p}>{p}</option>)}
+                      <optgroup label="Non quotati dal modello">
+                        {PIANI_NON_QUOTATI.map((p) => <option key={p} value={p}>{p}</option>)}
+                      </optgroup>
                     </select>
-                    {letto?.pianoNonSupportato && (
-                      <span className="v-field__hint v-field__hint--errore">
-                        L&apos;annuncio dice «{letto.pianoNonSupportato}»: il modello non lo quota e qui è impostato «terra», che vale di più.
-                        La stima va letta come un tetto, non come un valore.
-                      </span>
-                    )}
+                    {conferma("piano")}
                   </label>
                   <label className="v-field">
                     <span className="v-field__lbl">Classe energetica</span>
                     <select className="v-select" value={i.classe}
-                            onChange={(e) => set({ classe: e.target.value as Input["classe"] })}>
+                            onChange={(e) => { tocca("classe"); set({ classe: e.target.value as Input["classe"] }); }}>
                       <option value="nd">Non la conosco</option>
                       {CLASSI.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                     {i.classe === "nd" && <span className="v-field__hint">Senza classe la stima non applica nessun aggiustamento, e lo scrive nel dettaglio. Una classe vera la sposta fino al ±10%.</span>}
+                    {conferma("classe")}
                   </label>
                 </div>
+
+                {i.pianoDichiarato && (
+                  <div className={"v-note" + (pianoBloccato ? " v-note--errore" : "")} role={pianoBloccato ? "alert" : undefined}>
+                    <p style={{ margin: 0 }}>
+                      <b>Piano {i.pianoDichiarato}: non è disponibile una valutazione attendibile.</b> Le quotazioni OMI partono dal
+                      piano terra e il motore non ha un coefficiente per questo piano. Il piano dichiarato resta scritto qui e nella stima salvata.
+                    </p>
+                    <label className="v-toggle" style={{ marginTop: "var(--s-3)" }}>
+                      <span>Simulazione che ipotizza un piano terra<small>Uno scenario, non una valutazione del {i.pianoDichiarato}: il piano terra vale di più, ma di quanto il modello non lo sa. Il risultato lo dice in ogni pagina e non giudica se il prezzo è caro o conveniente.</small></span>
+                      <input type="checkbox" checked={!!i.simulazionePiano} onChange={(e) => set({ simulazionePiano: e.target.checked })} />
+                    </label>
+                  </div>
+                )}
 
                 <label className="v-toggle">
                   <span>Ascensore<small>Dal terzo piano in su pesa molto</small></span>
                   <input type="checkbox" checked={i.ascensore}
-                         onChange={(e) => set({ ascensore: e.target.checked })} />
+                         onChange={(e) => { tocca("ascensore"); set({ ascensore: e.target.checked }); }} />
                 </label>
+                {conferma("ascensore")}
 
                 {/* La categoria catastale decide la tipologia OMI, che in centro vale un
                     quinto del prezzo. Sta sulla visura e sul rogito: chi possiede la casa
@@ -550,21 +618,39 @@ function Valuta() {
                 {!pertinenzeDaChiedere && (
                   <label className="v-toggle">
                     <span>Cantina o soffitta<small>Se è già dentro i metri commerciali non la contiamo di nuovo: qui serve solo alla descrizione</small></span>
-                    <input type="checkbox" checked={!!i.cantina} onChange={(e) => set({ cantina: e.target.checked })} />
+                    <input type="checkbox" checked={!!i.cantina} onChange={(e) => { tocca("pertinenze"); set({ cantina: e.target.checked }); }} />
                   </label>
                 )}
 
                 {boxSeparato && (
-                  <label className="v-toggle">
-                    <span>
-                      L&apos;annuncio offre un box a parte{boxSeparato.prezzo ? `, a ${eur(boxSeparato.prezzo)} €` : ", senza dirne il prezzo"}: includilo nella valutazione
-                      <small>
-                        Se lo includi, il box entra nel valore stimato e{boxSeparato.prezzo ? " il suo prezzo si somma a quello confrontato" : " il prezzo confrontato resta quello dell'abitazione, perché il suo non è scritto"}.
-                        Se non lo includi, valutiamo la sola abitazione, come il prezzo dell&apos;annuncio.
-                      </small>
-                    </span>
-                    <input type="checkbox" checked={boxSeparato.incluso} onChange={(e) => includiBox(e.target.checked)} />
-                  </label>
+                  <>
+                    <label className="v-toggle">
+                      <span>
+                        L&apos;annuncio offre un box a parte{boxSeparato.prezzo ? `, a ${eur(boxSeparato.prezzo)} €` : ", senza dirne il prezzo"}: includilo nella valutazione
+                        <small>
+                          Se lo includi, il box entra nel valore stimato con il suo valore, tenuto separato da quello dell&apos;abitazione.
+                          Il prezzo dell&apos;abitazione e quello del box restano due cifre distinte: il confronto mette ciascuna contro il proprio valore.
+                          Se non lo includi, valutiamo la sola abitazione, come il prezzo dell&apos;annuncio.
+                        </small>
+                      </span>
+                      <input type="checkbox" checked={boxSeparato.incluso} onChange={(e) => includiBox(e.target.checked)} />
+                    </label>
+                    {boxSeparato.incluso && (
+                      <label className="v-field">
+                        <span className="v-field__lbl">Prezzo richiesto per il box</span>
+                        <input className={"v-input" + (errori.prezzoBox ? " v-input--errore" : "")} type="number" inputMode="numeric" min={0} placeholder="—"
+                               aria-invalid={!!errori.prezzoBox}
+                               value={boxSeparato.prezzo || ""}
+                               onChange={(e) => set({ boxSeparato: { ...boxSeparato, prezzo: e.target.value === "" ? null : numero(e.target.value) } })} />
+                        {errori.prezzoBox && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.prezzoBox}</span>}
+                        <span className="v-field__hint">
+                          {boxSeparato.prezzo
+                            ? "Letto dall'annuncio o inserito da te: con questo il confronto vale anche sul totale abitazione più box."
+                            : "L'annuncio non lo scrive. Senza, il confronto è sulla sola abitazione e il totale resta non confrontabile: il valore stimato del box non fa da prezzo."}
+                        </span>
+                      </label>
+                    )}
+                  </>
                 )}
                 <div className="v-field">
                   <span className="v-field__lbl">
@@ -573,22 +659,23 @@ function Valuta() {
                   <div className="v-choices v-choices--4">
                     {([["nessuno", "Nessuno"], ["posto", "Posto auto"], ["box", "Box"]] as const).map(([id, t]) => (
                       <button key={id} className="v-choice" aria-pressed={i.box === id}
-                              onClick={() => set({ box: id })}>
+                              onClick={() => { tocca("box"); set({ box: id, ...(boxSeparato ? { boxSeparato: { ...boxSeparato, incluso: id === "box" } } : {}) }); }}>
                         <b>{t}</b>
                       </button>
                     ))}
                   </div>
+                  {conferma("box")}
                 </div>
 
                 <div className="v-field">
-                  <span className="v-field__lbl">{T.prezzo}</span>
+                  <span className="v-field__lbl">{T.prezzo}{boxSeparato?.incluso ? " · solo abitazione" : ""}</span>
                   <input className={"v-input" + (errori.prezzo ? " v-input--errore" : "")} type="number" inputMode="numeric" min={0} placeholder="450000"
                          aria-invalid={!!errori.prezzo}
                          value={i.prezzoRichiesto || ""} onChange={(e) => set({ prezzoRichiesto: numero(e.target.value) || null })} />
                   {errori.prezzo && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.prezzo}</span>}
                   <span className="v-field__hint">
                     {T.prezzoHint}
-                    {boxSeparato?.incluso && boxSeparato.prezzo ? ` Comprende il box a parte (${eur(boxSeparato.prezzo)} €), perché lo hai incluso nella valutazione.` : ""}
+                    {boxSeparato?.incluso ? " Il prezzo del box sta nel suo campo, qui sopra: questo è solo quello dell'abitazione, non li sommiamo." : ""}
                   </span>
                 </div>
 
@@ -598,6 +685,7 @@ function Valuta() {
               <div className="v-actions">
                 <button className="v-btn v-btn--accent v-btn--lg"
                         onClick={() => erroriAttivi.length ? setAvviso(`Correggi prima: ${erroriAttivi.join(" ")}`)
+                                     : pianoBloccato ? setAvviso(PIANO_NON_VALUTABILE(i.pianoDichiarato!))
                                      : i.mq > 0 ? (setAvviso(null), setVista("calcolo"))
                                      : setAvviso("Manca la superficie: senza metri quadri non c'è stima.")}>
                   Valuta
@@ -615,6 +703,7 @@ function Valuta() {
             indirizzo={indirizzo} insight={insight} intento={intento}
             switchIntento={switchIntento}
             primaCasa={primaCasa} onPrimaCasa={setPrimaCasa}
+            lavori={lavori} onLavori={setLavori}
             onModifica={() => setVista("casa")}
           />
         )}
@@ -634,11 +723,12 @@ function Valuta() {
 
 function Risultato({
   stima, input, zonaDesc, indirizzo, insight, intento, switchIntento,
-  primaCasa, onPrimaCasa, onModifica,
+  primaCasa, onPrimaCasa, lavori, onLavori, onModifica,
 }: {
   stima: Stima; input: Input; zonaDesc: string;
   indirizzo: string; insight: React.ReactNode; intento: Intento; switchIntento: React.ReactNode;
   primaCasa: boolean; onPrimaCasa: (v: boolean) => void;
+  lavori: SceltaLavori; onLavori: (v: SceltaLavori) => void;
   onModifica: () => void;
 }) {
   const tacche = stima.affidabilita === "Alta" ? 3 : stima.affidabilita === "Media" ? 2 : 1;
@@ -649,21 +739,34 @@ function Risultato({
   let capitolo = 1;
   const cap = () => String(++capitolo).padStart(2, "0");
   const mostraConfronto = intento === "vendo" || !!input.prezzoRichiesto;
+  const simulazione = stima.simulazione;
+  const boxAParte = !!input.boxSeparato?.incluso && stima.valoreBox > 0;
 
   return (
     <>
       {/* 01 — quanto vale */}
       <section className="v-wrap v-result__hero">
-        <p className="v-eyebrow">{indirizzo}</p>
+        <p className="v-eyebrow">{indirizzo}{simulazione ? " · simulazione che ipotizza un piano terra" : ""}</p>
         <p className="v-value">
           <span className="v-value__cur">€</span><NumeroAnimato valore={stima.centro} durata={1100} />
         </p>
         <p className="v-value__span">
-          Intervallo realistico {eur(stima.min)} – {eur(stima.max)} €
+          {simulazione ? "Intervallo della simulazione" : "Intervallo realistico"} {eur(stima.min)} – {eur(stima.max)} €
         </p>
+        {boxAParte && (
+          <p className="v-small" style={{ marginTop: "var(--s-2)" }}>
+            Di cui abitazione <b>{eur(stima.abitazione.centro)} €</b> ({eur(stima.abitazione.min)} – {eur(stima.abitazione.max)} €)
+            e box venduto a parte <b>{eur(stima.valoreBox)} €</b>: due valori distinti, sommati qui sopra.
+          </p>
+        )}
         <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
           Zona OMI <b>{input.zona}</b> · {zonaDesc} · quotazioni {stima.semestre}
         </p>
+        {simulazione && (
+          <p className="v-note v-note--errore" role="note" style={{ marginTop: "var(--s-4)" }}>
+            <b>Non è una valutazione del {simulazione.pianoDichiarato}.</b> {simulazione.testo} Il piano dichiarato è salvato con la stima.
+          </p>
+        )}
         <div style={{ marginTop: "var(--s-4)" }}>{switchIntento}</div>
 
         <dl className="v-facts">
@@ -682,7 +785,7 @@ function Risultato({
                 <span className="v-conf__bars" aria-hidden="true">
                   {[1, 2, 3].map((n) => <i key={n} className={n <= tacche ? "on" : ""} />)}
                 </span>
-                <span className="v-conf__lbl">{stima.affidabilita} · ± {num(stima.sigma * 100, 1)}%</span>
+                <span className="v-conf__lbl">{simulazione ? "Simulazione" : stima.affidabilita} · ± {num(stima.sigma * 100, 1)}%</span>
               </span>
             </dd>
           </div>
@@ -700,7 +803,7 @@ function Risultato({
               <span className="v-numeral">{cap()}</span>
               <h2 className="v-h2">{T.confronto}</h2>
             </div>
-            <AskingPrice richiesto={input.prezzoRichiesto ?? null} stima={stima} intento={intento} />
+            <AskingPrice input={input} stima={stima} intento={intento} />
           </Reveal>
         </section>
       )}
@@ -731,7 +834,7 @@ function Risultato({
             Tre pacchetti per partire, poi ogni intervento si tiene, si toglie, si segna come già fatto o si sostituisce
             con un preventivo. Il valore atteso dipende dai lavori che restano, non dal nome del pacchetto.
           </p>
-          <RenovationSelector input={input} stima={stima} primaCasa={primaCasa} onPrimaCasa={onPrimaCasa} intento={intento} />
+          <RenovationSelector input={input} stima={stima} primaCasa={primaCasa} onPrimaCasa={onPrimaCasa} intento={intento} lavori={lavori} onLavori={onLavori} />
         </Reveal>
       </section>
 
@@ -826,6 +929,20 @@ function Risultato({
               richiesti non sono prezzi di compravendita: la taratura dice quanto le stime somigliano a ciò che i venditori chiedono,
               non quanto a ciò che gli acquirenti pagano. Il metodo per esteso è in <code>docs/taratura.md</code>.
             </p>
+            {simulazione && (
+              <p className="v-small v-measure">
+                <b>Simulazione.</b> Il piano dichiarato è «{simulazione.pianoDichiarato}», che il modello non quota. Tutti i numeri di questa
+                pagina — valore, lavori, affitti — ipotizzano un piano terra su richiesta esplicita e non valgono per il piano vero;
+                non sono un tetto e non danno un giudizio sul prezzo. La stima è salvata con questa avvertenza.
+              </p>
+            )}
+            {boxAParte && (
+              <p className="v-small v-measure">
+                <b>Box a parte.</b> L&apos;annuncio vende il box separatamente e lo hai incluso: il suo valore ({eur(stima.valoreBox)} €) è tenuto
+                distinto da quello dell&apos;abitazione, e il prezzo richiesto dell&apos;abitazione non viene mai sommato al valore del box.
+                Il confronto sul totale c&apos;è solo se anche il prezzo del box è noto.
+              </p>
+            )}
             <p className="v-small v-measure">
               <b>Prezzi.</b> Il prezzo richiesto è un&apos;intenzione, non un valore. Il prezzo di pubblicazione possibile è il valore
               centrale più il 6%, una convenzione del motore che la taratura ha allineato in mediana ai prezzi richiesti degli
@@ -844,7 +961,8 @@ function Risultato({
             </p>
           </div>
           <p className="v-disclaimer" style={{ marginTop: "var(--s-6)" }}>
-            Stima automatica indicativa. Non costituisce perizia né valutazione ai sensi degli standard estimativi. Fonte: {stima.fonte}.
+            Stima automatica indicativa{simulazione ? `, qui come simulazione che ipotizza un piano terra al posto del ${simulazione.pianoDichiarato} dichiarato` : ""}.
+            Non costituisce perizia né valutazione ai sensi degli standard estimativi. Fonte: {stima.fonte}.
           </p>
         </Reveal>
       </section>

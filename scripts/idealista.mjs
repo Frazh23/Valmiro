@@ -2,8 +2,12 @@
  * Annunci di Milano dall'API ufficiale di Idealista, nel formato di
  * data/annunci/.
  *
- *   npm run idealista            → data/annunci/AAAA-MM-GG-idealista.csv
- *   npm run calibra data/annunci/AAAA-MM-GG-idealista.csv   (solo quel lotto: test fuori campione)
+ *   npm run idealista                → data/annunci/AAAA-MM-GG-idealista.csv          (lotto di taratura)
+ *   npm run idealista -- --verifica  → data/annunci/AAAA-MM-GG-idealista-verifica.csv (lotto di verifica)
+ *
+ * Il ruolo lo decide il nome, una volta per sempre (docs/verifica.md): un lotto di
+ * verifica si misura con `npm run verifica` dopo aver congelato il modello, e non si
+ * usa mai per tarare. Prima di scaricarlo: npm run verifica -- --congela.
  *
  * Serve una chiave: ci si registra su https://developers.idealista.com, si
  * ottengono apikey e secret e si mettono in .env.local come
@@ -128,8 +132,9 @@ for (const [nome, centro] of Object.entries(CENTRI)) {
   console.log(`${nome}: ${lista.length} annunci ricevuti`);
 }
 
-const out = join(RADICE, `data/annunci/${oggi}-idealista.csv`);
+const RUOLO = process.argv.includes("--verifica") ? "-verifica" : "";
+const out = join(RADICE, `data/annunci/${oggi}-idealista${RUOLO}.csv`);
 writeFileSync(out, righe.join("\n"));
 console.log(`\n${righe.length - 1} annunci di Milano scritti in ${out} (${fuori} fuori Milano o senza zona OMI, scartati)`);
 console.log("Rileggili prima di usarli: lo stato 'abit'/'otti' e' dedotto dal testo, il tipo e' sempre 'civ'.");
-console.log(`Poi: npm run calibra ${out.replace(RADICE + "/", "")}`);
+console.log(RUOLO ? "Poi: npm run verifica  (misura soltanto; il modello deve essere gia' congelato)" : `Poi: npm run calibra ${out.replace(RADICE + "/", "")}`);

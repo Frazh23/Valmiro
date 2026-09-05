@@ -1,0 +1,76 @@
+{
+  "data": "2026-09-05",
+  "commit": "f253a2e",
+  "hash": "2e277588b1b626a5",
+  "PARAMETRI": {
+    "compressioneStato": {
+      "B": 0.45,
+      "C": 0.45,
+      "D": 0.7,
+      "E": 0.7,
+      "R": 0.7
+    },
+    "livello": {
+      "B": 1.02,
+      "C": 1.05,
+      "D": 1,
+      "E": 1,
+      "R": 1
+    },
+    "scontoRist": 0.95,
+    "incertezzaSig": 0.07
+  },
+  "COEFF": {
+    "piano": {
+      "terra": 0.92,
+      "rialzato": 0.95,
+      "1-2": 1,
+      "3-5": 1.03,
+      "6+": 1.06,
+      "ultimo": 1.08
+    },
+    "classe": {
+      "A": 1.1,
+      "B": 1.06,
+      "C": 1.02,
+      "D": 1,
+      "E": 0.98,
+      "F": 0.95,
+      "G": 0.91
+    },
+    "luce": {
+      "scarsa": 0.96,
+      "media": 1,
+      "ottima": 1.04
+    },
+    "epoca": {
+      "ante1945": 1.04,
+      "1946-1980": 0.96,
+      "1981-2005": 1,
+      "post2005": 1.05
+    },
+    "affaccio": {
+      "interno": 1.03,
+      "misto": 1,
+      "strada": 0.95
+    },
+    "metro": {
+      "vicina": 1.05,
+      "media": 1,
+      "lontana": 0.95
+    },
+    "senzaAscensoreAlto": 0.88,
+    "senzaAscensoreBasso": 0.97,
+    "pertinenzeQuota1": 0.3,
+    "pertinenzeSoglia": 25,
+    "pertinenzeQuota2": 0.1,
+    "muri": 1.12,
+    "cantinaMq": 2.5,
+    "boxMq": 15,
+    "postoAutoSuBox": 0.55,
+    "margineTrattativa": 0.06
+  },
+  "COMPRESSIONE_STATO": 0.7,
+  "SEMESTRE": "2025 · 2° semestre",
+  "INDICE_ISTAT": 1.015
+}

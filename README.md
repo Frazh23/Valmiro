@@ -61,7 +61,10 @@ tests/*.test.mjs                 invarianti sui dati: quotazioni, geometrie, ind
    reali**: 0,45 in centro e semicentro (B, C), 0,70 in periferia (D, E), livello +5% in B/C,
    sconto "da ristrutturare" 0,95; con il 2025/2 livello B a 1,02. Vedi `PARAMETRI` in `engine.ts`,
    `data/annunci/` e **`docs/taratura.md`**: cosa misurano i numeri dichiarati (prezzi richiesti, non
-   compravendite) e perché manca ancora un campione di verifica indipendente.
+   compravendite) e perché manca ancora un campione di verifica indipendente. Il protocollo per
+   ottenerlo — lotti `-verifica` separati, duplicati tolti anche fra portali, modello congelato
+   prima di guardare i dati, nessun coefficiente scelto sulla verifica — è in **`docs/verifica.md`**
+   (`npm run verifica -- --congela`, poi `npm run verifica`).
 3. **Aggiornamento a oggi.** `INDICE_ISTAT` porta la base, che esce con mesi di ritardo,
    al trimestre corrente. Va aggiornato ogni trimestre dai dati Istat.
 3b. **Classe energetica sconosciuta.** «Non la conosco» è un'opzione vera: nessun
@@ -93,6 +96,25 @@ convenzione del motore che la taratura ha allineato in mediana ai **prezzi richi
 annunci (non a prezzi di compravendita), presentata come comportamento dei venditori e non
 come consiglio. Nessuna percentuale di trattativa è presentata come evidenza di mercato.
 L'intento si cambia in ogni passo senza perdere i dati e resta nella stima salvata.
+
+**Nuovo immobile o stesso immobile.** Con una casa già nel modulo, un testo incollato si
+importa con due bottoni distinti: «Importa un nuovo immobile» riparte da zero (caratteristiche,
+pertinenze, box a parte, prezzi, avvisi, scelte sui lavori) e segna campo per campo ciò che il
+testo non dichiara come *da confermare*; «Aggiorna questo immobile» cambia solo ciò che il
+testo dichiara ed elenca le modifiche. L'indirizzo non decide: due case allo stesso civico sono
+due case. Logica pura in `src/lib/modulo.ts`, testata.
+
+**Box venduto a parte.** Prezzo dell'abitazione e prezzo del box restano due cifre; il valore
+del box è separato da quello dell'abitazione (`Stima.valoreBox`, `Stima.abitazione`). Il
+confronto (`src/lib/confronto.ts`) mette ciascuna componente contro il proprio valore: senza
+il prezzo del box si giudica la sola abitazione e il totale è dichiarato non confrontabile; il
+valore stimato del box non fa mai da prezzo. Vale per i due percorsi e per le stime salvate.
+
+**Piano non quotato (seminterrato, interrato).** Il piano dichiarato resta scritto
+(`Input.pianoDichiarato`) e il motore rifiuta di stimare: non c'è una valutazione attendibile,
+e nessun «tetto». Chi vuole può chiedere in modo esplicito una *simulazione che ipotizza un
+piano terra* (`Input.simulazionePiano`): il risultato porta `Stima.simulazione`, lo dice in
+ogni capitolo e nelle stime salvate, e non esprime giudizi caro/conveniente né offerte.
 
 ## Ristrutturazione intervento per intervento
 
@@ -192,6 +214,8 @@ Il livello visuale vive in tre posti e in nessun altro:
 - `docs/design-system.md` — il linguaggio visuale.
 - `docs/v0-brief.md` — il brief da incollare in v0 a ogni iterazione.
 - `docs/workflow.md` — il ciclo Claude ↔ v0 ↔ GitHub ↔ Vercel, i rami, la lista di revisione.
+- `docs/taratura.md` — come sono stati ottenuti i numeri dichiarati, e cosa misurano.
+- `docs/verifica.md` — il protocollo per un campione di verifica indipendente; i rapporti finiscono in `docs/verifiche/`.
 
 ## Comandi
 
@@ -200,4 +224,7 @@ npm run dev        # sviluppo
 npm run typecheck  # tsc --noEmit
 npm test           # test del motore
 npm run build      # build di produzione
+npm run calibra    # taratura sui lotti di taratura (propone, non scrive)
+npm run verifica -- --congela   # fissa il modello prima di guardare un lotto di verifica
+npm run verifica   # misura sui soli lotti «-verifica», scrive docs/verifiche/AAAA-MM-GG.md
 ```

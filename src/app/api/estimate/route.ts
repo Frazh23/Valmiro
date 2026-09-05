@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stima } from "@/lib/engine";
+import { stima, PIANO_NON_VALUTABILE } from "@/lib/engine";
 import { prospettoRistrutturazione } from "@/lib/ristrutturazione";
 import { ZONE } from "@/lib/data";
 import type { Input } from "@/lib/types";
@@ -26,6 +26,10 @@ export async function POST(req: Request) {
     const v = i[campo];
     if (v !== undefined && v !== null && Number(v) < 0) return NextResponse.json({ errore: `${campo} non puo' essere negativo` }, { status: 400 });
   }
+  if (i.boxSeparato?.prezzo != null && Number(i.boxSeparato.prezzo) < 0) return NextResponse.json({ errore: "il prezzo del box non puo' essere negativo" }, { status: 400 });
+  /* Un piano non quotato senza richiesta di simulazione: il motore rifiuta, e la risposta lo dice
+     con le sue parole (422: la richiesta e' ben formata, ma non c'e' una valutazione da dare). */
+  if (i.pianoDichiarato && !i.simulazionePiano) return NextResponse.json({ errore: PIANO_NON_VALUTABILE(i.pianoDichiarato) }, { status: 422 });
 
   try {
     const risultato = stima({ ...i, mq: Number(i.mq) });

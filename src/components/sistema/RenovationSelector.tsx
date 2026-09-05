@@ -5,7 +5,7 @@ import BeforeAfter from "./BeforeAfter";
 import { eur, num, pct } from "@/lib/formato";
 import {
   PACCHETTI, prospettoRistrutturazione, scelteAlCambioPacchetto,
-  type Modo, type Pacchetto, type Prospetto, type Scelte,
+  type Modo, type Pacchetto, type Prospetto, type SceltaLavori, type Scelte,
 } from "@/lib/ristrutturazione";
 import type { Input, Intento, Stato, Stima } from "@/lib/types";
 
@@ -31,19 +31,27 @@ const MODI: { id: Modo; t: string }[] = [
  * margine non e' il protagonista, perche' e' il numero meno solido della pagina.
  */
 export default function RenovationSelector({
-  input, stima, primaCasa, onPrimaCasa, intento,
+  input, stima, primaCasa, onPrimaCasa, intento, lavori, onLavori,
 }: {
   input: Input;
   stima: Stima;
   primaCasa: boolean;
   onPrimaCasa: (v: boolean) => void;
   intento: Intento;
+  /** pacchetto e personalizzazioni: li tiene la pagina, perche' appartengono all'immobile
+      e devono azzerarsi quando l'immobile cambia, non quando il componente si rimonta */
+  lavori: SceltaLavori;
+  onLavori: (v: SceltaLavori) => void;
 }) {
-  const [scelto, setScelto] = useState<"attuale" | Pacchetto>("attuale");
-  const [scelte, setScelte] = useState<Scelte>({});
+  const { scelto, scelte } = lavori;
+  const setScelto = (v: "attuale" | Pacchetto) => onLavori({ ...lavori, scelto: v });
+  const setScelte = (f: Scelte | ((v: Scelte) => Scelte)) => onLavori({ ...lavori, scelte: typeof f === "function" ? f(lavori.scelte) : f });
   const [aperto, setAperto] = useState(false);
   const [avvisoCambio, setAvvisoCambio] = useState<string | null>(null);
-  const [prezzoAcquisto, setPrezzoAcquisto] = useState<number>(input.prezzoRichiesto || stima.centro);
+  /* il box a parte senza prezzo non entra nell'esborso: non c'e' una cifra, e il suo valore stimato non la sostituisce */
+  const boxSenzaPrezzo = !!input.boxSeparato?.incluso && !input.boxSeparato?.prezzo;
+  const prezzoBox = input.boxSeparato?.incluso ? input.boxSeparato.prezzo || 0 : 0;
+  const [prezzoAcquisto, setPrezzoAcquisto] = useState<number>((input.prezzoRichiesto || stima.abitazione?.centro || stima.centro) + prezzoBox);
 
   const p: Prospetto | null = useMemo(
     () => (scelto === "attuale" ? null : prospettoRistrutturazione(input, scelto, primaCasa, scelte)),
@@ -75,11 +83,13 @@ export default function RenovationSelector({
     if (id !== "attuale" && scelto !== "attuale" && id !== scelto && personalizzato) {
       const tenute = scelteAlCambioPacchetto(scelte);
       const perse = Object.keys(scelte).length - Object.keys(tenute).length;
-      setScelte(tenute);
+      onLavori({ scelto: id, scelte: tenute });
       setAvvisoCambio(
         `Cambiando pacchetto tengo ciò che riguarda la casa — «già fatto» e «non lo faccio» — ${perse ? `e azzero ${perse === 1 ? "il preventivo" : `${perse} preventivi`}, perché erano riferiti al pacchetto precedente` : "e non c'era altro da azzerare"}.`
       );
-    } else setAvvisoCambio(null);
+      return;
+    }
+    setAvvisoCambio(null);
     setScelto(id);
   }
   const setScelta = (id: string, s: Scelte[string]) => setScelte((v) => {
@@ -98,7 +108,7 @@ export default function RenovationSelector({
           ))}
         </div>
 
-        <p className="v-eyebrow">{p ? "Valore atteso dopo i lavori" : "Valore stimato oggi"}</p>
+        <p className="v-eyebrow">{p ? "Valore atteso dopo i lavori" : "Valore stimato oggi"}{stima.simulazione ? " · simulazione, piano terra ipotizzato" : ""}</p>
         <p className="v-reno__value" aria-live="polite"><NumeroAnimato valore={valore} /> €</p>
         {p && (
           <>
@@ -210,14 +220,15 @@ export default function RenovationSelector({
                   <input className="v-input" type="number" inputMode="numeric" min={0} value={prezzoAcquisto || ""}
                          onChange={(e) => setPrezzoAcquisto(Math.max(0, Number(e.target.value) || 0))} />
                   <span className="v-field__hint">
-                    {input.prezzoRichiesto ? `Parte dal prezzo richiesto, ${eur(input.prezzoRichiesto)} €: ` : "Parte dal valore stimato: "}
+                    {input.prezzoRichiesto ? `Parte dal prezzo richiesto, ${eur(input.prezzoRichiesto)} €${prezzoBox ? ` più il box a parte, ${eur(prezzoBox)} €` : ""}: ` : "Parte dal valore stimato: "}
                     metti quello che pensi di pagare, non è la stessa cosa.
+                    {boxSenzaPrezzo ? " Il box venduto a parte non è compreso: il suo prezzo non è scritto e il suo valore stimato non lo sostituisce." : ""}
                   </span>
                 </label>
                 <div className="v-reno__lines" style={{ marginTop: "var(--s-4)" }}>
                   <div className="v-factor"><span className="v-factor__n">Acquisto ipotizzato</span><span className="v-factor__v">{eur(prezzoAcquisto)} €</span></div>
                   <div className="v-factor"><span className="v-factor__n">Lavori, IVA, tecnici e pratiche</span><span className="v-factor__v">{eur(p.costo)} €</span></div>
-                  <div className="v-factor v-factor--total"><span className="v-factor__n">Totale dichiarato</span><span className="v-factor__v">{eur(prezzoAcquisto + p.costo)} €</span></div>
+                  <div className="v-factor v-factor--total"><span className="v-factor__n">Totale dichiarato{boxSenzaPrezzo ? ", senza il box a parte" : ""}</span><span className="v-factor__v">{eur(prezzoAcquisto + p.costo)} €</span></div>
                 </div>
                 <p className="v-small v-measure" style={{ marginTop: "var(--s-3)" }}>
                   Non è il totale completo: mancano le imposte sull&apos;acquisto (registro o IVA), il notaio, l&apos;agenzia e gli eventuali

@@ -77,12 +77,11 @@ prezzi richiesti», e non «distanza misurata».
 
 **Non c'è ancora un campione di verifica indipendente.** I numeri sopra sono calcolati sugli
 stessi annunci usati per scegliere i parametri: sono ottimistici per costruzione, anche se
-i parametri sono pochi (quattro) e il rischio di adattamento è contenuto. Il piano:
-
-1. quando arrivano le chiavi dell'API ufficiale di Idealista, `npm run idealista` scarica
-   150 annunci indipendenti in `data/annunci/AAAA-MM-GG-idealista.csv`;
-2. `npm run calibra data/annunci/<lotto>.csv` misura **solo** quel lotto, senza ritarare;
-3. i numeri del lotto di verifica sostituiscono quelli di taratura nella pagina.
+i parametri sono pochi (quattro) e il rischio di adattamento è contenuto. Il protocollo per
+ottenerne uno — lotti `-verifica` separati, duplicati tolti anche fra portali, modello
+congelato prima di guardare i dati, nessun coefficiente scelto sulla verifica, rapporto con
+dimensione, copertura, date e metriche — è in **`docs/verifica.md`**; lo fa rispettare
+`npm run verifica`. Un lotto Idealista non è una verifica finché non passa da lì.
 
 ## Cosa non dimostrano questi numeri
 

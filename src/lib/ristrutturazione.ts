@@ -41,6 +41,11 @@ export type Scelta = {
 };
 export type Scelte = Partial<Record<string, Scelta>>;
 
+/** Pacchetto scelto e personalizzazioni: lo stato dell'interfaccia sulla ristrutturazione,
+    tenuto dalla pagina perche' appartiene all'immobile, non al componente. */
+export type SceltaLavori = { scelto: "attuale" | Pacchetto; scelte: Scelte };
+export const LAVORI_INIZIALI: SceltaLavori = { scelto: "attuale", scelte: {} };
+
 type Base = "mq" | "pareti" | "bagni" | "finestre" | "porte" | "corpo";
 
 export type Intervento = {

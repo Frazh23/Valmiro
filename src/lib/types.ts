@@ -2,6 +2,9 @@ export type Fascia = "B" | "C" | "D" | "E" | "R";
 export type Stato = "rist" | "abit" | "otti" | "nuov";
 export type Tipo = "civ" | "sig" | "eco" | "vil";
 export type Piano = "terra" | "rialzato" | "1-2" | "3-5" | "6+" | "ultimo";
+/** Piani che esistono ma che il modello non quota: l'OMI parte dal piano terra. */
+export type PianoNonQuotato = "seminterrato" | "interrato";
+export const PIANI_NON_QUOTATI: readonly PianoNonQuotato[] = ["seminterrato", "interrato"];
 export type Classe = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 
 /** Le due fasce che l'OMI pubblica per ogni tipologia: stato NORMALE e stato OTTIMO. */
@@ -46,8 +49,21 @@ export type Input = {
   balconi?: number;
   cantina?: boolean;
   box?: "nessuno" | "posto" | "box";
+  /** Un box offerto a parte dall'annuncio, fuori dal prezzo dell'abitazione. `incluso`
+      dice se entra nella valutazione (allora `box` vale "box"); `prezzo` e' il suo prezzo
+      richiesto se e' scritto o se chi valuta lo inserisce, altrimenti null. `prezzoRichiesto`
+      resta sempre e solo quello dell'abitazione: le due cifre non si sommano mai in silenzio. */
+  boxSeparato?: { prezzo: number | null; incluso: boolean } | null;
   stato: Stato;
+  /** il piano che il motore usa: uno di quelli quotati */
   piano: Piano;
+  /** il piano vero quando non e' quotato (seminterrato, interrato). Con questo campo e senza
+      `simulazionePiano` il motore rifiuta di stimare: non c'e' una valutazione attendibile. */
+  pianoDichiarato?: PianoNonQuotato | null;
+  /** chi valuta chiede in modo esplicito una simulazione che ipotizza il piano terra al posto
+      del piano dichiarato non quotato. Il risultato porta `Stima.simulazione` e non e' una
+      valutazione del piano vero. */
+  simulazionePiano?: boolean;
   ascensore: boolean;
   /** "nd": classe non conosciuta. Nessun aggiustamento, e il dettaglio lo dice; non e' una D mascherata */
   classe: Classe | "nd";
@@ -75,6 +91,14 @@ export type Stima = {
   affidabilita: "Alta" | "Media" | "Bassa";
   /** presente quando il modello sa di essere debole (oggi: segmento di pregio) */
   avvertenza?: string;
+  /** quanto del valore e' il box o posto auto (0 se non c'e'): serve a confrontare
+      l'abitazione da sola quando il box e' venduto a parte */
+  valoreBox: number;
+  /** la sola abitazione, senza box: stessi arrotondamenti e stessa incertezza del totale */
+  abitazione: { centro: number; min: number; max: number; pubblica: number };
+  /** presente quando il piano dichiarato non e' quotato e chi valuta ha chiesto una
+      simulazione: il risultato ipotizza `pianoIpotizzato` e non vale per il piano vero */
+  simulazione?: { pianoDichiarato: PianoNonQuotato; pianoIpotizzato: Piano; testo: string };
   dettaglio: Voce[];
   semestre: string;
   fonte: string;

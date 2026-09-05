@@ -731,3 +731,8 @@ button { font: inherit; letter-spacing: inherit; }
 .v-note--errore { border-color: color-mix(in srgb, var(--neg) 45%, transparent); background: color-mix(in srgb, var(--neg) 7%, var(--surface)); }
 .v-input--errore { border-color: var(--neg); }
 .v-field__hint--errore { color: var(--neg); }
+/* Un campo al valore predefinito, non dichiarato dall'annuncio: si vede finche' non lo si tocca. */
+.v-field__hint--conferma { color: var(--accent-ink); font-weight: 600; }
+/* la limitazione di una stima salvata, nella lista legacy di /stime */
+.riga-stima small.avviso { color: var(--neg); }
+.v-field__hint--conferma::before { content: "○ "; }

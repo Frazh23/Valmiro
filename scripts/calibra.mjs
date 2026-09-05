@@ -124,14 +124,22 @@ console.log("  per fascia:");  perGruppo((x) => x.zona[0]);
 // ---------------------------------------------------------------- taratura
 
 const P = motore.PARAMETRI;
-const originali = { ...P };
+/* I parametri del motore sono per fascia OMI. La ricerca qui e' a valore unico:
+   lo applica a tutte le fasce insieme, che basta a vedere la direzione. Per
+   tarature per fascia si copia .calibrazione/esperimento-fasce.mjs. */
+const FASCE = Object.keys(P.compressioneStato);
+const originali = { compressione: { ...P.compressioneStato }, livello: { ...P.livello } };
+const setComp = (c) => { for (const f of FASCE) P.compressioneStato[f] = c; };
+const setLiv = (l) => { for (const f of FASCE) P.livello[f] = l; };
+const mediaObj = (o) => Object.values(o).reduce((a, b) => a + b, 0) / Object.values(o).length;
 
 /* Primo: il livello. Se il mercato chiede sistematicamente piu' (o meno) di
    quanto l'OMI aggiornato dice, l'errore mediano non e' zero. Il livello che lo
    azzera e' exp(mediana). */
-P.livello = originali.livello * Math.exp(mediana(E0.map((x) => x.e)));
+const liv1 = mediaObj(originali.livello) * Math.exp(mediana(E0.map((x) => x.e)));
+setLiv(liv1);
 const E1 = errori();
-riassunto(`CON livello = ${P.livello.toFixed(3)}  (azzera l'errore mediano)`, E1);
+riassunto(`CON livello = ${liv1.toFixed(3)} su tutte le fasce  (azzera l'errore mediano)`, E1);
 
 /* Secondo: la compressione dello stato. Il valore giusto e' quello per cui gli
    annunci "da sistemare" e quelli "in ordine" sbagliano nella stessa direzione:
@@ -140,20 +148,20 @@ riassunto(`CON livello = ${P.livello.toFixed(3)}  (azzera l'errore mediano)`, E1
 const bassi = (E) => E.filter((x) => ["rist", "abit"].includes(x.input.stato)).map((x) => x.e);
 const alti = (E) => E.filter((x) => ["otti", "nuov"].includes(x.input.stato)).map((x) => x.e);
 if (alti(E1).length >= 6 && bassi(E1).length >= 6) {
-  let migliore = { c: originali.compressioneStato, gap: Infinity, mad: Infinity };
+  let migliore = { c: mediaObj(originali.compressione), gap: Infinity, mad: Infinity, livello: 1 };
   for (let c = 0; c <= 1.0001; c += 0.05) {
-    P.compressioneStato = c;
-    P.livello = originali.livello;
+    setComp(c); setLiv(mediaObj(originali.livello));
     const Ec = errori();
-    P.livello = originali.livello * Math.exp(mediana(Ec.map((x) => x.e)));
+    const l = mediaObj(originali.livello) * Math.exp(mediana(Ec.map((x) => x.e)));
+    setLiv(l);
     const E = errori();
     const gap = Math.abs(mediana(alti(E)) - mediana(bassi(E)));
     const disp = mad(E.map((x) => x.e));
-    if (gap < migliore.gap - 1e-9 || (Math.abs(gap - migliore.gap) < 1e-9 && disp < migliore.mad)) migliore = { c, gap, mad: disp, livello: P.livello };
+    if (gap < migliore.gap - 1e-9 || (Math.abs(gap - migliore.gap) < 1e-9 && disp < migliore.mad)) migliore = { c, gap, mad: disp, livello: l };
   }
-  P.compressioneStato = migliore.c; P.livello = migliore.livello;
+  setComp(migliore.c); setLiv(migliore.livello);
   const E2 = errori();
-  riassunto(`CON compressioneStato = ${migliore.c.toFixed(2)} e livello = ${migliore.livello.toFixed(3)}`, E2);
+  riassunto(`CON compressioneStato = ${migliore.c.toFixed(2)} e livello = ${migliore.livello.toFixed(3)} su tutte le fasce`, E2);
   console.log(`  scarto fra stati in ordine e da sistemare: ${pct(mediana(alti(E2)) - mediana(bassi(E2)))} (oggi ${pct(mediana(alti(E0)) - mediana(bassi(E0)))})`);
 } else {
   console.log("\nTroppo pochi annunci per stato (servono almeno 6 'rist/abit' e 6 'otti/nuov') per tarare compressioneStato.");

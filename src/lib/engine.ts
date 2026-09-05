@@ -49,22 +49,35 @@ export const DETRAZIONE = { primaCasa: 0.5, altri: 0.36, tetto: 96000, rate: 10 
  * premio che il mercato riconosce a un immobile in ordine. Preso alla lettera pero'
  * sovrastima, perche' dentro ogni fascia c'e' anche la posizione dentro la zona, che
  * non cambia ristrutturando. Lo comprimiamo con un esponente: 1 = premio pieno,
- * 0 = nessun premio. PARAMETRO DA TARARE sui comparabili reali, vedi README.
+ * 0 = nessun premio.
+ *
+ * TARATO il 5 settembre 2026 su 201 annunci reali di Milano (data/calibrazione),
+ * con classe energetica e civici verificati in anagrafe. Il premio andava
+ * compresso di piu' in centro e semicentro (fasce B e C), dove la fascia OTTIMO
+ * dell'OMI e' tirata su dal lusso e un appartamento normale ristrutturato non ci
+ * arriva; in periferia (D, E) 0,70 era gia' giusto. Risultato sugli appartamenti
+ * normali: errore mediano -0,2%, ogni stato entro +-4,4%, ogni fascia entro +-5%.
+ * Il valore storico, 0,70 ovunque, resta come riferimento.
  */
 export const COMPRESSIONE_STATO = 0.7;
 
 /**
- * I parametri che la calibrazione puo' muovere, in un oggetto invece che in
- * costanti sciolte: scripts/calibra.mjs li cambia a runtime per provare valori
- * diversi sugli annunci reali, senza ricompilare e senza toccare il codice.
- * In produzione valgono i default qui sotto; cambiarli e' una decisione che
- * passa da un commit, non da un file di configurazione.
+ * I parametri che la calibrazione puo' muovere, per fascia OMI. scripts/calibra.mjs
+ * li cambia a runtime per provare valori diversi sugli annunci reali, senza
+ * ricompilare e senza toccare il codice. In produzione valgono i default qui
+ * sotto; cambiarli e' una decisione che passa da un commit, non da un file di
+ * configurazione. R e' la fascia rurale, presente nei dati ma senza annunci.
  */
 export const PARAMETRI = {
-  compressioneStato: COMPRESSIONE_STATO,
-  /** correzione globale del livello: 1 = le mediane OMI aggiornate Istat sono giuste cosi' */
-  livello: 1,
+  compressioneStato: { B: 0.45, C: 0.45, D: 0.7, E: 0.7, R: 0.7 } as Record<string, number>,
+  /* correzione del livello: in centro la mediana NORMALE dell'OMI corre sotto il
+     mercato di circa il 5%, in periferia e' giusta */
+  livello: { B: 1.05, C: 1.05, D: 1.0, E: 1.0, R: 1.0 } as Record<string, number>,
+  /* "da ristrutturare": il mercato lo prezza a -5% dal normale, non a -10% */
+  scontoRist: 0.95,
 };
+
+const fasciaDi = (zona: string) => (ZONE[zona]?.f as string) || "D";
 
 /** Le due fasce OMI ridotte alle loro mediane, con i ripieghi per le zone incomplete. */
 export function scala(zona: string, tipo: Tipo) {
@@ -83,8 +96,9 @@ export function scala(zona: string, tipo: Tipo) {
 /** Euro al mq per lo stato dichiarato, ancorati alle mediane OMI. */
 export function baseOmi(zona: string, tipo: Tipo, stato: Stato) {
   const s = scala(zona, tipo);
-  const premio = Math.pow(s.mediaO / s.mediaN, PARAMETRI.compressioneStato);
-  if (stato === "rist") return s.mediaN * 0.9;
+  const f = fasciaDi(zona);
+  const premio = Math.pow(s.mediaO / s.mediaN, PARAMETRI.compressioneStato[f] ?? COMPRESSIONE_STATO);
+  if (stato === "rist") return s.mediaN * PARAMETRI.scontoRist;
   if (stato === "abit") return s.mediaN;
   if (stato === "otti") return s.mediaN * premio;
   return s.mediaN * premio * 1.06;
@@ -102,7 +116,7 @@ export function stima(i: Input): Stima {
   if (!(i.mq > 0)) throw new Error("Superficie mancante o non valida");
 
   const sc = superficieCommerciale(i);
-  const base = baseOmi(i.zona, i.tipo, i.stato) * INDICE_ISTAT * PARAMETRI.livello;
+  const base = baseOmi(i.zona, i.tipo, i.stato) * INDICE_ISTAT * (PARAMETRI.livello[fasciaDi(i.zona)] ?? 1);
   const grezzo = sc * base;
 
   const alto = ["3-5", "6+", "ultimo"].includes(i.piano);

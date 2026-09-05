@@ -53,7 +53,9 @@ tests/engine.test.mjs            invarianti sui dati e sulle geometrie
 2. **Premio di stato.** Il rapporto tra le due mediane è quanto il mercato paga la buona
    conservazione. Preso alla lettera sovrastima, perché dentro ogni fascia c'è anche la
    posizione dentro la zona, che non cambia ristrutturando: lo comprimiamo con
-   `COMPRESSIONE_STATO = 0.7`. **È il primo parametro da tarare sui comparabili reali.**
+   `COMPRESSIONE_STATO = 0.7` come riferimento storico; **tarato il 5/9/2026 su 201 annunci
+   reali**: 0,45 in centro e semicentro (B, C), 0,70 in periferia (D, E), livello +5% in B/C,
+   sconto "da ristrutturare" 0,95. Vedi `PARAMETRI` in `engine.ts` e `data/calibrazione/`.
 3. **Aggiornamento a oggi.** `INDICE_ISTAT` porta la base, che esce con mesi di ritardo,
    al trimestre corrente. Va aggiornato ogni trimestre dai dati Istat.
 4. **Coefficienti** su piano, ascensore, classe energetica, luminosità e — se l'utente

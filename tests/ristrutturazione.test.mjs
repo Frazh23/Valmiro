@@ -60,7 +60,7 @@ test("infissi gia' fatti: la spesa scende, lo stato atteso resta, e lo si dice",
   assert.ok(fatti.costo < pieno.costo);
   assert.equal(fatti.voci.find((v) => v.id === "infissi").imponibile, 0);
   assert.ok(fatti.giaFatto > 0);
-  assert.ok(fatti.nonQuantificato.some((t) => /gia' fatti/.test(t)));
+  assert.ok(fatti.nonQuantificato.some((t) => /già fatti/.test(t)));
   assert.ok(fatti.detrazione <= pieno.detrazione);
 });
 
@@ -91,4 +91,39 @@ test("la detrazione segue la spesa e si divide in dieci rate; il costo si paga t
   assert.equal(Math.round(p.costoNetto), Math.round(p.costo - p.detrazione));
   const altri = R.prospettoRistrutturazione(CASA, "completa", false);
   assert.ok(altri.detrazione < p.detrazione);
+});
+
+test("un preventivo vuoto o negativo non e' un lavoro gratis: errore, fuori dal conto e dallo stato atteso", () => {
+  const pieno = R.prospettoRistrutturazione(CASA, "completa", true);
+  for (const preventivo of [undefined, 0, -2000]) {
+    const p = R.prospettoRistrutturazione(CASA, "completa", true, { infissi: { modo: "preventivo", preventivo } });
+    const v = p.voci.find((x) => x.id === "infissi");
+    assert.ok(v.errore, `preventivo ${preventivo}: serve un errore`);
+    assert.equal(v.imponibile, 0);
+    assert.ok(p.errori.length === 1 && /Infissi/.test(p.errori[0]));
+    assert.equal(p.statoAtteso, "otti", "senza infissi validi la casa non arriva a «come nuova»");
+    assert.ok(p.mancanti.includes("Infissi"));
+    assert.ok(p.costo < pieno.costo);
+  }
+  const ok = R.prospettoRistrutturazione(CASA, "completa", true, { infissi: { modo: "preventivo", preventivo: 5000 } });
+  assert.deepEqual(ok.errori, []);
+  assert.equal(ok.statoAtteso, "nuov");
+});
+
+test("classe energetica sconosciuta: nessun aggiustamento, dichiarato nel dettaglio, non una D mascherata", () => {
+  const nd = M.stima({ ...CASA, classe: "nd" });
+  const d = M.stima({ ...CASA, classe: "D" });
+  assert.equal(nd.centro, d.centro, "il coefficiente di D e' 1, quindi il numero coincide");
+  assert.ok(nd.dettaglio.some((v) => /non dichiarata/.test(v.voce) && v.nota), "ma il dettaglio lo dice");
+  assert.ok(!d.dettaglio.some((v) => /non dichiarata/.test(v.voce)));
+});
+
+test("il dettaglio separa la base in stato normale dal contributo dello stato conservativo", () => {
+  const otti = M.stima({ ...CASA, stato: "otti" });
+  const base = otti.dettaglio[0], stato = otti.dettaglio.find((v) => /Stato conservativo: ottimo/.test(v.voce));
+  assert.ok(/stato normale/.test(base.voce));
+  assert.ok(stato && stato.euro > 0 && stato.effetto > 0);
+  const abit = M.stima({ ...CASA, stato: "abit" });
+  assert.ok(!abit.dettaglio.some((v) => /Stato conservativo/.test(v.voce)), "in stato normale la riga non c'e': non aggiunge niente");
+  assert.ok(Math.abs(base.euro + stato.euro - otti.baseOmi * CASA.mq) < 1, "base normale piu' stato fanno la base OMI dello stato dichiarato, per i metri principali");
 });

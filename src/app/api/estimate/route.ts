@@ -21,9 +21,11 @@ export async function POST(req: Request) {
   const i = body as Input;
   if (!i?.zona || !ZONE[i.zona]) return NextResponse.json({ errore: "Zona OMI non valida" }, { status: 400 });
   if (!(Number(i.mq) > 0)) return NextResponse.json({ errore: "Superficie non valida" }, { status: 400 });
-  /* Un numero negativo non e' un metro quadro: si azzera invece di far uscire una stima strana. */
-  const nonNeg = (v: unknown) => Math.max(0, Number(v) || 0);
-  i.mqBalconi = nonNeg(i.mqBalconi); i.mqTerrazzi = nonNeg(i.mqTerrazzi);
+  /* Un numero negativo non e' un metro quadro: si rifiuta, non si azzera in silenzio. */
+  for (const campo of ["mqBalconi", "mqTerrazzi", "prezzoRichiesto"] as const) {
+    const v = i[campo];
+    if (v !== undefined && v !== null && Number(v) < 0) return NextResponse.json({ errore: `${campo} non puo' essere negativo` }, { status: 400 });
+  }
 
   try {
     const risultato = stima({ ...i, mq: Number(i.mq) });

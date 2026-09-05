@@ -141,6 +141,8 @@ export type VoceProspetto = {
   /** vero se per raggiungere lo stato atteso del pacchetto questa voce serve */
   necessaria: boolean;
   nota?: string;
+  /** dato non valido: la voce non entra nel conto finche' non e' corretto */
+  errore?: string;
 };
 
 export type Prospetto = {
@@ -177,6 +179,8 @@ export type Prospetto = {
   margine: number;
   /** cose che il metodo non quantifica, dette in chiaro */
   nonQuantificato: string[];
+  /** voci con dati non validi: il riepilogo e' incompleto finche' ci sono */
+  errori: string[];
   /* compatibilita' con il prospetto vecchio */
   euroMq: number;
 };
@@ -206,9 +210,15 @@ export function prospettoRistrutturazione(i: Input, pacchettoId: string, primaCa
     if (v.id === "tecnici") continue; // si calcola dopo, sugli altri
     const st = stimato(v, p.id, i);
     const scelta: Scelta = scelte[v.id] ?? { modo: st === null ? "escluso" : "incluso" };
-    let imponibile = 0, nota: string | undefined;
+    let imponibile = 0, nota: string | undefined, errore: string | undefined;
     if (scelta.modo === "incluso") imponibile = st ?? 0;
-    else if (scelta.modo === "preventivo" && scelta.preventivo && scelta.preventivo > 0) {
+    else if (scelta.modo === "preventivo" && !(scelta.preventivo && scelta.preventivo > 0)) {
+      /* Un preventivo vuoto o negativo non e' un lavoro gratis: la voce resta fuori dal
+         conto e dallo stato atteso finche' non c'e' una cifra vera. */
+      errore = scelta.preventivo !== undefined && scelta.preventivo < 0
+        ? "un preventivo non può essere negativo: inserisci la cifra del fornitore"
+        : "inserisci la cifra del preventivo: finché manca, il lavoro non entra nel conto né nello stato atteso";
+    } else if (scelta.modo === "preventivo" && scelta.preventivo && scelta.preventivo > 0) {
       imponibile = scelta.ivaInclusa ? scelta.preventivo / (1 + ONERI.ivaLavori) : scelta.preventivo;
       if (scelta.soloMateriali) {
         /* la posa vale, in un cantiere medio, circa la meta' del costo di una
@@ -220,14 +230,14 @@ export function prospettoRistrutturazione(i: Input, pacchettoId: string, primaCa
       }
     } else if (scelta.modo === "fatto") giaFatto += st ?? 0;
     if (scelta.modo === "incluso" && st === null) { imponibile = 0; nota = "il pacchetto non prevede questo lavoro: scegli «Completa» o metti un preventivo"; }
-    if (imponibile > 0 || scelta.modo === "fatto") fatteONelConto.add(v.id);
+    if ((imponibile > 0 && !errore) || scelta.modo === "fatto") fatteONelConto.add(v.id);
     lavori += imponibile;
     const ivaVoce = imponibile * ONERI.ivaLavori;
     iva += ivaVoce;
     voci.push({
       id: v.id, nome: v.nome, cosa: v.cosa, base: BASE_TESTO[v.base](q) + (v.perBagno ? ` + ${q.bagni} ${q.bagni === 1 ? "bagno" : "bagni"} a corpo` : ""),
       stimato: st, modo: scelta.modo, scelta, imponibile, iva: ivaVoce,
-      necessaria: REQUISITI[p.statoDopo].includes(v.id), nota,
+      necessaria: REQUISITI[p.statoDopo].includes(v.id), nota, errore,
     });
   }
 
@@ -235,12 +245,13 @@ export function prospettoRistrutturazione(i: Input, pacchettoId: string, primaCa
   const vt = INTERVENTI.find((v) => v.id === "tecnici")!;
   const stTecnici = lavori * ONERI.spesaTecnica * (1 + ONERI.cassaTecnici) * (1 + ONERI.ivaTecnici) + ONERI.pratiche;
   const sceltaT: Scelta = scelte.tecnici ?? { modo: "incluso" };
-  let tecnici = 0, pratiche = 0, notaT: string | undefined;
+  let tecnici = 0, pratiche = 0, notaT: string | undefined, erroreT: string | undefined;
   if (sceltaT.modo === "incluso") { tecnici = stTecnici - ONERI.pratiche; pratiche = ONERI.pratiche; }
-  else if (sceltaT.modo === "preventivo" && sceltaT.preventivo) { tecnici = sceltaT.preventivo; pratiche = 0; notaT = "il preventivo del tecnico si intende lordo, IVA e cassa comprese; se non comprende i diritti comunali e il catasto, aggiungili"; }
+  else if (sceltaT.modo === "preventivo" && sceltaT.preventivo && sceltaT.preventivo > 0) { tecnici = sceltaT.preventivo; pratiche = 0; notaT = "il preventivo del tecnico si intende lordo, IVA e cassa comprese; se non comprende i diritti comunali e il catasto, aggiungili"; }
+  else if (sceltaT.modo === "preventivo") erroreT = sceltaT.preventivo !== undefined && sceltaT.preventivo < 0 ? "un preventivo non può essere negativo" : "inserisci la cifra del preventivo del tecnico";
   else if (sceltaT.modo === "escluso" && lavori > 0) notaT = "senza tecnico non si presenta la CILA: i lavori sugli impianti la richiedono. Escludilo solo se la pratica la fa qualcun altro";
   voci.push({ id: "tecnici", nome: vt.nome, cosa: vt.cosa, base: `${Math.round(ONERI.spesaTecnica * 100)}% dei lavori da fare, piu' cassa 4%, IVA 22% e ${ONERI.pratiche} euro di diritti, catasto e attestato`,
-    stimato: stTecnici, modo: sceltaT.modo, scelta: sceltaT, imponibile: tecnici + pratiche, iva: 0, necessaria: false, nota: notaT });
+    stimato: stTecnici, modo: sceltaT.modo, scelta: sceltaT, imponibile: tecnici + pratiche, iva: 0, necessaria: false, nota: notaT, errore: erroreT });
 
   const costo = lavori + iva + tecnici + pratiche;
 
@@ -268,8 +279,8 @@ export function prospettoRistrutturazione(i: Input, pacchettoId: string, primaCa
   const nonQuantificato: string[] = [];
   const energia = voci.some((v) => (v.modo === "incluso" || v.modo === "preventivo") && v.imponibile > 0 && INTERVENTI.find((x) => x.id === v.id)?.energia);
   if (energia) nonQuantificato.push("La classe energetica probabilmente migliora con serramenti o impianto termico nuovi, ma di quanto dipende da isolamento e attestato: non lo stimiamo, e il valore qui non lo conta.");
-  if (giaFatto > 0) nonQuantificato.push(`Lavori segnati come gia' fatti per circa ${Math.round(giaFatto / 100) * 100} euro: il valore di partenza e' quello dello stato che hai dichiarato oggi; se lo stato attuale non li riflette, il miglioramento ti verrebbe contato due volte.`);
-  if (voci.some((v) => v.modo === "preventivo" && v.imponibile > 0)) nonQuantificato.push("Un preventivo piu' basso della nostra stima non cambia il valore atteso: cambia solo la spesa. Il valore dipende dallo stato in cui la casa arriva, non da quanto e' costato arrivarci.");
+  if (giaFatto > 0) nonQuantificato.push(`Lavori segnati come già fatti per circa ${Math.round(giaFatto / 100) * 100} euro: il valore di partenza è quello dello stato che hai dichiarato oggi; se lo stato attuale non li riflette, il miglioramento ti verrebbe contato due volte.`);
+  if (voci.some((v) => v.modo === "preventivo" && v.imponibile > 0)) nonQuantificato.push("Un preventivo più basso della nostra stima non cambia il valore atteso: cambia solo la spesa. Il valore dipende dallo stato in cui la casa arriva, non da quanto è costato arrivarci.");
 
   return {
     pacchetto: p.id, livello: p.nome, voci,
@@ -280,6 +291,7 @@ export function prospettoRistrutturazione(i: Input, pacchettoId: string, primaCa
     valorePrima: prima.centro, valoreDopo: dopo.centro, valoreDopoMin: dopo.min, valoreDopoMax: dopo.max, sigmaDopo: dopo.sigma,
     margine: dopo.centro - prima.centro - (costo - detrazione),
     nonQuantificato,
+    errori: voci.filter((v) => v.errore).map((v) => `${v.nome}: ${v.errore}`),
     euroMq: i.mq > 0 ? lavori / i.mq : 0,
   };
 }

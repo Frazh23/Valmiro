@@ -728,3 +728,6 @@ button { font: inherit; letter-spacing: inherit; }
   .v-locus--intento { width: 100%; justify-content: stretch; }
   .v-locus--intento button { flex: 1; }
 }
+.v-note--errore { border-color: color-mix(in srgb, var(--neg) 45%, transparent); background: color-mix(in srgb, var(--neg) 7%, var(--surface)); }
+.v-input--errore { border-color: var(--neg); }
+.v-field__hint--errore { color: var(--neg); }

@@ -73,3 +73,49 @@ test("quando non capisce, non inventa", () => {
   assert.equal(r.indirizzo, undefined);
   assert.deepEqual(r.trovati, []);
 });
+
+test("negazioni: «senza» e «non» sono assenze dichiarate, non presenze; seminterrato e classe n.d. si dicono", () => {
+  const r = leggiAnnuncio("Appartamento in vendita in Via Luigi Porro Lambertenghi 25, Milano. Prezzo 300.000 euro. Superficie 60 mq. Piano seminterrato, senza ascensore. Non ristrutturato: impianti e finiture da rifare. Classe energetica non disponibile. Senza balcone, senza terrazzo, senza cantina e senza box.");
+  assert.equal(r.indirizzo, "Via Luigi Porro Lambertenghi 25");
+  assert.equal(r.mq, 60);
+  assert.equal(r.prezzo, 300000);
+  assert.equal(r.stato, "rist", "«non ristrutturato» non e' «ristrutturato»");
+  assert.equal(r.ascensore, false);
+  assert.equal(r.piano, undefined);
+  assert.equal(r.pianoNonSupportato, "seminterrato");
+  assert.ok(r.avvisi.some((a) => /seminterrato/.test(a)));
+  assert.equal(r.classe, "nd");
+  assert.deepEqual(r.presenze, { balcone: "no", terrazzo: "no", cantina: "no", box: "no" });
+  assert.equal(r.balconi, undefined);
+  assert.equal(r.terrazzo, undefined);
+  assert.equal(r.cantina, false);
+  assert.equal(r.box, "nessuno");
+});
+
+test("il silenzio non e' un'assenza: senza parole, la presenza resta sconosciuta", () => {
+  const r = leggiAnnuncio("Bilocale via Savona 35, 50 mq, 2° piano, buono stato, € 320.000.");
+  assert.deepEqual(r.presenze, { balcone: "?", terrazzo: "?", cantina: "?", box: "?" });
+  assert.equal(r.cantina, undefined);
+  assert.equal(r.box, undefined);
+});
+
+test("«non ristrutturato, con balcone» tiene il balcone", () => {
+  const r = leggiAnnuncio("Trilocale non ristrutturato, con balcone e cantina, via Savona 35, 80 mq, € 400.000");
+  assert.equal(r.stato, "rist");
+  assert.equal(r.presenze.balcone, "si");
+  assert.equal(r.presenze.cantina, "si");
+});
+
+test("box acquistabile a parte: fuori dal prezzo dell'abitazione, con il suo prezzo", () => {
+  const r = leggiAnnuncio("Appartamento in vendita in Via Luigi Porro Lambertenghi 25, Milano. Prezzo € 820.000. Superficie commerciale 122 m². Da ristrutturare. Classe energetica G. Box auto acquistabile separatamente a € 75.000.");
+  assert.equal(r.prezzo, 820000, "il prezzo della casa resta quello della casa");
+  assert.equal(r.mq, 122);
+  assert.equal(r.classe, "G");
+  assert.equal(r.stato, "rist");
+  assert.equal(r.box, "nessuno");
+  assert.equal(r.presenze.box, "separato");
+  assert.deepEqual(r.boxSeparato, { prezzo: 75000 });
+  const c = leggiAnnuncio("Trilocale via Savona 35, 85 mq, box auto compreso nel prezzo, € 500.000");
+  assert.equal(c.box, "box");
+  assert.equal(c.presenze.box, "si");
+});

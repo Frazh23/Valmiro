@@ -84,7 +84,7 @@ export default function RenovationSelector({
   }
   const setScelta = (id: string, s: Scelte[string]) => setScelte((v) => {
     const n = { ...v };
-    if (!s || (s.modo === "incluso" && !s.preventivo)) delete n[id]; else n[id] = s;
+    if (!s || s.modo === "incluso") delete n[id]; else n[id] = s;
     return n;
   });
 
@@ -107,7 +107,7 @@ export default function RenovationSelector({
               {delta >= 0 ? "+" : "−"}{eur(Math.abs(delta))} € rispetto a oggi
             </p>
             <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
-              Da <b>{STATO_NOME[p.statoAttuale]}</b> a <b>{STATO_NOME[p.statoAtteso]}</b>
+              Oggi <b>«{STATO_NOME[p.statoAttuale]}»</b>, dopo i lavori <b>«{STATO_NOME[p.statoAtteso]}»</b>
               {p.statoAtteso === p.statoAttuale ? ": con questi lavori lo stato conservativo non cambia" : ""}.
             </p>
           </>
@@ -126,6 +126,11 @@ export default function RenovationSelector({
           </p>
         )}
         {avvisoCambio && <p className="v-note" style={{ marginTop: "var(--s-4)" }}>{avvisoCambio}</p>}
+        {p && p.errori.length > 0 && (
+          <p className="v-note v-note--errore" style={{ marginTop: "var(--s-4)" }} role="alert">
+            Riepilogo incompleto: {p.errori.join("; ")}. Le voci con un dato non valido non entrano nel conto né nello stato atteso.
+          </p>
+        )}
 
         {p ? (
           <>
@@ -275,7 +280,8 @@ function Voce({ v, scelta, onChange }: {
   const [dettaglio, setDettaglio] = useState(false);
   const cambiaModo = (m: Modo) => {
     if (m === "incluso") onChange(undefined);
-    else if (m === "preventivo") onChange({ modo: m, preventivo: scelta?.preventivo ?? Math.round(v.stimato ?? 0), ivaInclusa: scelta?.ivaInclusa ?? false, soloMateriali: scelta?.soloMateriali ?? false });
+    /* il preventivo parte vuoto: la cifra e' del fornitore, non nostra, e finche' manca la voce resta fuori dal conto */
+    else if (m === "preventivo") onChange({ modo: m, preventivo: scelta?.preventivo, ivaInclusa: scelta?.ivaInclusa ?? false, soloMateriali: scelta?.soloMateriali ?? false });
     else onChange({ modo: m });
   };
   const nonPrevisto = v.stimato === null;
@@ -299,8 +305,11 @@ function Voce({ v, scelta, onChange }: {
         <div className="v-intervento__prev">
           <label className="v-field">
             <span className="v-field__lbl">Il tuo preventivo, in euro</span>
-            <input className="v-input" type="number" inputMode="numeric" min={0} value={scelta?.preventivo || ""}
-                   onChange={(e) => onChange({ ...(scelta as any), modo: "preventivo", preventivo: Math.max(0, Number(e.target.value) || 0) })} />
+            <input className={"v-input" + (v.errore ? " v-input--errore" : "")} type="number" inputMode="numeric" min={0} placeholder="0"
+                   aria-invalid={!!v.errore}
+                   value={scelta?.preventivo === undefined || Number.isNaN(scelta.preventivo) ? "" : scelta.preventivo}
+                   onChange={(e) => onChange({ ...(scelta as any), modo: "preventivo", preventivo: e.target.value === "" ? undefined : Number(e.target.value) })} />
+            {v.errore && <span className="v-field__hint v-field__hint--errore" role="alert">{v.errore}</span>}
           </label>
           <label className="v-toggle">
             <span>Comprende l&apos;IVA<small>Se sì, la togliamo per contare i lavori al netto come le altre voci.</small></span>

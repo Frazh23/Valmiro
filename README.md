@@ -59,9 +59,14 @@ tests/*.test.mjs                 invarianti sui dati: quotazioni, geometrie, ind
    posizione dentro la zona, che non cambia ristrutturando: lo comprimiamo con
    `COMPRESSIONE_STATO = 0.7` come riferimento storico; **tarato il 5/9/2026 su 201 annunci
    reali**: 0,45 in centro e semicentro (B, C), 0,70 in periferia (D, E), livello +5% in B/C,
-   sconto "da ristrutturare" 0,95. Vedi `PARAMETRI` in `engine.ts` e `data/annunci/`.
+   sconto "da ristrutturare" 0,95; con il 2025/2 livello B a 1,02. Vedi `PARAMETRI` in `engine.ts`,
+   `data/annunci/` e **`docs/taratura.md`**: cosa misurano i numeri dichiarati (prezzi richiesti, non
+   compravendite) e perché manca ancora un campione di verifica indipendente.
 3. **Aggiornamento a oggi.** `INDICE_ISTAT` porta la base, che esce con mesi di ritardo,
    al trimestre corrente. Va aggiornato ogni trimestre dai dati Istat.
+3b. **Classe energetica sconosciuta.** «Non la conosco» è un'opzione vera: nessun
+   aggiustamento, e il dettaglio lo scrive. Non è una D mascherata (il numero coincide
+   perché il coefficiente di D è 1, ma la pagina non finge di sapere).
 4. **Superficie commerciale** secondo il DPR 138/1998, allegato C: la superficie degli
    annunci e degli atti (muri compresi) è la base; se l'utente ha solo la calpestabile si
    aggiunge il 12% di muri, dichiarato come media. Balconi e terrazzi, chiesti separati in
@@ -83,9 +88,10 @@ nemmeno quale intento sia stato scelto (`Input.intento` è solo informativo). Ca
 parole e gli strumenti: chi compra incolla l'annuncio, inserisce il prezzo richiesto e
 legge «È caro o no?» con un intervallo per l'offerta che ha un criterio esplicito (la metà
 bassa dell'intervallo di stima); chi vende inserisce il prezzo che aveva in mente e legge
-valore stimato e **prezzo di pubblicazione possibile**, che è la mediana osservata sugli
-annunci di taratura (il 6% sopra il valore), presentata come comportamento dei venditori e
-non come consiglio. Nessuna percentuale di trattativa è presentata come evidenza di mercato.
+valore stimato e **prezzo di pubblicazione possibile**: il valore centrale più il 6%, una
+convenzione del motore che la taratura ha allineato in mediana ai **prezzi richiesti** negli
+annunci (non a prezzi di compravendita), presentata come comportamento dei venditori e non
+come consiglio. Nessuna percentuale di trattativa è presentata come evidenza di mercato.
 L'intento si cambia in ogni passo senza perdere i dati e resta nella stima salvata.
 
 ## Ristrutturazione intervento per intervento

@@ -43,7 +43,7 @@ export default function RentalYield({ r, zona }: { r: Rendita; zona: string }) {
       </p>
       <p className="v-small v-measure" style={{ marginTop: "var(--s-4)" }}>
         Con il canone concordato (3+2) la cedolare scende al 10%, ma il canone lo fissa l&apos;accordo territoriale
-        di Milano, di solito sotto il mercato: non lo calcoliamo. Canoni OMI {SEMESTRE_LOCAZIONI}, non aggiornati
+        di Milano, di solito sotto il mercato: non lo calcoliamo. Canoni OMI {SEMESTRE_LOCAZIONI}, non rivalutati con l&apos;indice Istat (per gli affitti non ne usiamo uno)
         {r.ripiego ? "; per questa tipologia la zona non ha canoni propri, usiamo quelli delle abitazioni civili" : ""}.
       </p>
     </div>

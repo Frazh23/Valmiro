@@ -7,8 +7,11 @@ export const NOMI = nomiJson as { n: string; z: string }[];
 
 /** Semestre a cui si riferiscono le quotazioni caricate. Aggiornato da scripts/ingest-fornitura.mjs o ingest-omi.mjs */
 export const SEMESTRE = "2025 · 2° semestre";
+/* Le quotazioni e i perimetri 2025/2 arrivano dalla fornitura diretta dell'Agenzia
+   delle Entrate (file QIP e KML); dal Comune di Milano (CC BY 4.0) arrivano l'anagrafe
+   dei civici e la serie storica fino al 2024. L'attribuzione lo dice per esteso. */
 export const FONTE =
-  "Agenzia delle Entrate — Osservatorio del Mercato Immobiliare, via Comune di Milano (CC BY 4.0)";
+  "Agenzia delle Entrate — Osservatorio del Mercato Immobiliare, quotazioni e perimetri forniti dall'Agenzia (2025/2); serie storica e anagrafe dei civici dal Comune di Milano (CC BY 4.0)";
 
 /**
  * Indice Istat dei prezzi delle abitazioni (IPAB): porta la base OMI, che esce con

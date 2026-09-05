@@ -49,7 +49,8 @@ export type Input = {
   stato: Stato;
   piano: Piano;
   ascensore: boolean;
-  classe: Classe;
+  /** "nd": classe non conosciuta. Nessun aggiustamento, e il dettaglio lo dice; non e' una D mascherata */
+  classe: Classe | "nd";
   luce?: "scarsa" | "media" | "ottima";
   epoca?: "ante1945" | "1946-1980" | "1981-2005" | "post2005" | null;
   affaccio?: "interno" | "misto" | "strada" | null;

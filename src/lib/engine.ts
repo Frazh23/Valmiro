@@ -187,7 +187,7 @@ export function stima(i: Input): Stima {
   const k = {
     piano: COEFF.piano[i.piano],
     ascensore: i.ascensore ? 1 : alto ? COEFF.senzaAscensoreAlto : COEFF.senzaAscensoreBasso,
-    classe: COEFF.classe[i.classe],
+    classe: i.classe === "nd" ? 1 : COEFF.classe[i.classe],
     luce: COEFF.luce[i.luce || "media"],
     epoca: i.epoca ? COEFF.epoca[i.epoca] : 1,
     affaccio: i.affaccio ? COEFF.affaccio[i.affaccio] : 1,
@@ -223,23 +223,33 @@ export function stima(i: Input): Stima {
   const voce = (nome: string, coeff: number): Voce => ({
     voce: nome, effetto: coeff - 1, euro: grezzo * (coeff - 1),
   });
+  /* Lo stato conservativo sta dentro `base`: qui si separa, cosi' il dettaglio mostra
+     la base della zona in stato normale e, a parte, quanto vale lo stato dichiarato. */
+  const baseNormale = baseOmi(i.zona, i.tipo, "abit") * INDICE_ISTAT * (PARAMETRI.livello[fasciaDi(i.zona)] ?? 1);
+  const kStato = base / baseNormale;
   const sup = superficie(i);
   const dettaglio: Voce[] = [
-    { voce: `Base OMI zona ${i.zona} · ${Math.round(sup.principale)} mq${sup.muri ? " (calpestabile piu' muri, 12%)" : ""}`, effetto: 0, euro: sup.principale * base },
+    { voce: `Base OMI zona ${i.zona}, stato normale · ${Math.round(sup.principale)} mq${sup.muri ? " (calpestabile più muri, 12%)" : ""}`, effetto: 0, euro: sup.principale * baseNormale },
   ];
+  if (Math.abs(kStato - 1) > 1e-9) {
+    const nomeStato = { rist: "da ristrutturare", abit: "abitabile", otti: "ottimo stato", nuov: "nuova" }[i.stato];
+    dettaglio.push({ voce: `Stato conservativo: ${nomeStato}`, effetto: kStato - 1, euro: sup.principale * (base - baseNormale) });
+  }
   if (sup.balconiTerrazzi) {
     const mq = (i.mqBalconi || 0) + (i.mqTerrazzi || 0);
     dettaglio.push({ voce: `Balconi e terrazzi · ${Math.round(mq)} mq contati al ${mq > COEFF.pertinenzeSoglia ? "30% fino a 25 e al 10% oltre" : "30%"} (DPR 138/98)`, effetto: 0, euro: sup.balconiTerrazzi * base });
   }
   if (sup.cantina) dettaglio.push({ voce: "Cantina o soffitta · 2,5 mq commerciali", effetto: 0, euro: sup.cantina * base });
   if (sup.incluse && (i.mqBalconi || i.mqTerrazzi || i.cantina)) {
-    dettaglio.push({ voce: "Balconi, terrazzi e cantina gia' compresi nella superficie commerciale inserita", effetto: 0, euro: 0, nota: true });
+    dettaglio.push({ voce: "Balconi, terrazzi e cantina già compresi nella superficie commerciale inserita", effetto: 0, euro: 0, nota: true });
   }
   dettaglio.push(
     voce(`Piano ${i.piano}`, k.piano),
     voce(i.ascensore ? "Ascensore presente" : "Senza ascensore", k.ascensore),
-    voce(`Classe energetica ${i.classe}`, k.classe),
-    voce(`Luminosita' ${i.luce || "media"}`, k.luce),
+    i.classe === "nd"
+      ? { voce: "Classe energetica non dichiarata · nessun aggiustamento", effetto: 0, euro: 0, nota: true }
+      : voce(`Classe energetica ${i.classe}`, k.classe),
+    voce(`Luminosità ${i.luce || "media"}`, k.luce),
   );
   if (i.epoca) dettaglio.push(voce(`Epoca ${i.epoca}`, k.epoca));
   if (i.affaccio) dettaglio.push(voce(`Affaccio ${i.affaccio}`, k.affaccio));

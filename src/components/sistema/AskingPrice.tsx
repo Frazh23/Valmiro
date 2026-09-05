@@ -9,9 +9,9 @@ import type { Intento, Stima } from "@/lib/types";
  * - il valore stimato: il centro dell'intervallo del motore;
  * - il prezzo richiesto (chi compra) o il prezzo che si aveva in mente (chi vende):
  *   e' un'intenzione, non un valore;
- * - il prezzo di pubblicazione possibile (solo chi vende): il prezzo a cui, in
- *   mediana, case cosi' sono messe in vendita negli annunci con cui il motore e'
- *   stato tarato — una misura del comportamento dei venditori, non un consiglio;
+ * - il prezzo di pubblicazione possibile (solo chi vende): centro piu' il 6% di
+ *   convenzione del motore; la taratura ha allineato questo prezzo, in mediana, ai
+ *   prezzi richiesti negli annunci — comportamento dei venditori, non un consiglio;
  * - l'intervallo per un'offerta (solo chi compra): la meta' bassa dell'intervallo
  *   di stima. Il criterio e' quello e non un altro: sotto il minimo si esce da
  *   cio' che il modello ritiene plausibile, sopra il centro si paga piu' del valore.
@@ -92,10 +92,10 @@ export default function AskingPrice({ richiesto, stima, intento }: { richiesto: 
       ) : null}
       <p className="v-body v-measure" style={{ marginTop: "var(--s-5)" }}>
         Sono due cose diverse. Il <b>valore stimato</b> è quanto la casa vale per il modello. Il <b>prezzo di pubblicazione
-        possibile</b> è il prezzo a cui, in mediana, case come questa vengono messe in vendita: il {pct(sopra)} sopra il valore,
-        cioè la distanza tipica fra richiesta e valore misurata sui 201 annunci milanesi con cui il motore è stato tarato
-        (settembre 2026). È una misura di come si comportano i venditori, non un consiglio: chi ha fretta parte più vicino al valore,
-        chi può aspettare lascia spazio alla trattativa.
+        possibile</b> sta il {pct(sopra)} sopra: è una convenzione del motore, e la taratura ha regolato il livello delle stime in
+        modo che questo prezzo coincida, in mediana, con i <b>prezzi richiesti</b> nei 201 annunci milanesi verificati (settembre 2026).
+        Dice quindi a che prezzo case come questa vengono messe in vendita, non a quanto si vendono: è una misura di come si comportano
+        i venditori, non un consiglio. Chi ha fretta parte più vicino al valore, chi può aspettare lascia spazio alla trattativa.
         {richiesto
           ? richiesto > stima.max
             ? " Il prezzo che avevi in mente è sopra il massimo dell'intervallo di stima: il rischio è restare a lungo sul mercato."

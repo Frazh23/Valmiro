@@ -75,8 +75,8 @@ function tipologiaNota(c: Categoria, tipo: Tipo, zona: Record<string, any>) {
   return `${cat.nome}: usiamo le quotazioni OMI «${nome}» della zona. ${nota}.`;
 }
 
-/** Un numero dal modulo: mai negativo, mai NaN. */
-const nonNeg = (v: string) => Math.max(0, Number(v) || 0);
+/** Un numero dal modulo, com'e': i negativi restano tali per essere segnalati, non azzerati in silenzio. */
+const numero = (v: string) => (v === "" ? 0 : Number(v));
 
 type Esito = { stima: Stima };
 
@@ -104,11 +104,15 @@ function Valuta() {
   const [letto, setLetto] = useState<Letto | null>(null);
   const [annuncioNota, setAnnuncioNota] = useState<string | null>(null);
   const [qIniziale, setQIniziale] = useState("");
+  /* cose lette dall'annuncio che il modulo non rappresenta e va detto: il piano seminterrato */
+  const [avvisiAnnuncio, setAvvisiAnnuncio] = useState<string[]>([]);
+  /* box in vendita a parte: fuori dal prezzo dell'abitazione finche' chi legge non lo include */
+  const [boxSeparato, setBoxSeparato] = useState<{ prezzo: number | null; incluso: boolean } | null>(null);
 
   const [i, setI] = useState<Input>({
     zona: "", tipo: "civ", mq: 0, superficie: "commerciale", pertinenzeIncluse: true,
     mqBalconi: 0, mqTerrazzi: 0, cantina: false, box: "nessuno",
-    stato: "abit", piano: "1-2", ascensore: true, classe: "D", luce: "media",
+    stato: "abit", piano: "1-2", ascensore: true, classe: "nd", luce: "media",
     epoca: null, affaccio: null, metro: null, prezzoRichiesto: null,
   });
   const set = (p: Partial<Input>) => setI((v) => ({ ...v, ...p }));
@@ -153,15 +157,21 @@ function Valuta() {
     set({
       ...(r.mq ? { mq: r.mq, superficie: "commerciale", pertinenzeIncluse: true } : {}),
       ...(r.piano ? { piano: r.piano } : {}),
+      /* un piano che il modello non quota: si sceglie «terra» in chiaro e l'avviso resta in vista */
+      ...(r.pianoNonSupportato ? { piano: "terra" } : {}),
       ...(r.ascensore !== undefined ? { ascensore: r.ascensore } : {}),
       ...(r.stato ? { stato: r.stato } : {}), ...(r.classe ? { classe: r.classe } : {}),
-      /* i metri delle pertinenze solo se l'annuncio li scrive: la presenza da sola non e' un numero */
-      ...(r.mqBalconi ? { mqBalconi: r.mqBalconi } : {}),
-      ...(r.mqTerrazzi ? { mqTerrazzi: r.mqTerrazzi } : {}),
-      ...(r.cantina ? { cantina: true } : {}), ...(r.box ? { box: r.box } : {}),
+      /* i metri delle pertinenze solo se l'annuncio li scrive: la presenza da sola non e' un numero;
+         un'assenza dichiarata azzera; il silenzio lascia com'era */
+      ...(r.mqBalconi ? { mqBalconi: r.mqBalconi } : r.presenze.balcone === "no" ? { mqBalconi: 0 } : {}),
+      ...(r.mqTerrazzi ? { mqTerrazzi: r.mqTerrazzi } : r.presenze.terrazzo === "no" ? { mqTerrazzi: 0 } : {}),
+      ...(r.presenze.cantina !== "?" ? { cantina: r.presenze.cantina === "si" } : {}),
+      ...(r.box ? { box: r.box } : {}),
       prezzoRichiesto: r.prezzo ?? null,
     });
     setLetto(r);
+    setAvvisiAnnuncio(r.avvisi);
+    setBoxSeparato(r.boxSeparato ? { prezzo: r.boxSeparato.prezzo, incluso: false } : null);
     if (!r.indirizzo) { setAnnuncioNota("Ho letto i dati della casa ma non l'indirizzo: cercalo qui sopra e i dati restano."); return; }
     try {
       const g = await fetch(`/api/geocode?q=${encodeURIComponent(r.indirizzo)}`).then((x) => x.json());
@@ -206,13 +216,31 @@ function Valuta() {
     const scarto = (esito.stima.euroMq - mediana) / mediana;
     const f = ZONE[i.zona].f;
     if (Math.abs(scarto) < 0.04)
-      return <>È <b>in linea con la mediana</b> della zona: {eur(mediana)} €/mq per un immobile in stato normale.</>;
+      return <>È <b>in linea con il punto medio dell&apos;intervallo OMI</b> della zona: {eur(mediana)} €/mq per un immobile in stato normale.</>;
     return scarto > 0
-      ? <>Vale <b>il {num(scarto * 100)}% in più</b> della mediana di zona ({eur(mediana)} €/mq): sono piano, stato e caratteristiche a spingerla verso l&apos;alto della forbice {FASCIA_NOME[f]?.toLowerCase()}.</>
-      : <>Vale <b>il {num(Math.abs(scarto) * 100)}% in meno</b> della mediana di zona ({eur(mediana)} €/mq): è lo spazio che una ristrutturazione può recuperare.</>;
+      ? <>Vale <b>il {num(scarto * 100)}% in più</b> del punto medio dell&apos;intervallo OMI di zona ({eur(mediana)} €/mq, stato normale): sono piano, stato e caratteristiche a spingerla verso l&apos;alto della forbice {FASCIA_NOME[f]?.toLowerCase()}.</>
+      : <>Vale <b>il {num(Math.abs(scarto) * 100)}% in meno</b> del punto medio dell&apos;intervallo OMI di zona ({eur(mediana)} €/mq, stato normale): è lo spazio che una ristrutturazione può recuperare.</>;
   }, [esito, i.zona, i.tipo]);
 
   const pertinenzeDaChiedere = i.superficie === "calpestabile" || i.pertinenzeIncluse === false;
+
+  /* Errori del modulo, detti accanto al campo e ripetuti sul bottone: niente correzioni in silenzio. */
+  const errori = {
+    mq: i.mq < 0 ? "La superficie non può essere negativa." : null,
+    mqBalconi: (i.mqBalconi ?? 0) < 0 ? "I metri dei balconi non possono essere negativi." : null,
+    mqTerrazzi: (i.mqTerrazzi ?? 0) < 0 ? "I metri dei terrazzi non possono essere negativi." : null,
+    prezzo: (i.prezzoRichiesto ?? 0) < 0 ? "Il prezzo non può essere negativo." : null,
+  };
+  const erroriAttivi = Object.values(errori).filter(Boolean) as string[];
+
+  /* Il box a parte entra nella valutazione e nel prezzo confrontato insieme, o in nessuno dei due. */
+  function includiBox(incluso: boolean) {
+    if (!boxSeparato) return;
+    const prezzoBox = boxSeparato.prezzo || 0;
+    const baseRichiesto = (i.prezzoRichiesto || 0) - (boxSeparato.incluso ? prezzoBox : 0);
+    set({ box: incluso ? "box" : "nessuno", prezzoRichiesto: baseRichiesto ? baseRichiesto + (incluso ? prezzoBox : 0) : null });
+    setBoxSeparato({ ...boxSeparato, incluso });
+  }
 
   /* Il bottone per cambiare intento, sempre a portata: cambia le parole, non i dati. */
   const switchIntento = intento && (
@@ -355,6 +383,7 @@ function Valuta() {
                   <p className="v-note" style={{ marginTop: "var(--s-4)" }}>
                     Dall&apos;annuncio ho letto: {letto.trovati.join(", ")}. Sono già nel modulo: controllali,
                     un annuncio dice «ristrutturato» più spesso di quanto lo sia.
+                    {avvisiAnnuncio.length ? ` Attenzione: ${avvisiAnnuncio.join("; ")}.` : ""}
                     {letto.balconi && !letto.mqBalconi && letto.terrazzo && !letto.mqTerrazzi
                       ? " I metri di balconi e terrazzo non erano scritti: se li conosci e non sono già nella superficie, inseriscili qui sotto."
                       : letto.balconi && !letto.mqBalconi
@@ -370,14 +399,16 @@ function Valuta() {
                 <div className="v-field">
                   <span className="v-field__lbl">Superficie</span>
                   <div className="v-row2">
-                    <input className="v-input" type="number" inputMode="numeric" min={0} placeholder="93"
-                           value={i.mq || ""} onChange={(e) => set({ mq: nonNeg(e.target.value) })} />
+                    <input className={"v-input" + (errori.mq ? " v-input--errore" : "")} type="number" inputMode="numeric" min={0} placeholder="93"
+                           aria-invalid={!!errori.mq}
+                           value={i.mq || ""} onChange={(e) => set({ mq: numero(e.target.value) })} />
                     <select className="v-select" value={i.superficie || "commerciale"}
                             onChange={(e) => set({ superficie: e.target.value as Input["superficie"] })}>
                       <option value="commerciale">metri commerciali</option>
                       <option value="calpestabile">metri calpestabili</option>
                     </select>
                   </div>
+                  {errori.mq && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.mq}</span>}
                   <span className="v-field__hint">
                     {i.superficie === "calpestabile"
                       ? "La calpestabile è la superficie interna, senza muri. L'OMI ragiona in commerciale, muri compresi: aggiungiamo il 12%, che è una media, e le pertinenze qui sotto."
@@ -398,14 +429,18 @@ function Valuta() {
                     <div className="v-row2">
                       <label className="v-field">
                         <span className="v-field__lbl">Balconi, m²</span>
-                        <input className="v-input" type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
-                               value={i.mqBalconi || ""} onChange={(e) => set({ mqBalconi: nonNeg(e.target.value) })} />
+                        <input className={"v-input" + (errori.mqBalconi ? " v-input--errore" : "")} type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
+                               aria-invalid={!!errori.mqBalconi}
+                               value={i.mqBalconi || ""} onChange={(e) => set({ mqBalconi: numero(e.target.value) })} />
+                        {errori.mqBalconi && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.mqBalconi}</span>}
                         <span className="v-field__hint">Sporgono dalla facciata, di solito stretti: si sta in piedi, non a tavola.</span>
                       </label>
                       <label className="v-field">
                         <span className="v-field__lbl">Terrazzi, m²</span>
-                        <input className="v-input" type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
-                               value={i.mqTerrazzi || ""} onChange={(e) => set({ mqTerrazzi: nonNeg(e.target.value) })} />
+                        <input className={"v-input" + (errori.mqTerrazzi ? " v-input--errore" : "")} type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
+                               aria-invalid={!!errori.mqTerrazzi}
+                               value={i.mqTerrazzi || ""} onChange={(e) => set({ mqTerrazzi: numero(e.target.value) })} />
+                        {errori.mqTerrazzi && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.mqTerrazzi}</span>}
                         <span className="v-field__hint">Sopra un altro locale o in arretramento, abbastanza larghi da viverci.</span>
                       </label>
                     </div>
@@ -439,13 +474,21 @@ function Valuta() {
                             onChange={(e) => set({ piano: e.target.value as Input["piano"] })}>
                       {PIANI.map((p) => <option key={p} value={p}>{p}</option>)}
                     </select>
+                    {letto?.pianoNonSupportato && (
+                      <span className="v-field__hint v-field__hint--errore">
+                        L&apos;annuncio dice «{letto.pianoNonSupportato}»: il modello non lo quota e qui è impostato «terra», che vale di più.
+                        La stima va letta come un tetto, non come un valore.
+                      </span>
+                    )}
                   </label>
                   <label className="v-field">
                     <span className="v-field__lbl">Classe energetica</span>
                     <select className="v-select" value={i.classe}
                             onChange={(e) => set({ classe: e.target.value as Input["classe"] })}>
+                      <option value="nd">Non la conosco</option>
                       {CLASSI.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
+                    {i.classe === "nd" && <span className="v-field__hint">Senza classe la stima non applica nessun aggiustamento, e lo scrive nel dettaglio. Una classe vera la sposta fino al ±10%.</span>}
                   </label>
                 </div>
 
@@ -511,6 +554,18 @@ function Valuta() {
                   </label>
                 )}
 
+                {boxSeparato && (
+                  <label className="v-toggle">
+                    <span>
+                      L&apos;annuncio offre un box a parte{boxSeparato.prezzo ? `, a ${eur(boxSeparato.prezzo)} €` : ", senza dirne il prezzo"}: includilo nella valutazione
+                      <small>
+                        Se lo includi, il box entra nel valore stimato e{boxSeparato.prezzo ? " il suo prezzo si somma a quello confrontato" : " il prezzo confrontato resta quello dell'abitazione, perché il suo non è scritto"}.
+                        Se non lo includi, valutiamo la sola abitazione, come il prezzo dell&apos;annuncio.
+                      </small>
+                    </span>
+                    <input type="checkbox" checked={boxSeparato.incluso} onChange={(e) => includiBox(e.target.checked)} />
+                  </label>
+                )}
                 <div className="v-field">
                   <span className="v-field__lbl">
                     Posto auto{zona.box ? ` · box quotato ${eur(zona.box[0])}–${eur(zona.box[1])} €/mq` : ""}
@@ -527,9 +582,14 @@ function Valuta() {
 
                 <div className="v-field">
                   <span className="v-field__lbl">{T.prezzo}</span>
-                  <input className="v-input" type="number" inputMode="numeric" min={0} placeholder="450000"
-                         value={i.prezzoRichiesto || ""} onChange={(e) => set({ prezzoRichiesto: nonNeg(e.target.value) || null })} />
-                  <span className="v-field__hint">{T.prezzoHint}</span>
+                  <input className={"v-input" + (errori.prezzo ? " v-input--errore" : "")} type="number" inputMode="numeric" min={0} placeholder="450000"
+                         aria-invalid={!!errori.prezzo}
+                         value={i.prezzoRichiesto || ""} onChange={(e) => set({ prezzoRichiesto: numero(e.target.value) || null })} />
+                  {errori.prezzo && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.prezzo}</span>}
+                  <span className="v-field__hint">
+                    {T.prezzoHint}
+                    {boxSeparato?.incluso && boxSeparato.prezzo ? ` Comprende il box a parte (${eur(boxSeparato.prezzo)} €), perché lo hai incluso nella valutazione.` : ""}
+                  </span>
                 </div>
 
                 {avviso && <p className="v-note">{avviso}</p>}
@@ -537,8 +597,9 @@ function Valuta() {
 
               <div className="v-actions">
                 <button className="v-btn v-btn--accent v-btn--lg"
-                        onClick={() => i.mq > 0 ? (setAvviso(null), setVista("calcolo"))
-                                                : setAvviso("Manca la superficie: senza metri quadri non c'è stima.")}>
+                        onClick={() => erroriAttivi.length ? setAvviso(`Correggi prima: ${erroriAttivi.join(" ")}`)
+                                     : i.mq > 0 ? (setAvviso(null), setVista("calcolo"))
+                                     : setAvviso("Manca la superficie: senza metri quadri non c'è stima.")}>
                   Valuta
                 </button>
                 <button className="v-btn v-btn--bare" onClick={() => setVista("dove")}>Indietro</button>
@@ -750,15 +811,26 @@ function Risultato({
           </div>
           <div className="v-fonti">
             <p className="v-small v-measure">
-              <b>Valore.</b> Quotazioni OMI {stima.semestre} della zona {input.zona}, aggiornate con l&apos;indice Istat dei prezzi
-              delle abitazioni, con coefficienti dichiarati per piano, ascensore, classe, luce e pertinenze. Superficie commerciale
-              secondo il DPR 138/1998, allegato C. Motore tarato su 201 annunci milanesi verificati (settembre 2026): errore
-              mediano −0,3%, dispersione 10–13%. La stessa casa vale lo stesso per chi compra e per chi vende.
+              <b>Valore.</b> Quotazioni OMI {stima.semestre} della zona {input.zona} (fornitura diretta dell&apos;Agenzia delle
+              Entrate), aggiornate con l&apos;indice Istat dei prezzi delle abitazioni, con coefficienti dichiarati per piano,
+              ascensore, classe, luce e pertinenze. Superficie commerciale secondo il DPR 138/1998, allegato C. La stessa casa vale
+              lo stesso per chi compra e per chi vende.
             </p>
             <p className="v-small v-measure">
-              <b>Prezzi.</b> Il prezzo richiesto è un&apos;intenzione, non un valore. Il prezzo di pubblicazione possibile è la mediana
-              osservata sugli annunci di taratura, il 6% sopra il valore. L&apos;intervallo per un&apos;offerta è la metà bassa
-              dell&apos;intervallo di stima. Nessuna di queste è una percentuale di trattativa garantita.
+              <b>Taratura, e cosa misura.</b> Il motore è stato tarato il 5 settembre 2026 su 201 annunci di vendita a Milano,
+              raccolti dai portali con una ricerca assistita e verificati a campione (12 riletti a mano: prezzi e metri confermati
+              in tutti, due stati corretti). La variabile di confronto è il <b>prezzo richiesto</b> nell&apos;annuncio contro il prezzo
+              di pubblicazione stimato; la metrica è il logaritmo del rapporto: scarto mediano −0,3%, dispersione (MAD) 10% fuori dal
+              segmento di pregio e 13% con il pregio dentro, 37% degli annunci entro ±10%. Sono numeri sul campione di taratura
+              stesso: <b>un campione di verifica indipendente non c&apos;è ancora</b> (previsto con l&apos;API di Idealista). E i prezzi
+              richiesti non sono prezzi di compravendita: la taratura dice quanto le stime somigliano a ciò che i venditori chiedono,
+              non quanto a ciò che gli acquirenti pagano. Il metodo per esteso è in <code>docs/taratura.md</code>.
+            </p>
+            <p className="v-small v-measure">
+              <b>Prezzi.</b> Il prezzo richiesto è un&apos;intenzione, non un valore. Il prezzo di pubblicazione possibile è il valore
+              centrale più il 6%, una convenzione del motore che la taratura ha allineato in mediana ai prezzi richiesti degli
+              annunci. L&apos;intervallo per un&apos;offerta è la metà bassa dell&apos;intervallo di stima. Nessuna di queste è una
+              percentuale di trattativa misurata su compravendite.
             </p>
             <p className="v-small v-measure">
               <b>Lavori.</b> Costi medi di fascia per Milano, IVA esclusa, da prezzari e guide 2026; IVA 10% sui lavori con la regola

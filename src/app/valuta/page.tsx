@@ -27,6 +27,7 @@ import { leggiAnnuncio, type Letto } from "@/lib/annuncio";
 import AskingPrice from "@/components/sistema/AskingPrice";
 import RentalYield from "@/components/sistema/RentalYield";
 import ZoneHistory from "@/components/sistema/ZoneHistory";
+import ShortRent from "@/components/sistema/ShortRent";
 import { salvaStima, salvaStimaAccount } from "@/lib/storage";
 import { useSessione } from "@/lib/sessione";
 import { FONTI, type FonteIndirizzo, type Input, type Scelta, type Stato, type Stima, type Tipo } from "@/lib/types";
@@ -594,6 +595,23 @@ function Risultato({
               anche affittare di più.
             </p>
             <RentalYield r={affitto} zona={input.zona} />
+          </Reveal>
+        </section>
+      )}
+
+      {/* affitto breve, scenario */}
+      {affitto && (
+        <section className="v-wrap v-chapter">
+          <Reveal>
+            <div className="v-chapter__head">
+              <span className="v-numeral">{cap()}</span>
+              <h2 className="v-h2">E se la affitti a notte?</h2>
+            </div>
+            <p className="v-lead v-measure" style={{ marginBottom: "clamp(28px,4vw,44px)" }}>
+              Qui non ci sono dati ufficiali: è uno scenario, con le ipotesi in vista. Muovile e guarda
+              dove sta il pareggio con il contratto lungo, che è il numero che conta.
+            </p>
+            <ShortRent lungo={affitto} stima={stima} />
           </Reveal>
         </section>
       )}

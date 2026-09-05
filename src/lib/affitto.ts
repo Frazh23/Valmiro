@@ -123,3 +123,67 @@ export function andamento(zona: string): Andamento | null {
     nuova: punti.length < 4,
   };
 }
+
+/* --------------------------------------------------------------------------
+   Affitto breve: uno scenario, non un dato.
+
+   Non esiste una fonte ufficiale per le tariffe a notte. Le ipotesi qui sotto
+   vengono da fonti di settore su Milano (AirDNA via iltuopropertymanager.it,
+   luglio 2026; Home2Home, luglio 2026; Verto AI, aprile 2026): tariffa media
+   150-160 euro a notte sul mercato, 120 prudente per un bilocale; occupazione
+   55-65%; commissioni 12-18%; pulizie ~55 euro a cambio; utenze e condominio
+   a carico del proprietario; cedolare 21%, 26% dal secondo immobile;
+   property manager 20-25%. Sono regolabili dalla pagina, e la pagina dice che
+   sono ipotesi. Il profilo di partenza e' prudente, scelta di Francesco.
+   -------------------------------------------------------------------------- */
+
+export type IpotesiBreve = {
+  tariffa: number;       // euro a notte
+  occupazione: number;   // 0..1
+  commissioni: number;   // quota del lordo alle piattaforme
+  pulizie: number;       // euro a cambio
+  soggiorno: number;     // notti medie per prenotazione
+  utenze: number;        // euro al mese, luce gas acqua internet condominio
+  gestione: number;      // quota del lordo al property manager, 0 se in proprio
+  cedolare: number;      // 0.21, 0.26 dal secondo immobile
+};
+
+export const IPOTESI_BREVE_BASE: Omit<IpotesiBreve, "tariffa"> = {
+  occupazione: 0.55, commissioni: 0.15, pulizie: 55, soggiorno: 3, utenze: 200, gestione: 0, cedolare: 0.21,
+};
+
+/** Tariffa prudente: ancorata al canone mensile della zona, non al mercato turistico. */
+export function tariffaPrudente(canoneMese: number) {
+  return Math.max(60, Math.round(canoneMese / 9 / 5) * 5);
+}
+
+export type Breve = {
+  notti: number; lordo: number; commissioni: number; pulizie: number; utenze: number; gestione: number;
+  cedolare: number; netto: number; rendimentoNetto: number;
+  /** occupazione a cui l'affitto breve rende quanto il 4+4, o null se non la raggiunge mai */
+  pareggio: number | null;
+  /** quanto rende in piu' (o in meno) del 4+4, in euro l'anno */
+  differenza: number;
+};
+
+export function affittoBreve(ip: IpotesiBreve, lungo: Rendita, stima: Stima): Breve {
+  const notti = 365 * ip.occupazione;
+  const lordo = ip.tariffa * notti;
+  const commissioni = lordo * ip.commissioni;
+  const pulizie = (notti / ip.soggiorno) * ip.pulizie;
+  const utenze = ip.utenze * 12;
+  const gestione = lordo * ip.gestione;
+  /* La cedolare si paga sul corrispettivo lordo, non sull'utile: e' la
+     differenza che fa sembrare l'affitto breve piu' ricco di quanto sia. */
+  const cedolare = lordo * ip.cedolare;
+  const netto = lordo - commissioni - pulizie - utenze - gestione - cedolare;
+  // netto(occ) = occ * 365 * margineNotte - utenze  =>  occ* = (nettoLungo + utenze) / (365 * margineNotte)
+  const margineNotte = ip.tariffa * (1 - ip.commissioni - ip.gestione - ip.cedolare) - ip.pulizie / ip.soggiorno;
+  const occ = margineNotte > 0 ? (lungo.annuoNetto + utenze) / (365 * margineNotte) : Infinity;
+  return {
+    notti, lordo, commissioni, pulizie, utenze, gestione, cedolare, netto,
+    rendimentoNetto: netto / stima.centro,
+    pareggio: Number.isFinite(occ) && occ <= 1 ? occ : null,
+    differenza: netto - lungo.annuoNetto,
+  };
+}

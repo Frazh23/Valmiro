@@ -54,3 +54,44 @@ test("l'ultimo semestre dello storico coincide con le quotazioni caricate", () =
     assert.deepEqual(ultimo.c, c, `zona ${z}: storico e quotazioni non coincidono`);
   }
 });
+
+/* Le funzioni: compilate al volo come il motore, cosi' il test gira sul codice vero. */
+import { execSync } from "node:child_process";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+const RADICE = join(dirname(fileURLToPath(import.meta.url)), "..");
+const BUILD = join(RADICE, ".calibrazione/build-test");
+execSync(`npx tsc src/lib/affitto.ts --outDir ${BUILD} --module commonjs --target es2022 --moduleResolution node --resolveJsonModule --esModuleInterop --skipLibCheck`, { cwd: RADICE, stdio: "inherit" });
+const req = createRequire(import.meta.url);
+const affitto = req(join(BUILD, "src/lib/affitto.js"));
+const motore = req(join(BUILD, "src/lib/engine.js"));
+
+const CASA = { zona: "C18", tipo: "civ", mq: 85, stato: "abit", piano: "1-2", ascensore: true, classe: "D", balconi: 0, cantina: false, box: "nessuno", epoca: null, affaccio: null, metro: null };
+
+test("il canone segue il prezzo: stessa casa, stato migliore, canone piu' alto", () => {
+  const a = affitto.rendita(CASA, motore.stima(CASA));
+  const b = affitto.rendita({ ...CASA, stato: "otti" }, motore.stima({ ...CASA, stato: "otti" }));
+  assert.ok(b.canoneMese > a.canoneMese);
+  assert.ok(a.lordo > 0.02 && a.lordo < 0.08, `rendimento lordo ${a.lordo}`);
+  assert.ok(a.netto < a.lordo);
+});
+
+test("al pareggio l'affitto breve rende esattamente quanto il 4+4", () => {
+  const s = motore.stima(CASA);
+  const lungo = affitto.rendita(CASA, s);
+  const ip = { ...affitto.IPOTESI_BREVE_BASE, tariffa: affitto.tariffaPrudente(lungo.canoneMese) };
+  const b = affitto.affittoBreve(ip, lungo, s);
+  assert.ok(b.pareggio !== null && b.pareggio > 0.2 && b.pareggio < 0.95, `pareggio ${b.pareggio}`);
+  const al = affitto.affittoBreve({ ...ip, occupazione: b.pareggio }, lungo, s);
+  assert.ok(Math.abs(al.netto - lungo.annuoNetto) < 1, `${al.netto} vs ${lungo.annuoNetto}`);
+});
+
+test("l'andamento di una zona storica parte dal 2014-2 e quello di una nuova lo dice", () => {
+  const c18 = affitto.andamento("C18");
+  assert.equal(c18.dal, "2014-2");
+  assert.equal(c18.punti.length, 21);
+  assert.ok(c18.variazione > 0);
+  const d37 = affitto.andamento("D37");
+  assert.equal(d37.nuova, true);
+});

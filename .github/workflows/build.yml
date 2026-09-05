@@ -1,0 +1,30 @@
+# Build di produzione riproducibile: ogni push e ogni pull request su main compila il sito
+# in un ambiente pulito con il repository e le dipendenze (npm ci), dopo typecheck e test.
+# L'esito e il commit restano nella scheda Actions di GitHub: e' il registro delle build.
+# La build non ha bisogno di rete ne' di chiavi (vedi CLAUDE.md, «Rete»): le variabili
+# Supabase pubbliche sono facoltative in fase di compilazione.
+# Copia di riferimento nel repository: docs/github-actions-build.yml.
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"

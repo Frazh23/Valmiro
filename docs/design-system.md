@@ -73,6 +73,15 @@ esiste lì, prima si aggiunge lì. Nessun valore letterale nei componenti.
   si chiede serve alla stima, quindi si mostra di seguito. «Altri dettagli» e'
   stato tolto per questo. Un `<details>` resta accettabile solo per una via
   alternativa (incollare un annuncio, la mappa quando l'indirizzo non si trova), mai per un dato.
+- Il percorso comincia dall'intento (comprare o vendere) e lo tiene in vista con un
+  interruttore che cambia le parole, mai i dati. Il valore stimato, il prezzo richiesto,
+  il prezzo di pubblicazione possibile e l'intervallo per un'offerta sono quattro cose
+  diverse e non si mischiano in una frase.
+- Nel risultato l'ordine e' quello delle decisioni: valore e confronto, spiegazione,
+  ristrutturazione, affitto, quartiere, fonti. Vicino al valore resta solo un riferimento
+  sintetico alla zona OMI.
+- Prima il riepilogo, poi il dettaglio per chi lo cerca («Personalizza gli interventi»):
+  il percorso iniziale resta breve.
 - Il mobile si progetta a parte: verticale, tocco ampio, tipografia grande,
   pochissimi grafici. Mai una dashboard compressa.
 

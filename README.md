@@ -62,13 +62,45 @@ tests/*.test.mjs                 invarianti sui dati: quotazioni, geometrie, ind
    sconto "da ristrutturare" 0,95. Vedi `PARAMETRI` in `engine.ts` e `data/annunci/`.
 3. **Aggiornamento a oggi.** `INDICE_ISTAT` porta la base, che esce con mesi di ritardo,
    al trimestre corrente. Va aggiornato ogni trimestre dai dati Istat.
-4. **Coefficienti** su piano, ascensore, classe energetica, luminosità e — se l'utente
+4. **Superficie commerciale** secondo il DPR 138/1998, allegato C: la superficie degli
+   annunci e degli atti (muri compresi) è la base; se l'utente ha solo la calpestabile si
+   aggiunge il 12% di muri, dichiarato come media. Balconi e terrazzi, chiesti separati in
+   m², contano insieme al 30% fino a 25 m² e al 10% oltre; la cantina 2,5 m². Se sono già
+   dentro la commerciale inserita non si contano due volte. Ogni contributo è una riga del
+   dettaglio.
+5. **Coefficienti** su piano, ascensore, classe energetica, luminosità e — se l'utente
    risponde alle domande di affinamento — epoca, affaccio, distanza dalla metropolitana.
-5. **Incertezza.** Non è una costante: nasce dall'ampiezza della fascia OMI di quella
+6. **Incertezza.** Non è una costante: nasce dall'ampiezza della fascia OMI di quella
    zona, cresce se lo stato è incerto, cala a ogni domanda di affinamento risposta.
 
 Il risultato è sempre un **intervallo**, mai un numero secco, con la fonte e il semestre
 dichiarati accanto.
+
+## Comprare o vendere
+
+Il percorso chiede prima da che parte si sta. **Il valore è lo stesso**: il motore non sa
+nemmeno quale intento sia stato scelto (`Input.intento` è solo informativo). Cambiano le
+parole e gli strumenti: chi compra incolla l'annuncio, inserisce il prezzo richiesto e
+legge «È caro o no?» con un intervallo per l'offerta che ha un criterio esplicito (la metà
+bassa dell'intervallo di stima); chi vende inserisce il prezzo che aveva in mente e legge
+valore stimato e **prezzo di pubblicazione possibile**, che è la mediana osservata sugli
+annunci di taratura (il 6% sopra il valore), presentata come comportamento dei venditori e
+non come consiglio. Nessuna percentuale di trattativa è presentata come evidenza di mercato.
+L'intento si cambia in ogni passo senza perdere i dati e resta nella stima salvata.
+
+## Ristrutturazione intervento per intervento
+
+`src/lib/ristrutturazione.ts`: nove voci con cosa comprendono e su che base si calcolano
+(metri di pavimento, di pareti, bagni, finestre, porte, a corpo), prezzi unitari IVA esclusa
+per pacchetto da prezzari 2026 per Milano, moltiplicatore di fascia. I pacchetti Essenziale,
+Completa e Design sono una precompilazione: ogni voce si include, si esclude, si segna come
+già fatta o si sostituisce con un preventivo (con o senza IVA, con o senza posa). Lo stato
+atteso dipende dai lavori che restano: «ottimo» richiede impianti, bagni, pavimenti e
+tinteggiatura; «come nuova» anche demolizioni, termico, infissi e porte. Se manca un
+lavoro necessario, il valore atteso scende e la pagina dice perché. La classe energetica
+non viene stimata. La detrazione (50%/36%, tetto 96.000, dieci rate) si applica alla spesa
+sostenuta e viene distinta dalla liquidità necessaria. Al cambio pacchetto restano solo
+«già fatto» e «non lo faccio», i preventivi si azzerano, e lo si dice.
 
 ## Aggiornare i dati
 

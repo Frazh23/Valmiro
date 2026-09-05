@@ -1,160 +1,322 @@
 "use client";
+import { useMemo, useState } from "react";
 import NumeroAnimato from "./NumeroAnimato";
 import BeforeAfter from "./BeforeAfter";
-import { eur } from "@/lib/formato";
-import { RISTRUTTURAZIONE, ONERI } from "@/lib/engine";
-import { pct } from "@/lib/formato";
+import { eur, num, pct } from "@/lib/formato";
+import {
+  PACCHETTI, prospettoRistrutturazione, scelteAlCambioPacchetto,
+  type Modo, type Pacchetto, type Prospetto, type Scelte,
+} from "@/lib/ristrutturazione";
+import type { Input, Intento, Stato, Stima } from "@/lib/types";
 
-export type Prospetto = {
-  livello: string; euroMq: number;
-  lavori: number; iva: number; tecnici: number; pratiche: number;
-  costo: number; detrazione: number; rate: number;
-  costoNetto: number; valorePrima: number; valoreDopo: number;
-  valoreDopoMin: number; valoreDopoMax: number; sigmaDopo: number;
-  margine: number;
-};
+export type { Prospetto } from "@/lib/ristrutturazione";
+
+const STATO_NOME: Record<Stato, string> = { rist: "da ristrutturare", abit: "abitabile", otti: "ottimo stato", nuov: "come nuova" };
+const MODI: { id: Modo; t: string }[] = [
+  { id: "incluso", t: "Lo faccio, al costo stimato" },
+  { id: "preventivo", t: "Ho un preventivo" },
+  { id: "fatto", t: "Già fatto o non serve" },
+  { id: "escluso", t: "Non lo faccio" },
+];
 
 /**
- * Scenari di ristrutturazione.
- * Ogni cifra viene da prospettoRistrutturazione(), calcolata dal motore e
- * ricevuta gia' pronta: qui si sceglie quale mostrare e si anima il passaggio.
+ * Ristrutturazione. Prima un riepilogo semplice: pacchetto, valore atteso,
+ * costo, detrazione. Poi, per chi lo cerca, «Personalizza gli interventi»:
+ * ogni voce si tiene, si toglie, si segna come fatta o si sostituisce con il
+ * preventivo di un fornitore. Il prospetto e' sempre quello del motore,
+ * ricalcolato a ogni modifica: qui non si somma niente a mano.
  *
- * Due scelte deliberate sull'onesta' dei numeri:
- * - il valore dopo i lavori si mostra come intervallo, come la stima principale:
- *   deriva da quella e non puo' essere piu' preciso di lei;
- * - il margine non e' il protagonista. E' il numero meno affidabile della
- *   pagina, perche' somma l'incertezza della stima a quella di un costo che e'
- *   una media di fascia e non un preventivo.
+ * Due regole sull'onesta' dei numeri restano dalla versione precedente:
+ * il valore dopo i lavori e' un intervallo, come la stima da cui deriva; il
+ * margine non e' il protagonista, perche' e' il numero meno solido della pagina.
  */
 export default function RenovationSelector({
-  attuale, prospetti, scelto, onSceglie, primaCasa, onPrimaCasa,
+  input, stima, primaCasa, onPrimaCasa, intento,
 }: {
-  attuale: number;
-  prospetti: Record<string, Prospetto>;
-  scelto: string;               // "attuale" | id di RISTRUTTURAZIONE
-  onSceglie: (id: string) => void;
+  input: Input;
+  stima: Stima;
   primaCasa: boolean;
   onPrimaCasa: (v: boolean) => void;
+  intento: Intento;
 }) {
-  const p = scelto === "attuale" ? null : prospetti[scelto];
-  const valore = p ? p.valoreDopo : attuale;
-  const delta = valore - attuale;
-  const liv = RISTRUTTURAZIONE.find((r) => r.id === scelto);
+  const [scelto, setScelto] = useState<"attuale" | Pacchetto>("attuale");
+  const [scelte, setScelte] = useState<Scelte>({});
+  const [aperto, setAperto] = useState(false);
+  const [avvisoCambio, setAvvisoCambio] = useState<string | null>(null);
+  const [prezzoAcquisto, setPrezzoAcquisto] = useState<number>(input.prezzoRichiesto || stima.centro);
+
+  const p: Prospetto | null = useMemo(
+    () => (scelto === "attuale" ? null : prospettoRistrutturazione(input, scelto, primaCasa, scelte)),
+    [input, scelto, primaCasa, scelte]
+  );
+  /* Lo stesso pacchetto senza personalizzazioni: serve a dire quanto le scelte hanno spostato. */
+  const pieno: Prospetto | null = useMemo(
+    () => (scelto === "attuale" ? null : prospettoRistrutturazione(input, scelto, primaCasa, {})),
+    [input, scelto, primaCasa]
+  );
+
+  const valore = p ? p.valoreDopo : stima.centro;
+  const delta = valore - stima.centro;
+  const pacchetto = PACCHETTI.find((x) => x.id === scelto);
+  const personalizzato = Object.keys(scelte).length > 0;
 
   /* L'OMI pubblica due stati, non tre: oltre "come nuova" la zona non riconosce
-     di piu'. Due livelli di spesa possono quindi arrivare allo stesso valore.
-     Non lo nascondiamo dietro un premio inventato: lo diciamo. */
-  const stessoValore = RISTRUTTURAZIONE.filter(
-    (r) => prospetti[r.id] && p && prospetti[r.id].valoreDopo === p.valoreDopo
-  );
-  const piuEconomico = stessoValore[0];
-  const plateau = p && piuEconomico && piuEconomico.id !== scelto ? piuEconomico : null;
+     di piu'. Due pacchetti possono quindi arrivare allo stesso valore. Non lo
+     nascondiamo dietro un premio inventato: lo diciamo. */
+  const plateau = useMemo(() => {
+    if (!p || p.mancanti.length) return null;
+    const altri = PACCHETTI.filter((x) => x.id !== scelto)
+      .map((x) => ({ x, pr: prospettoRistrutturazione(input, x.id, primaCasa, {}) }))
+      .filter(({ pr }) => pr.valoreDopo === p.valoreDopo && pr.costo < p.costo);
+    return altri[0]?.x ?? null;
+  }, [p, scelto, input, primaCasa]);
+
+  function scegliPacchetto(id: "attuale" | Pacchetto) {
+    if (id !== "attuale" && scelto !== "attuale" && id !== scelto && personalizzato) {
+      const tenute = scelteAlCambioPacchetto(scelte);
+      const perse = Object.keys(scelte).length - Object.keys(tenute).length;
+      setScelte(tenute);
+      setAvvisoCambio(
+        `Cambiando pacchetto tengo ciò che riguarda la casa — «già fatto» e «non lo faccio» — ${perse ? `e azzero ${perse === 1 ? "il preventivo" : `${perse} preventivi`}, perché erano riferiti al pacchetto precedente` : "e non c'era altro da azzerare"}.`
+      );
+    } else setAvvisoCambio(null);
+    setScelto(id);
+  }
+  const setScelta = (id: string, s: Scelte[string]) => setScelte((v) => {
+    const n = { ...v };
+    if (!s || (s.modo === "incluso" && !s.preventivo)) delete n[id]; else n[id] = s;
+    return n;
+  });
 
   return (
     <div className="v-reno">
       <div>
         <div className="v-scenari" role="group" aria-label="Livello di intervento">
-          <button className="v-scenario" aria-pressed={scelto === "attuale"} onClick={() => onSceglie("attuale")}>
-            Oggi
-          </button>
-          {RISTRUTTURAZIONE.map((r) => (
-            <button key={r.id} className="v-scenario" aria-pressed={scelto === r.id}
-                    disabled={!prospetti[r.id]} onClick={() => onSceglie(r.id)}>
-              {r.nome}
-            </button>
+          <button className="v-scenario" aria-pressed={scelto === "attuale"} onClick={() => scegliPacchetto("attuale")}>Oggi</button>
+          {PACCHETTI.map((r) => (
+            <button key={r.id} className="v-scenario" aria-pressed={scelto === r.id} onClick={() => scegliPacchetto(r.id)}>{r.nome}</button>
           ))}
         </div>
 
-        <p className="v-eyebrow">{p ? "Valore dopo i lavori" : "Valore attuale"}</p>
-        <p className="v-reno__value" aria-live="polite">
-          <NumeroAnimato valore={valore} /> €
-        </p>
+        <p className="v-eyebrow">{p ? "Valore atteso dopo i lavori" : "Valore stimato oggi"}</p>
+        <p className="v-reno__value" aria-live="polite"><NumeroAnimato valore={valore} /> €</p>
         {p && (
           <>
             <p className="v-reno__range">Intervallo {eur(p.valoreDopoMin)} – {eur(p.valoreDopoMax)} €</p>
             <p className={"v-reno__delta " + (delta >= 0 ? "pos" : "neg")}>
               {delta >= 0 ? "+" : "−"}{eur(Math.abs(delta))} € rispetto a oggi
             </p>
+            <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
+              Da <b>{STATO_NOME[p.statoAttuale]}</b> a <b>{STATO_NOME[p.statoAtteso]}</b>
+              {p.statoAtteso === p.statoAttuale ? ": con questi lavori lo stato conservativo non cambia" : ""}.
+            </p>
           </>
         )}
 
-        {plateau && (
-          <p className="v-plateau">
-            Stesso valore di <b>{plateau.nome}</b>. Le quotazioni ufficiali si fermano allo
-            stato «come nuova»: oltre quella soglia la zona non riconosce di più, e la
-            differenza fra i due livelli è tutta nel costo. Infatti il margine scende.
+        {p && p.mancanti.length > 0 && (
+          <p className="v-note" style={{ marginTop: "var(--s-4)" }}>
+            Senza {p.mancanti.join(", ").toLowerCase()} la casa non arriva a «{STATO_NOME[p.statoPacchetto]}», lo stato che il pacchetto
+            «{p.livello}» avrebbe raggiunto: il valore atteso è quello di «{STATO_NOME[p.statoAtteso]}». Spendere meno non porta lo stesso risultato.
           </p>
         )}
+        {plateau && (
+          <p className="v-plateau">
+            Stesso valore di <b>{plateau.nome}</b>. Le quotazioni ufficiali si fermano allo stato «come nuova»: oltre quella soglia la zona
+            non riconosce di più, e la differenza fra i due pacchetti è tutta nel costo.
+          </p>
+        )}
+        {avvisoCambio && <p className="v-note" style={{ marginTop: "var(--s-4)" }}>{avvisoCambio}</p>}
 
         {p ? (
           <>
+            {pacchetto && !aperto && <p className="v-reno__what">{pacchetto.cosa}</p>}
+
             <div className="v-reno__lines">
               <div className="v-factor">
-                <span className="v-factor__n">Lavori · {eur(p.euroMq)} €/mq, imponibile</span>
+                <span className="v-factor__n">Lavori da fare · imponibile{personalizzato && pieno ? `, pacchetto pieno ${eur(pieno.lavori)} €` : ""}</span>
                 <span className="v-factor__v neg">−{eur(p.lavori)} €</span>
               </div>
               <div className="v-factor">
-                <span className="v-factor__n">IVA sui lavori al {pct(ONERI.ivaLavori)}</span>
+                <span className="v-factor__n">IVA sui lavori</span>
                 <span className="v-factor__v neg">−{eur(p.iva)} €</span>
               </div>
               <div className="v-factor">
-                <span className="v-factor__n">Progetto, direzione lavori, pratiche · {pct(ONERI.spesaTecnica)} + cassa e IVA 22%</span>
-                <span className="v-factor__v neg">−{eur(p.tecnici)} €</span>
-              </div>
-              <div className="v-factor">
-                <span className="v-factor__n">Diritti comunali, catasto, attestato energetico</span>
-                <span className="v-factor__v neg">−{eur(p.pratiche)} €</span>
+                <span className="v-factor__n">Progettazione, direzione lavori e pratiche</span>
+                <span className="v-factor__v neg">−{eur(p.tecnici + p.pratiche)} €</span>
               </div>
               <div className="v-factor v-factor--sub">
-                <span className="v-factor__n">Costo complessivo</span>
+                <span className="v-factor__n">Da pagare, tutto compreso</span>
                 <span className="v-factor__v">{eur(p.costo)} €</span>
               </div>
               <div className="v-factor">
-                <span className="v-factor__n">Detrazione fiscale in {p.rate} anni</span>
+                <span className="v-factor__n">Detrazione fiscale: {eur(p.rataAnnua)} € l&apos;anno per {p.rate} anni</span>
                 <span className="v-factor__v pos">+{eur(p.detrazione)} €</span>
               </div>
-              <div className="v-factor">
-                <span className="v-factor__n">Margine indicativo</span>
-                <span className={"v-factor__v " + (p.margine >= 0 ? "pos" : "neg")}>
-                  {p.margine >= 0 ? "+" : "−"}{eur(Math.abs(p.margine))} €
-                </span>
+              <div className="v-factor v-factor--total">
+                <span className="v-factor__n">Costo netto, a fine detrazione</span>
+                <span className="v-factor__v">{eur(p.costoNetto)} €</span>
               </div>
             </div>
-
-            <p className="v-caveat">
-              Il costo dei lavori è una media della fascia di zona, non un preventivo: un
-              preventivo vero cambia sensibilmente con il palazzo, il piano e gli accessi.
-              L&apos;IVA al 10% vale sulla manodopera e, per infissi, caldaia e sanitari, solo
-              fino al suo valore: il resto è al 22%, e un cantiere con molti infissi paga
-              qualcosa in più.
-              Il margine somma l&apos;incertezza della stima a quella del costo, ed è per
-              questo il numero meno solido di tutta la pagina: leggilo come ordine di
-              grandezza, non come una previsione di guadagno.
+            <p className="v-small v-measure" style={{ marginTop: "var(--s-3)" }}>
+              La detrazione torna in dieci rate sull&apos;Irpef: i {eur(p.costo)} € vanno pagati subito, per intero. Spetta al
+              {primaCasa ? " 50% perché è l'abitazione principale" : " 36% perché non è l'abitazione principale"}, entro 96.000 € di spesa, e
+              solo se c&apos;è Irpef abbastanza da assorbirla.
             </p>
 
-            {liv && <p className="v-reno__what">{liv.cosa}</p>}
-            <label className="v-toggle" style={{ marginTop: "var(--s-6)" }}>
-              <span>
-                È la tua prima casa
-                <small>Nel 2026 prima casa 50%, altri immobili 36%, tetto {eur(96000)} € su tutto il costo. Dal 2027 scendono a 36% e 30%.</small>
-              </span>
+            <label className="v-toggle" style={{ marginTop: "var(--s-5)" }}>
+              <span>È la tua abitazione principale<small>Nel 2026 la detrazione è del 50% sulla prima casa, del 36% sulle altre. Dal 2027 scendono a 36% e 30%.</small></span>
               <input type="checkbox" checked={primaCasa} onChange={(e) => onPrimaCasa(e.target.checked)} />
             </label>
+
+            <div className="v-actions" style={{ marginTop: "var(--s-5)" }}>
+              <button className="v-btn v-btn--quiet" onClick={() => setAperto((a) => !a)} aria-expanded={aperto}>
+                {aperto ? "Chiudi gli interventi" : "Personalizza gli interventi"}
+              </button>
+              {personalizzato && (
+                <button className="v-btn v-btn--bare" onClick={() => { setScelte({}); setAvvisoCambio(null); }}>
+                  Ripristina il pacchetto «{p.livello}»
+                </button>
+              )}
+            </div>
+
+            {aperto && (
+              <div className="v-interventi">
+                <p className="v-small v-measure">
+                  Ogni voce dice cosa comprende e su cosa è calcolata. I costi sono medie di fascia per Milano, IVA esclusa,
+                  non preventivi. Se un lavoro l&apos;hai già fatto, segnalo: la spesa scende e il valore atteso non lo conta due volte.
+                </p>
+                {p.voci.map((v) => (
+                  <Voce key={v.id} v={v} scelta={scelte[v.id]} onChange={(s) => setScelta(v.id, s)} />
+                ))}
+              </div>
+            )}
+
+            {p.nonQuantificato.length > 0 && (
+              <div className="v-reno__nq">
+                {p.nonQuantificato.map((t, n) => <p key={n} className="v-small v-measure">{t}</p>)}
+              </div>
+            )}
+
+            {intento === "compro" ? (
+              <div className="v-reno__intento">
+                <p className="v-eyebrow">Esborso complessivo ipotizzato</p>
+                <label className="v-field" style={{ marginTop: "var(--s-3)" }}>
+                  <span className="v-field__lbl">Prezzo di acquisto ipotizzato</span>
+                  <input className="v-input" type="number" inputMode="numeric" min={0} value={prezzoAcquisto || ""}
+                         onChange={(e) => setPrezzoAcquisto(Math.max(0, Number(e.target.value) || 0))} />
+                  <span className="v-field__hint">
+                    {input.prezzoRichiesto ? `Parte dal prezzo richiesto, ${eur(input.prezzoRichiesto)} €: ` : "Parte dal valore stimato: "}
+                    metti quello che pensi di pagare, non è la stessa cosa.
+                  </span>
+                </label>
+                <div className="v-reno__lines" style={{ marginTop: "var(--s-4)" }}>
+                  <div className="v-factor"><span className="v-factor__n">Acquisto ipotizzato</span><span className="v-factor__v">{eur(prezzoAcquisto)} €</span></div>
+                  <div className="v-factor"><span className="v-factor__n">Lavori, IVA, tecnici e pratiche</span><span className="v-factor__v">{eur(p.costo)} €</span></div>
+                  <div className="v-factor v-factor--total"><span className="v-factor__n">Totale dichiarato</span><span className="v-factor__v">{eur(prezzoAcquisto + p.costo)} €</span></div>
+                </div>
+                <p className="v-small v-measure" style={{ marginTop: "var(--s-3)" }}>
+                  Non è il totale completo: mancano le imposte sull&apos;acquisto (registro o IVA), il notaio, l&apos;agenzia e gli eventuali
+                  costi del mutuo, che dipendono dalla tua situazione. La detrazione ({eur(p.detrazione)} €) arriva dopo, in dieci anni.
+                </p>
+              </div>
+            ) : (
+              <div className="v-reno__intento">
+                <p className="v-eyebrow">Conviene sistemarla prima di vendere?</p>
+                <div className="v-reno__lines" style={{ marginTop: "var(--s-4)" }}>
+                  <div className="v-factor"><span className="v-factor__n">Valore stimato oggi</span><span className="v-factor__v">{eur(p.valorePrima)} €</span></div>
+                  <div className="v-factor"><span className="v-factor__n">Costo dei lavori, netto della detrazione</span><span className="v-factor__v neg">−{eur(p.costoNetto)} €</span></div>
+                  <div className="v-factor"><span className="v-factor__n">Valore atteso dopo</span><span className="v-factor__v">{eur(p.valoreDopo)} €</span></div>
+                  <div className="v-factor v-factor--total">
+                    <span className="v-factor__n">Incremento di valore meno spesa</span>
+                    <span className={"v-factor__v " + (p.margine >= 0 ? "pos" : "neg")}>{p.margine >= 0 ? "+" : "−"}{eur(Math.abs(p.margine))} €</span>
+                  </div>
+                </div>
+                <p className="v-small v-measure" style={{ marginTop: "var(--s-3)" }}>
+                  {p.margine >= 0
+                    ? "Un segno positivo dice che, per il modello, i lavori si ripagano nel prezzo. Non è un guadagno garantito: "
+                    : "Un segno negativo dice che, per il modello, i lavori non si ripagano nel prezzo. "}
+                  la stima dopo i lavori ha la stessa incertezza di quella di oggi (±{pct(p.sigmaDopo, 1)}), il costo è una media di fascia,
+                  e la detrazione la incassa chi paga i lavori, in dieci anni: se vendi prima, la parte residua passa a chi compra.
+                </p>
+              </div>
+            )}
+
+            <p className="v-caveat">
+              Il costo dei lavori è una media della fascia di zona, non un preventivo: un preventivo vero cambia sensibilmente con il
+              palazzo, il piano e gli accessi. L&apos;IVA al 10% vale sulla manodopera e, per infissi, caldaia e sanitari, solo fino al
+              suo valore: il resto è al 22%, e un cantiere con molti infissi paga qualcosa in più.
+            </p>
           </>
         ) : (
           <p className="v-reno__what">
-            Scegli un livello di intervento per vedere quanto costerebbe, quanto ne torna
-            indietro con le detrazioni e quanto varrebbe la casa dopo.
+            Scegli un pacchetto per vedere quanto costerebbe, quanto ne torna con le detrazioni e quanto varrebbe la casa dopo.
+            Poi puoi personalizzare gli interventi uno a uno.
           </p>
         )}
       </div>
 
       <div>
-        <BeforeAfter etichettaDopo={liv ? liv.nome : "Dopo i lavori"} />
+        <BeforeAfter etichettaDopo={pacchetto ? pacchetto.nome : "Dopo i lavori"} />
         <p className="v-micro" style={{ marginTop: "var(--s-4)" }}>
           Rappresentazione indicativa. Le immagini reali dell&apos;immobile si collegano qui.
         </p>
       </div>
+    </div>
+  );
+}
+
+/** Una voce del catalogo con le sue quattro possibilita'. */
+function Voce({ v, scelta, onChange }: {
+  v: Prospetto["voci"][number];
+  scelta: Scelte[string];
+  onChange: (s: Scelte[string] | undefined) => void;
+}) {
+  const modo: Modo = scelta?.modo ?? v.modo;
+  const [dettaglio, setDettaglio] = useState(false);
+  const cambiaModo = (m: Modo) => {
+    if (m === "incluso") onChange(undefined);
+    else if (m === "preventivo") onChange({ modo: m, preventivo: scelta?.preventivo ?? Math.round(v.stimato ?? 0), ivaInclusa: scelta?.ivaInclusa ?? false, soloMateriali: scelta?.soloMateriali ?? false });
+    else onChange({ modo: m });
+  };
+  const nonPrevisto = v.stimato === null;
+
+  return (
+    <div className={"v-intervento" + (v.imponibile === 0 && modo !== "incluso" ? " v-intervento--fuori" : "")}>
+      <div className="v-intervento__testa">
+        <div>
+          <b>{v.nome}</b>{v.necessaria && <span className="v-intervento__tag">serve per lo stato atteso</span>}
+          <small>{v.base}{v.stimato !== null ? ` · stima Valmiro ${eur(v.stimato)} € IVA esclusa` : " · non previsto da questo pacchetto"}</small>
+        </div>
+        <span className={"v-factor__v" + (v.imponibile ? " neg" : "")}>{v.imponibile ? `−${eur(v.imponibile + v.iva)} €` : "0 €"}</span>
+      </div>
+      <div className="v-intervento__modi" role="group" aria-label={`Come trattare ${v.nome}`}>
+        {MODI.map((m) => (
+          <button key={m.id} className="v-scenario v-scenario--sm" aria-pressed={modo === m.id}
+                  disabled={m.id === "incluso" && nonPrevisto} onClick={() => cambiaModo(m.id)}>{m.t}</button>
+        ))}
+      </div>
+      {modo === "preventivo" && (
+        <div className="v-intervento__prev">
+          <label className="v-field">
+            <span className="v-field__lbl">Il tuo preventivo, in euro</span>
+            <input className="v-input" type="number" inputMode="numeric" min={0} value={scelta?.preventivo || ""}
+                   onChange={(e) => onChange({ ...(scelta as any), modo: "preventivo", preventivo: Math.max(0, Number(e.target.value) || 0) })} />
+          </label>
+          <label className="v-toggle">
+            <span>Comprende l&apos;IVA<small>Se sì, la togliamo per contare i lavori al netto come le altre voci.</small></span>
+            <input type="checkbox" checked={!!scelta?.ivaInclusa} onChange={(e) => onChange({ ...(scelta as any), modo: "preventivo", ivaInclusa: e.target.checked })} />
+          </label>
+          <label className="v-toggle">
+            <span>Solo materiali, senza posa<small>Aggiungiamo la posa stimata da noi, la metà del costo di questa voce.</small></span>
+            <input type="checkbox" checked={!!scelta?.soloMateriali} onChange={(e) => onChange({ ...(scelta as any), modo: "preventivo", soloMateriali: e.target.checked })} />
+          </label>
+        </div>
+      )}
+      {v.nota && <p className="v-small" style={{ marginTop: "var(--s-2)" }}>{v.nota}</p>}
+      <button className="v-intervento__cosa" onClick={() => setDettaglio((d) => !d)} aria-expanded={dettaglio}>
+        {dettaglio ? "Nascondi cosa comprende" : "Cosa comprende"}
+      </button>
+      {dettaglio && <p className="v-small v-measure">{v.cosa}</p>}
     </div>
   );
 }

@@ -5,9 +5,9 @@ import Reveal from "@/components/sistema/Reveal";
 import { ZONE, SEMESTRE, FONTE } from "@/lib/data";
 
 const PASSI = [
-  { n: "01", t: "L'indirizzo", d: "Il punto cade dentro una delle 42 zone omogenee in cui l'Agenzia delle Entrate divide Milano. È lì che si formano i prezzi." },
-  { n: "02", t: "La casa", d: "Superficie, stato, piano. Poche domande, e ognuna sposta il risultato di una cifra che ti mostriamo." },
-  { n: "03", t: "Il valore", d: "Un intervallo con il suo grado di affidabilità, come si posiziona nella zona, e quanto varrebbe ristrutturata." },
+  { n: "01", t: "Da che parte stai", d: "Compri o vendi? Il valore è lo stesso, cambiano le domande: se compri, incolla l'annuncio e ti diciamo se è caro; se vendi, ti diciamo a che prezzo case così vengono messe in vendita." },
+  { n: "02", t: "La casa", d: "Indirizzo, superficie, stato, piano, balconi e terrazzi. Poche domande, e ognuna sposta il risultato di una cifra che ti mostriamo." },
+  { n: "03", t: "Il valore e le decisioni", d: "Un intervallo con il suo grado di affidabilità, cosa costerebbe sistemarla intervento per intervento, quanto renderebbe affittata, com'è andata la zona." },
 ];
 
 export default function Home() {
@@ -36,10 +36,10 @@ export default function Home() {
             <div className="v-hero__col">
               <p className="v-eyebrow">Milano</p>
               <h1 className="v-display v-hero__copy" style={{ marginTop: "var(--s-4)" }}>
-                Quanto vale davvero la tua casa
+                Quanto vale questa casa?
               </h1>
               <p className="v-lead v-hero__lead">
-                Scopri il valore del tuo immobile, i prezzi della zona e il suo potenziale.
+                Una stima per decidere meglio.
               </p>
 
               <div className="v-hero__form">

@@ -24,14 +24,31 @@ test("un annuncio tipico da portale", () => {
   assert.equal(r.stato, "abit");
   assert.equal(r.classe, "D");
   assert.equal(r.balconi, 1);
+  assert.equal(r.mqBalconi, undefined, "un balcone senza metri non ha metri");
   assert.equal(r.cantina, true);
   assert.equal(r.prezzo, 450000);
+});
+
+test("balcone e terrazzo con i metri dichiarati, e la casa non e' il terrazzo", () => {
+  const r = leggiAnnuncio("Quadrilocale di 110 mq con terrazzo di 30 mq e due balconi (8 m² totali), via Vigevano 8. € 890.000");
+  assert.equal(r.mq, 110);
+  assert.equal(r.mqTerrazzi, 30);
+  assert.equal(r.balconi, 2);
+  assert.equal(r.mqBalconi, 8);
+  assert.equal(r.terrazzo, true);
+});
+
+test("il terrazzo grande non viene preso per la superficie della casa", () => {
+  const r = leggiAnnuncio("Attico 60 mq, terrazzo 70 mq, ultimo piano, € 520.000");
+  assert.equal(r.mq, 60);
+  assert.equal(r.mqTerrazzi, 70);
 });
 
 test("attico ristrutturato, prezzo scritto senza punti, classe A4", () => {
   const r = leggiAnnuncio("Attico finemente ristrutturato in Corso di Porta Romana, 120 mq, terrazzo 30 mq, classe A4, box doppio. Prezzo 1250000 euro.");
   assert.equal(r.indirizzo, "Corso di Porta Romana");
   assert.equal(r.mq, 120);
+  assert.equal(r.mqTerrazzi, 30);
   assert.equal(r.piano, "ultimo");
   assert.equal(r.stato, "otti");
   assert.equal(r.classe, "A");

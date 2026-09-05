@@ -19,14 +19,30 @@ export type Zona = {
   box: [number, number] | null;
 };
 
+/** Perche' si sta valutando: cambia il linguaggio e gli strumenti, mai il valore. */
+export type Intento = "compro" | "vendo";
+
 export type Input = {
   zona: string;
   tipo: Tipo;
   /** categoria catastale dichiarata dall'utente (A/2, A/3...): da qui deriva `tipo`. Solo informativa per il motore. */
   categoria?: string | null;
-  /** prezzo chiesto in un annuncio, se chi valuta ne ha uno sotto mano: solo per il confronto */
+  /** chi compra: il prezzo richiesto nell'annuncio; chi vende: il prezzo che aveva in mente. Solo per il confronto. */
   prezzoRichiesto?: number | null;
+  /** solo informativo per il motore: la stima e' la stessa nei due percorsi */
+  intento?: Intento;
+  /** metri quadri come li ha inseriti chi valuta, nel senso di `superficie` */
   mq: number;
+  /** "commerciale": la superficie degli annunci e degli atti, muri compresi (predefinita);
+      "calpestabile": la superficie interna netta, che il motore porta a commerciale */
+  superficie?: "commerciale" | "calpestabile";
+  /** vero se balconi, terrazzi e cantina sono gia' dentro la superficie commerciale inserita */
+  pertinenzeIncluse?: boolean;
+  /** superficie dei balconi, in metri quadri */
+  mqBalconi?: number;
+  /** superficie dei terrazzi, in metri quadri */
+  mqTerrazzi?: number;
+  /** @deprecated era un conteggio: le stime salvate prima del 6/9/2026 lo portano ancora; il motore lo ignora */
   balconi?: number;
   cantina?: boolean;
   box?: "nessuno" | "posto" | "box";
@@ -40,15 +56,16 @@ export type Input = {
   metro?: "vicina" | "media" | "lontana" | null;
 };
 
-export type Voce = { voce: string; effetto: number; euro: number };
+export type Voce = { voce: string; effetto: number; euro: number; /** una precisazione senza numero, da mostrare comunque */ nota?: boolean };
 
 export type Stima = {
   min: number;
   max: number;
   centro: number;
-  /** prezzo a cui pubblicare l'annuncio, lascia margine di trattativa */
+  /** il prezzo a cui, in mediana, case cosi' vengono messe in vendita: centro piu' il
+      margine tipico fra richiesta e valore, misurato sugli annunci di calibrazione */
   pubblica: number;
-  /** offerta difendibile per chi compra */
+  /** @deprecated simmetrico di `pubblica`, non e' un dato di mercato: l'interfaccia non lo usa piu' */
   offerta: number;
   euroMq: number;
   superficieCommerciale: number;

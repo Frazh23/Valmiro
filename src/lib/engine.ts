@@ -18,23 +18,31 @@ export const COEFF = {
   /** senza ascensore: penalita' forte dal terzo piano in su */
   senzaAscensoreAlto: 0.88,
   senzaAscensoreBasso: 0.97,
-  /** pesi della superficie commerciale */
-  balconi: 0.25,
+  /* Superficie commerciale. La regola e' quella del DPR 138/1998, allegato C, la
+     stessa del catasto: balconi, terrazze e similari comunicanti con l'abitazione
+     contano al 30% fino a 25 mq e al 10% per la quota oltre; la soglia si applica
+     al totale, perche' il decreto non distingue il balcone dal terrazzo, li tratta
+     come una categoria sola. I muri si contano per intero (perimetrali e interni,
+     fino a 50 cm) e al 50% se in comunione: da una superficie calpestabile alla
+     commerciale ci passa in media il 10-15%, qui il 12%, ed e' una stima. La
+     cantina resta una cifra fissa: 2,5 mq, cioe' il 25% di una cantina da 10 mq
+     non comunicante, come vuole lo stesso allegato. */
+  pertinenzeQuota1: 0.30,
+  pertinenzeSoglia: 25,
+  pertinenzeQuota2: 0.10,
+  muri: 1.12,
   cantinaMq: 2.5,
   boxMq: 15,
   postoAutoSuBox: 0.55,
-  /** margini su cui si costruiscono prezzo di pubblicazione e offerta */
+  /** distanza tipica fra prezzo richiesto e valore: tarata sugli annunci (vedi PARAMETRI) */
   margineTrattativa: 0.06,
 } as const;
 
-/** Costi di ristrutturazione a Milano, euro al mq, per livello di intervento. */
+/** I tre pacchetti di ristrutturazione: il catalogo degli interventi e i costi stanno in ristrutturazione.ts. */
 export const RISTRUTTURAZIONE = [
-  { id: "base", nome: "Essenziale", euroMq: 700, statoDopo: "otti" as Stato, classeDopo: "C" as const,
-    cosa: "Impianti standard, bagni completi, pavimento sovrapposto, finiture di serie." },
-  { id: "completa", nome: "Completa", euroMq: 1100, statoDopo: "nuov" as Stato, classeDopo: "B" as const,
-    cosa: "Demolizioni, nuovi impianti, serramenti performanti, finiture di livello." },
-  { id: "design", nome: "Design", euroMq: 1500, statoDopo: "nuov" as Stato, classeDopo: "A" as const,
-    cosa: "Progetto d'autore, domotica, parquet o marmo, climatizzazione canalizzata." },
+  { id: "base", nome: "Essenziale", statoDopo: "otti" as Stato },
+  { id: "completa", nome: "Completa", statoDopo: "nuov" as Stato },
+  { id: "design", nome: "Design", statoDopo: "nuov" as Stato },
 ];
 
 /** Il costo dei lavori dipende dalla fascia: accessi, ponteggi, livello di finitura atteso. */
@@ -140,8 +148,28 @@ export function baseOmi(zona: string, tipo: Tipo, stato: Stato) {
   return s.mediaN * premio * 1.06;
 }
 
+/** Metri commerciali che balconi e terrazzi aggiungono, con la regola del DPR 138/98. */
+export function pertinenzePonderate(mqBalconi = 0, mqTerrazzi = 0) {
+  const tot = Math.max(0, mqBalconi || 0) + Math.max(0, mqTerrazzi || 0);
+  return Math.min(tot, COEFF.pertinenzeSoglia) * COEFF.pertinenzeQuota1
+    + Math.max(0, tot - COEFF.pertinenzeSoglia) * COEFF.pertinenzeQuota2;
+}
+
+/** La superficie commerciale scomposta: cosi' il dettaglio puo' dire da dove viene ogni metro. */
+export function superficie(i: Input) {
+  const calpestabile = i.superficie === "calpestabile";
+  const principale = calpestabile ? i.mq * COEFF.muri : i.mq;
+  const muri = principale - i.mq;
+  /* Chi inserisce una commerciale presa da un annuncio o da un atto ha gia' dentro
+     balconi e cantina: contarli ancora sarebbe contarli due volte. */
+  const incluse = !calpestabile && i.pertinenzeIncluse !== false;
+  const balconiTerrazzi = incluse ? 0 : pertinenzePonderate(i.mqBalconi, i.mqTerrazzi);
+  const cantina = incluse || !i.cantina ? 0 : COEFF.cantinaMq;
+  return { principale, muri, balconiTerrazzi, cantina, incluse, totale: principale + balconiTerrazzi + cantina };
+}
+
 export function superficieCommerciale(i: Input) {
-  return i.mq + (i.balconi || 0) * COEFF.balconi + (i.cantina ? COEFF.cantinaMq : 0);
+  return superficie(i).totale;
 }
 
 const arrotonda = (x: number) => Math.round(x / 1000) * 1000;
@@ -195,13 +223,24 @@ export function stima(i: Input): Stima {
   const voce = (nome: string, coeff: number): Voce => ({
     voce: nome, effetto: coeff - 1, euro: grezzo * (coeff - 1),
   });
+  const sup = superficie(i);
   const dettaglio: Voce[] = [
-    { voce: `Base OMI zona ${i.zona}`, effetto: 0, euro: grezzo },
+    { voce: `Base OMI zona ${i.zona} · ${Math.round(sup.principale)} mq${sup.muri ? " (calpestabile piu' muri, 12%)" : ""}`, effetto: 0, euro: sup.principale * base },
+  ];
+  if (sup.balconiTerrazzi) {
+    const mq = (i.mqBalconi || 0) + (i.mqTerrazzi || 0);
+    dettaglio.push({ voce: `Balconi e terrazzi · ${Math.round(mq)} mq contati al ${mq > COEFF.pertinenzeSoglia ? "30% fino a 25 e al 10% oltre" : "30%"} (DPR 138/98)`, effetto: 0, euro: sup.balconiTerrazzi * base });
+  }
+  if (sup.cantina) dettaglio.push({ voce: "Cantina o soffitta · 2,5 mq commerciali", effetto: 0, euro: sup.cantina * base });
+  if (sup.incluse && (i.mqBalconi || i.mqTerrazzi || i.cantina)) {
+    dettaglio.push({ voce: "Balconi, terrazzi e cantina gia' compresi nella superficie commerciale inserita", effetto: 0, euro: 0, nota: true });
+  }
+  dettaglio.push(
     voce(`Piano ${i.piano}`, k.piano),
     voce(i.ascensore ? "Ascensore presente" : "Senza ascensore", k.ascensore),
     voce(`Classe energetica ${i.classe}`, k.classe),
     voce(`Luminosita' ${i.luce || "media"}`, k.luce),
-  ];
+  );
   if (i.epoca) dettaglio.push(voce(`Epoca ${i.epoca}`, k.epoca));
   if (i.affaccio) dettaglio.push(voce(`Affaccio ${i.affaccio}`, k.affaccio));
   if (i.metro) dettaglio.push(voce(`Metropolitana ${i.metro}`, k.metro));
@@ -225,45 +264,4 @@ export function stima(i: Input): Stima {
   };
 }
 
-/** Prospetto di ristrutturazione: costo, detrazione, valore dopo i lavori, margine. */
-export function prospettoRistrutturazione(i: Input, livelloId: string, primaCasa: boolean) {
-  const liv = RISTRUTTURAZIONE.find((r) => r.id === livelloId);
-  if (!liv) throw new Error(`Livello sconosciuto: ${livelloId}`);
-  const fascia = ZONE[i.zona].f as keyof typeof MOLTIPLICATORE_RISTRUTTURAZIONE;
-  const euroMq = liv.euroMq * (MOLTIPLICATORE_RISTRUTTURAZIONE[fascia] ?? 1);
-  const lavori = euroMq * i.mq;
-  const iva = lavori * ONERI.ivaLavori;
-  const tecnici = lavori * ONERI.spesaTecnica * (1 + ONERI.cassaTecnici) * (1 + ONERI.ivaTecnici);
-  const pratiche = ONERI.pratiche;
-  const costo = lavori + iva + tecnici + pratiche;
-  const aliquota = primaCasa ? DETRAZIONE.primaCasa : DETRAZIONE.altri;
-  const detrazione = Math.min(costo, DETRAZIONE.tetto) * aliquota;
-  const prima = stima(i);
-  /* Il valore dopo i lavori cambia lo stato conservativo ma NON la classe energetica:
-     la fascia OTTIMO dell'OMI incorpora gia' un immobile efficiente, e applicare anche
-     il coefficiente di classe conterebbe due volte lo stesso miglioramento. */
-  const dopo = stima({ ...i, stato: liv.statoDopo });
-  return {
-    livello: liv.nome,
-    euroMq,
-    /* le voci del costo, una per riga: chi legge deve poterle sommare */
-    lavori,
-    iva,
-    tecnici,
-    pratiche,
-    costo,
-    detrazione,
-    rate: DETRAZIONE.rate,
-    costoNetto: costo - detrazione,
-    valorePrima: prima.centro,
-    valoreDopo: dopo.centro,
-    /* La stima dopo i lavori porta la stessa incertezza di quella di partenza.
-       Esporla evita che l'interfaccia mostri un punto secco piu' preciso del
-       numero da cui deriva. Nessun calcolo nuovo: sono campi che stima() ha
-       gia' prodotto, qui vengono solo restituiti. */
-    valoreDopoMin: dopo.min,
-    valoreDopoMax: dopo.max,
-    sigmaDopo: dopo.sigma,
-    margine: dopo.centro - prima.centro - (costo - detrazione),
-  };
-}
+/* Il prospetto di ristrutturazione vive in ristrutturazione.ts, intervento per intervento. */

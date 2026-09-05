@@ -57,7 +57,10 @@ export default function Stime() {
             <div className="riga-stima" key={s.id}>
               <div>
                 <b>{s.indirizzo}</b>
-                <small>zona {s.zona} · {s.descrizioneZona} · {s.input.mq} mq · {new Date(s.creataIl).toLocaleDateString("it-IT")}</small>
+                <small>
+                  {s.input.intento === "compro" ? "da comprare · " : s.input.intento === "vendo" ? "da vendere · " : ""}
+                  zona {s.zona} · {s.descrizioneZona} · {s.input.mq} mq · {new Date(s.creataIl).toLocaleDateString("it-IT")}
+                </small>
               </div>
               <div className="valore">
                 {eur(s.stima.min)}–{eur(s.stima.max)} €

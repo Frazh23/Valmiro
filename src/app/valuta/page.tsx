@@ -9,7 +9,7 @@ import ValuationReveal from "@/components/sistema/ValuationReveal";
 import NumeroAnimato from "@/components/sistema/NumeroAnimato";
 import MarketRange from "@/components/sistema/MarketRange";
 import FactorExplanation from "@/components/sistema/FactorExplanation";
-import RenovationSelector, { type Prospetto } from "@/components/sistema/RenovationSelector";
+import RenovationSelector from "@/components/sistema/RenovationSelector";
 import Reveal from "@/components/sistema/Reveal";
 /* La mappa porta con se' i perimetri semplificati delle 42 zone: 70 KB di dati
    che finivano nel primo caricamento di /valuta anche se la mappa sta dentro un
@@ -20,7 +20,7 @@ const Mappa = dynamic(() => import("@/components/Mappa"), {
 });
 import { eur, num } from "@/lib/formato";
 import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
-import { RISTRUTTURAZIONE, scala } from "@/lib/engine";
+import { scala } from "@/lib/engine";
 import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
 import { rendita, andamento } from "@/lib/affitto";
 import { leggiAnnuncio, type Letto } from "@/lib/annuncio";
@@ -30,7 +30,7 @@ import ZoneHistory from "@/components/sistema/ZoneHistory";
 import ShortRent from "@/components/sistema/ShortRent";
 import { salvaStima, salvaStimaAccount } from "@/lib/storage";
 import { useSessione } from "@/lib/sessione";
-import { FONTI, type FonteIndirizzo, type Input, type Scelta, type Stato, type Stima, type Tipo } from "@/lib/types";
+import { FONTI, type FonteIndirizzo, type Input, type Intento, type Scelta, type Stato, type Stima, type Tipo } from "@/lib/types";
 
 const STATI: { id: Stato; t: string; d: string }[] = [
   { id: "rist", t: "Da ristrutturare", d: "Impianti e finiture da rifare" },
@@ -43,6 +43,26 @@ const TIPI: { id: Tipo; t: string }[] = [
   { id: "eco", t: "Economico" }, { id: "vil", t: "Villa" },
 ];
 const PIANI = ["terra", "rialzato", "1-2", "3-5", "6+", "ultimo"] as const;
+const CLASSI = ["A", "B", "C", "D", "E", "F", "G"] as const;
+
+/* Le parole cambiano con l'intento. Il valore no: la stessa casa, con gli stessi
+   dati, vale lo stesso nei due percorsi, e il motore non sa nemmeno quale sia. */
+const TESTI = {
+  compro: {
+    dove: "Quale casa stai valutando?",
+    doveLead: "Incolla il testo dell'annuncio e leggiamo noi indirizzo, metri, piano e prezzo. Oppure scrivi via e civico.",
+    prezzo: "Prezzo richiesto nell'annuncio",
+    prezzoHint: "Facoltativo. Lo confrontiamo con il valore stimato e ti diciamo dove sta.",
+    confronto: "È caro o no?",
+  },
+  vendo: {
+    dove: "Quale casa vuoi vendere?",
+    doveLead: "Via e civico. Milano è divisa in 42 zone omogenee: è lì che si formano i prezzi.",
+    prezzo: "Prezzo a cui pensavi di metterla in vendita",
+    prezzoHint: "Facoltativo. Lo confrontiamo con il valore stimato e con il prezzo a cui case simili vengono messe in vendita.",
+    confronto: "Valore stimato e prezzo di pubblicazione",
+  },
+} as const;
 
 /** Cosa succede alla stima con quella categoria, detto in una riga. */
 function tipologiaNota(c: Categoria, tipo: Tipo, zona: Record<string, any>) {
@@ -54,9 +74,11 @@ function tipologiaNota(c: Categoria, tipo: Tipo, zona: Record<string, any>) {
   const nota = cat.nota.charAt(0).toUpperCase() + cat.nota.slice(1);
   return `${cat.nome}: usiamo le quotazioni OMI «${nome}» della zona. ${nota}.`;
 }
-const CLASSI = ["A", "B", "C", "D", "E", "F", "G"] as const;
 
-type Esito = { stima: Stima; prospetti: Record<string, Prospetto> };
+/** Un numero dal modulo: mai negativo, mai NaN. */
+const nonNeg = (v: string) => Math.max(0, Number(v) || 0);
+
+type Esito = { stima: Stima };
 
 export default function Pagina() {
   return (
@@ -70,12 +92,11 @@ function Valuta() {
   const params = useSearchParams();
   const { utente } = useSessione();
 
-  const [vista, setVista] = useState<"dove" | "casa" | "calcolo" | "risultato">("dove");
+  const [vista, setVista] = useState<"intento" | "dove" | "casa" | "calcolo" | "risultato">("intento");
   const [indirizzo, setIndirizzo] = useState("");
   const [fonte, setFonte] = useState<FonteIndirizzo>("dizionario");
   const [avviso, setAvviso] = useState<string | null>(null);
   const [primaCasa, setPrimaCasa] = useState(true);
-  const [scenario, setScenario] = useState("attuale");
   const [esito, setEsito] = useState<Esito | null>(null);
   const [salvata, setSalvata] = useState(false);
   const [mappaAperta, setMappaAperta] = useState(false);
@@ -85,15 +106,22 @@ function Valuta() {
   const [qIniziale, setQIniziale] = useState("");
 
   const [i, setI] = useState<Input>({
-    zona: "", tipo: "civ", mq: 0, balconi: 0, cantina: false, box: "nessuno",
+    zona: "", tipo: "civ", mq: 0, superficie: "commerciale", pertinenzeIncluse: true,
+    mqBalconi: 0, mqTerrazzi: 0, cantina: false, box: "nessuno",
     stato: "abit", piano: "1-2", ascensore: true, classe: "D", luce: "media",
-    epoca: null, affaccio: null, metro: null,
+    epoca: null, affaccio: null, metro: null, prezzoRichiesto: null,
   });
   const set = (p: Partial<Input>) => setI((v) => ({ ...v, ...p }));
   const zona = i.zona ? ZONE[i.zona] : null;
+  const intento: Intento | undefined = i.intento;
+  const T = TESTI[intento || "vendo"];
 
-  /* L'indirizzo arriva dalla home nell'URL: la valutazione e' ricaricabile. */
+  /* Indirizzo e intento arrivano dalla home nell'URL: la valutazione e' ricaricabile.
+     Chi entra senza intento lo sceglie qui, prima di tutto il resto. */
   useEffect(() => {
+    const it = params.get("i");
+    const conIntento = it === "compro" || it === "vendo";
+    if (conIntento) setI((v) => ({ ...v, intento: it }));
     const z = params.get("zona");
     if (z && ZONE[z]) {
       setI((v) => ({ ...v, zona: z }));
@@ -102,9 +130,15 @@ function Valuta() {
       /* L'elenco delle fonti valide sta in types.ts: qui si legge da li', non
          si ripete a mano, altrimenti ogni fonte nuova torna "dizionario". */
       setFonte(FONTI.includes(f as FonteIndirizzo) ? (f as FonteIndirizzo) : "dizionario");
-      setVista("casa");
-    }
+      setVista(conIntento ? "casa" : "intento");
+    } else setVista(conIntento ? "dove" : "intento");
   }, [params]);
+
+  /* Cambiare intento non cancella niente: indirizzo e caratteristiche restano. */
+  function scegliIntento(it: Intento) {
+    set({ intento: it });
+    if (vista === "intento") setVista(i.zona ? "casa" : "dove");
+  }
 
   function scegliIndirizzo(s: Scelta) {
     set({ zona: s.zona }); setIndirizzo(s.etichetta); setFonte(s.fonte);
@@ -117,10 +151,13 @@ function Valuta() {
     const r = leggiAnnuncio(testoAnnuncio);
     if (!r.trovati.length) { setAnnuncioNota("Nel testo non ho riconosciuto né metri, né prezzo, né indirizzo. Prova a incollare tutta la scheda dell'annuncio, non solo il titolo."); return; }
     set({
-      ...(r.mq ? { mq: r.mq } : {}), ...(r.piano ? { piano: r.piano } : {}),
+      ...(r.mq ? { mq: r.mq, superficie: "commerciale", pertinenzeIncluse: true } : {}),
+      ...(r.piano ? { piano: r.piano } : {}),
       ...(r.ascensore !== undefined ? { ascensore: r.ascensore } : {}),
       ...(r.stato ? { stato: r.stato } : {}), ...(r.classe ? { classe: r.classe } : {}),
-      ...(r.balconi !== undefined ? { balconi: r.balconi } : {}),
+      /* i metri delle pertinenze solo se l'annuncio li scrive: la presenza da sola non e' un numero */
+      ...(r.mqBalconi ? { mqBalconi: r.mqBalconi } : {}),
+      ...(r.mqTerrazzi ? { mqTerrazzi: r.mqTerrazzi } : {}),
       ...(r.cantina ? { cantina: true } : {}), ...(r.box ? { box: r.box } : {}),
       prezzoRichiesto: r.prezzo ?? null,
     });
@@ -138,40 +175,23 @@ function Valuta() {
     setAnnuncioNota(`Ho letto «${r.indirizzo}» ma non l'ho trovato in anagrafe: correggilo qui sopra e i dati restano.`);
   }
 
-  /* Tre chiamate parallele: la stima e' identica in tutte e tre, cambia solo il
-     livello di ristrutturazione. Nessuna modifica alla rotta o al motore. */
+  /* La stima passa dalla rotta: e' il contratto pubblico del motore. I prospetti di
+     ristrutturazione si calcolano nel browser, perche' cambiano a ogni scelta. */
   const calcola = useCallback(async (): Promise<Esito> => {
-    const risposte = await Promise.all(
-      RISTRUTTURAZIONE.map((r) =>
-        fetch("/api/estimate", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...i, ristrutturazione: r.id, primaCasa }),
-        }).then((x) => x.json())
-      )
-    );
-    const errore = risposte.find((r) => r.errore);
-    if (errore) throw new Error(errore.errore);
-    const prospetti: Record<string, Prospetto> = {};
-    RISTRUTTURAZIONE.forEach((r, n) => { prospetti[r.id] = risposte[n].ristrutturazione; });
-    return { stima: risposte[0].stima, prospetti };
-  }, [i, primaCasa]);
-
-  /* Cambiare "prima casa" ricalcola solo le detrazioni: aggiorniamo in silenzio,
-     senza rifare la transizione. */
-  useEffect(() => {
-    if (vista !== "risultato") return;
-    let vivo = true;
-    calcola().then((e) => vivo && setEsito(e)).catch(() => {});
-    return () => { vivo = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaCasa]);
+    const r = await fetch("/api/estimate", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(i),
+    }).then((x) => x.json());
+    if (r.errore) throw new Error(r.errore);
+    return { stima: r.stima };
+  }, [i]);
 
   function fatto(e: Esito) {
     setEsito(e); setVista("risultato");
     if (!salvata && zona) {
       const da = {
         indirizzo: indirizzo || `Zona ${i.zona}`, zona: i.zona, descrizioneZona: zona.d,
-        input: i, stima: e.stima,
+        input: i, stima: e.stima, prezzoEsposto: i.prezzoRichiesto || undefined,
       };
       if (utente) salvaStimaAccount(utente.id, da); else salvaStima(da);
       setSalvata(true);
@@ -192,6 +212,16 @@ function Valuta() {
       : <>Vale <b>il {num(Math.abs(scarto) * 100)}% in meno</b> della mediana di zona ({eur(mediana)} €/mq): è lo spazio che una ristrutturazione può recuperare.</>;
   }, [esito, i.zona, i.tipo]);
 
+  const pertinenzeDaChiedere = i.superficie === "calpestabile" || i.pertinenzeIncluse === false;
+
+  /* Il bottone per cambiare intento, sempre a portata: cambia le parole, non i dati. */
+  const switchIntento = intento && (
+    <span className="v-locus v-locus--intento" role="group" aria-label="Cosa vuoi fare">
+      <button className={intento === "compro" ? "on" : ""} onClick={() => scegliIntento("compro")}>Voglio comprare</button>
+      <button className={intento === "vendo" ? "on" : ""} onClick={() => scegliIntento("vendo")}>Voglio vendere</button>
+    </span>
+  );
+
   return (
     <div className="v-page">
       <Header />
@@ -206,35 +236,76 @@ function Valuta() {
       )}
 
       <main className="v-fill">
+        {/* ---------------------------------------------------- INTENTO */}
+        {vista === "intento" && (
+          <section className="v-wrap v-section">
+            <div className="v-form">
+              <div className="v-form__head">
+                <p className="v-eyebrow">Prima di tutto</p>
+                <h1 className="v-h1" style={{ marginTop: "var(--s-3)" }}>Quanto vale questa casa?</h1>
+                <p className="v-lead" style={{ marginTop: "var(--s-4)", maxWidth: "40ch" }}>
+                  Una stima per decidere meglio. Dicci da che parte stai: il valore è lo stesso, cambiano le domande.
+                </p>
+              </div>
+              <div className="v-choices">
+                <button className="v-choice v-choice--lg" onClick={() => scegliIntento("compro")}>
+                  <b>Voglio comprare</b><small>Sto guardando una casa in vendita: è cara? Quanto offrire? Cosa costerebbe sistemarla?</small>
+                </button>
+                <button className="v-choice v-choice--lg" onClick={() => scegliIntento("vendo")}>
+                  <b>Voglio vendere</b><small>Quanto vale la mia casa, a che prezzo pubblicarla, conviene sistemarla prima?</small>
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ---------------------------------------------------- DOVE */}
-        {vista === "dove" && (
+        {vista === "dove" && intento && (
           <section className="v-wrap v-section">
             <div className="v-form">
               <div className="v-form__head">
                 <p className="v-eyebrow">Passo uno</p>
-                <h1 className="v-h1" style={{ marginTop: "var(--s-3)" }}>Dove si trova la casa?</h1>
-                <p className="v-lead" style={{ marginTop: "var(--s-4)", maxWidth: "40ch" }}>
-                  Via e civico. Milano è divisa in 42 zone omogenee: è lì che si formano i prezzi.
-                </p>
+                <h1 className="v-h1" style={{ marginTop: "var(--s-3)" }}>{T.dove}</h1>
+                <p className="v-lead" style={{ marginTop: "var(--s-4)", maxWidth: "44ch" }}>{T.doveLead}</p>
+                <div style={{ marginTop: "var(--s-4)" }}>{switchIntento}</div>
               </div>
-              <AddressSearch key={qIniziale} onScegli={scegliIndirizzo} azione="Continua" autoFocus valoreIniziale={qIniziale} />
-              <details className="v-more" style={{ marginTop: "var(--s-7)" }}>
-                <summary>Stai valutando un annuncio? Incolla il testo</summary>
-                <div className="v-more__in">
-                  <p className="v-small">
-                    Copia la scheda dell&apos;annuncio, tutta: indirizzo, metri, piano, stato, classe, prezzo. La leggiamo
-                    qui nel tuo browser, non la inviamo a nessuno, e precompiliamo il modulo. I link non li apriamo:
-                    i portali non permettono la lettura automatica.
-                  </p>
-                  <textarea className="v-input v-textarea" rows={7} value={testoAnnuncio}
+
+              {intento === "compro" && (
+                <div className="v-incolla">
+                  <span className="v-field__lbl">Il testo dell&apos;annuncio</span>
+                  <textarea className="v-input v-textarea" rows={6} value={testoAnnuncio}
                             onChange={(e) => setTestoAnnuncio(e.target.value)}
-                            placeholder="Trilocale in via Savona 35, 85 m², 2° piano con ascensore, buono stato, classe D, € 450.000…" />
+                            placeholder="Trilocale in via Savona 35, 85 m², 2° piano con ascensore, buono stato, classe D, balcone 6 m², € 450.000…" />
                   <div className="v-actions">
                     <button className="v-btn" disabled={testoAnnuncio.trim().length < 20} onClick={leggiTesto}>Leggi l&apos;annuncio</button>
                   </div>
+                  <p className="v-small">
+                    Lo leggiamo qui nel tuo browser, non lo inviamo a nessuno. I link non li apriamo: i portali non permettono la lettura automatica.
+                  </p>
                   {annuncioNota && <p className="v-note">{annuncioNota}</p>}
+                  <p className="v-field__lbl" style={{ marginTop: "var(--s-5)" }}>Oppure scrivi l&apos;indirizzo</p>
                 </div>
-              </details>
+              )}
+
+              <AddressSearch key={qIniziale} onScegli={scegliIndirizzo} azione="Continua" autoFocus={intento === "vendo"} valoreIniziale={qIniziale} />
+
+              {intento === "vendo" && (
+                <details className="v-more" style={{ marginTop: "var(--s-7)" }}>
+                  <summary>Hai un annuncio della casa? Incolla il testo</summary>
+                  <div className="v-more__in">
+                    <p className="v-small">
+                      Copia la scheda, tutta: indirizzo, metri, piano, stato, classe. La leggiamo qui nel tuo browser, non la inviamo a nessuno.
+                    </p>
+                    <textarea className="v-input v-textarea" rows={6} value={testoAnnuncio}
+                              onChange={(e) => setTestoAnnuncio(e.target.value)} />
+                    <div className="v-actions">
+                      <button className="v-btn" disabled={testoAnnuncio.trim().length < 20} onClick={leggiTesto}>Leggi l&apos;annuncio</button>
+                    </div>
+                    {annuncioNota && <p className="v-note">{annuncioNota}</p>}
+                  </div>
+                </details>
+              )}
+
               <details
                 className="v-more" style={{ marginTop: "var(--s-5)" }}
                 onToggle={(e) => setMappaAperta((e.currentTarget as HTMLDetailsElement).open)}
@@ -254,17 +325,18 @@ function Valuta() {
         )}
 
         {/* ---------------------------------------------------- LA CASA */}
-        {vista === "casa" && zona && (
+        {vista === "casa" && zona && intento && (
           <section className="v-wrap v-section">
             <div className="v-form">
               <div className="v-form__head">
                 <p className="v-eyebrow">Passo due</p>
                 <h1 className="v-h1" style={{ marginTop: "var(--s-3)" }}>Raccontaci la casa</h1>
-                <div style={{ marginTop: "var(--s-5)" }}>
+                <div className="v-loci">
                   <span className="v-locus">
                     <span><b>{indirizzo}</b> · zona {i.zona}, {zona.d}</span>
                     <button onClick={() => setVista("dove")}>Cambia</button>
                   </span>
+                  {switchIntento}
                 </div>
                 {fonte === "via" && (
                   <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
@@ -283,6 +355,13 @@ function Valuta() {
                   <p className="v-note" style={{ marginTop: "var(--s-4)" }}>
                     Dall&apos;annuncio ho letto: {letto.trovati.join(", ")}. Sono già nel modulo: controllali,
                     un annuncio dice «ristrutturato» più spesso di quanto lo sia.
+                    {letto.balconi && !letto.mqBalconi && letto.terrazzo && !letto.mqTerrazzi
+                      ? " I metri di balconi e terrazzo non erano scritti: se li conosci e non sono già nella superficie, inseriscili qui sotto."
+                      : letto.balconi && !letto.mqBalconi
+                      ? " I metri dei balconi non erano scritti: se li conosci e non sono già nella superficie, inseriscili qui sotto."
+                      : letto.terrazzo && !letto.mqTerrazzi
+                      ? " I metri del terrazzo non erano scritti: se li conosci e non sono già nella superficie, inseriscili qui sotto."
+                      : ""}
                   </p>
                 )}
               </div>
@@ -290,10 +369,56 @@ function Valuta() {
               <div className="v-fields">
                 <div className="v-field">
                   <span className="v-field__lbl">Superficie</span>
-                  <input className="v-input" type="number" inputMode="numeric" placeholder="93"
-                         value={i.mq || ""} onChange={(e) => set({ mq: Number(e.target.value) })} />
-                  <span className="v-field__hint">Metri quadri calpestabili. Balconi e cantina si aggiungono più sotto.</span>
+                  <div className="v-row2">
+                    <input className="v-input" type="number" inputMode="numeric" min={0} placeholder="93"
+                           value={i.mq || ""} onChange={(e) => set({ mq: nonNeg(e.target.value) })} />
+                    <select className="v-select" value={i.superficie || "commerciale"}
+                            onChange={(e) => set({ superficie: e.target.value as Input["superficie"] })}>
+                      <option value="commerciale">metri commerciali</option>
+                      <option value="calpestabile">metri calpestabili</option>
+                    </select>
+                  </div>
+                  <span className="v-field__hint">
+                    {i.superficie === "calpestabile"
+                      ? "La calpestabile è la superficie interna, senza muri. L'OMI ragiona in commerciale, muri compresi: aggiungiamo il 12%, che è una media, e le pertinenze qui sotto."
+                      : "La commerciale è quella degli annunci e degli atti: comprende i muri e, di solito, balconi e cantina a quota ridotta."}
+                  </span>
                 </div>
+
+                {i.superficie !== "calpestabile" && (
+                  <label className="v-toggle">
+                    <span>Balconi, terrazzi e cantina sono già compresi in questi metri<small>Negli annunci quasi sempre sì. Se togli la spunta, li aggiungiamo noi dai campi qui sotto.</small></span>
+                    <input type="checkbox" checked={i.pertinenzeIncluse !== false}
+                           onChange={(e) => set({ pertinenzeIncluse: e.target.checked })} />
+                  </label>
+                )}
+
+                {pertinenzeDaChiedere && (
+                  <>
+                    <div className="v-row2">
+                      <label className="v-field">
+                        <span className="v-field__lbl">Balconi, m²</span>
+                        <input className="v-input" type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
+                               value={i.mqBalconi || ""} onChange={(e) => set({ mqBalconi: nonNeg(e.target.value) })} />
+                        <span className="v-field__hint">Sporgono dalla facciata, di solito stretti: si sta in piedi, non a tavola.</span>
+                      </label>
+                      <label className="v-field">
+                        <span className="v-field__lbl">Terrazzi, m²</span>
+                        <input className="v-input" type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
+                               value={i.mqTerrazzi || ""} onChange={(e) => set({ mqTerrazzi: nonNeg(e.target.value) })} />
+                        <span className="v-field__hint">Sopra un altro locale o in arretramento, abbastanza larghi da viverci.</span>
+                      </label>
+                    </div>
+                    <p className="v-small v-measure">
+                      Contano al 30% fino a 25 m² complessivi e al 10% oltre, come nel DPR 138/1998: la regola non distingue il balcone
+                      dal terrazzo, li pesa insieme per la loro superficie. Li chiediamo separati per chiarezza e per il futuro.
+                    </p>
+                    <label className="v-toggle">
+                      <span>Cantina o soffitta<small>Aggiunge 2,5 m² commerciali: il 25% di una cantina da 10 m², come nel DPR 138/1998</small></span>
+                      <input type="checkbox" checked={!!i.cantina} onChange={(e) => set({ cantina: e.target.checked })} />
+                    </label>
+                  </>
+                )}
 
                 <div className="v-field">
                   <span className="v-field__lbl">In che stato è</span>
@@ -368,28 +493,24 @@ function Valuta() {
                     })}
                   </div>
                 </div>
-                <div className="v-row2">
-                  <label className="v-field">
-                    <span className="v-field__lbl">Balconi e terrazzi</span>
-                    <input className="v-input" type="number" inputMode="numeric" placeholder="0"
-                           value={i.balconi || ""} onChange={(e) => set({ balconi: Number(e.target.value) })} />
-                    <span className="v-field__hint">Contano al 25%</span>
-                  </label>
-                  <label className="v-field">
-                    <span className="v-field__lbl">Luminosità</span>
-                    <select className="v-select" value={i.luce}
-                            onChange={(e) => set({ luce: e.target.value as Input["luce"] })}>
-                      <option value="scarsa">scarsa</option>
-                      <option value="media">media</option>
-                      <option value="ottima">ottima</option>
-                    </select>
-                  </label>
-                </div>
-                <label className="v-toggle">
-                  <span>Cantina o soffitta<small>Aggiunge 2,5 mq commerciali</small></span>
-                  <input type="checkbox" checked={!!i.cantina}
-                         onChange={(e) => set({ cantina: e.target.checked })} />
+
+                <label className="v-field">
+                  <span className="v-field__lbl">Luminosità</span>
+                  <select className="v-select" value={i.luce}
+                          onChange={(e) => set({ luce: e.target.value as Input["luce"] })}>
+                    <option value="scarsa">scarsa</option>
+                    <option value="media">media</option>
+                    <option value="ottima">ottima</option>
+                  </select>
                 </label>
+
+                {!pertinenzeDaChiedere && (
+                  <label className="v-toggle">
+                    <span>Cantina o soffitta<small>Se è già dentro i metri commerciali non la contiamo di nuovo: qui serve solo alla descrizione</small></span>
+                    <input type="checkbox" checked={!!i.cantina} onChange={(e) => set({ cantina: e.target.checked })} />
+                  </label>
+                )}
+
                 <div className="v-field">
                   <span className="v-field__lbl">
                     Posto auto{zona.box ? ` · box quotato ${eur(zona.box[0])}–${eur(zona.box[1])} €/mq` : ""}
@@ -405,10 +526,10 @@ function Valuta() {
                 </div>
 
                 <div className="v-field">
-                  <span className="v-field__lbl">Prezzo richiesto, se c&apos;è un annuncio</span>
-                  <input className="v-input" type="number" inputMode="numeric" placeholder="450000"
-                         value={i.prezzoRichiesto || ""} onChange={(e) => set({ prezzoRichiesto: Number(e.target.value) || null })} />
-                  <span className="v-field__hint">Facoltativo. Lo confrontiamo con la stima per dirti se è caro o no.</span>
+                  <span className="v-field__lbl">{T.prezzo}</span>
+                  <input className="v-input" type="number" inputMode="numeric" min={0} placeholder="450000"
+                         value={i.prezzoRichiesto || ""} onChange={(e) => set({ prezzoRichiesto: nonNeg(e.target.value) || null })} />
+                  <span className="v-field__hint">{T.prezzoHint}</span>
                 </div>
 
                 {avviso && <p className="v-note">{avviso}</p>}
@@ -427,11 +548,11 @@ function Valuta() {
         )}
 
         {/* ---------------------------------------------------- RISULTATO */}
-        {vista === "risultato" && esito && zona && (
+        {vista === "risultato" && esito && zona && intento && (
           <Risultato
-            stima={esito.stima} prospetti={esito.prospetti} input={i} zonaDesc={zona.d}
-            indirizzo={indirizzo} insight={insight}
-            scenario={scenario} onScenario={setScenario}
+            stima={esito.stima} input={i} zonaDesc={zona.d}
+            indirizzo={indirizzo} insight={insight} intento={intento}
+            switchIntento={switchIntento}
             primaCasa={primaCasa} onPrimaCasa={setPrimaCasa}
             onModifica={() => setVista("casa")}
           />
@@ -448,24 +569,25 @@ function Valuta() {
   );
 }
 
-/* ============================================================ RISULTATO ==== */
+/* ------------------------------------------------------------------ RISULTATO */
 
 function Risultato({
-  stima, prospetti, input, zonaDesc, indirizzo, insight,
-  scenario, onScenario, primaCasa, onPrimaCasa, onModifica,
+  stima, input, zonaDesc, indirizzo, insight, intento, switchIntento,
+  primaCasa, onPrimaCasa, onModifica,
 }: {
-  stima: Stima; prospetti: Record<string, Prospetto>; input: Input; zonaDesc: string;
-  indirizzo: string; insight: React.ReactNode;
-  scenario: string; onScenario: (s: string) => void;
+  stima: Stima; input: Input; zonaDesc: string;
+  indirizzo: string; insight: React.ReactNode; intento: Intento; switchIntento: React.ReactNode;
   primaCasa: boolean; onPrimaCasa: (v: boolean) => void;
   onModifica: () => void;
 }) {
   const tacche = stima.affidabilita === "Alta" ? 3 : stima.affidabilita === "Media" ? 2 : 1;
   const affitto = rendita(input, stima);
   const storia = andamento(input.zona);
+  const T = TESTI[intento];
   /* I capitoli si numerano da soli: alcuni compaiono solo quando hanno qualcosa da dire. */
   let capitolo = 1;
   const cap = () => String(++capitolo).padStart(2, "0");
+  const mostraConfronto = intento === "vendo" || !!input.prezzoRichiesto;
 
   return (
     <>
@@ -478,6 +600,10 @@ function Risultato({
         <p className="v-value__span">
           Intervallo realistico {eur(stima.min)} – {eur(stima.max)} €
         </p>
+        <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
+          Zona OMI <b>{input.zona}</b> · {zonaDesc} · quotazioni {stima.semestre}
+        </p>
+        <div style={{ marginTop: "var(--s-4)" }}>{switchIntento}</div>
 
         <dl className="v-facts">
           <div className="v-fact">
@@ -505,31 +631,20 @@ function Risultato({
         {stima.avvertenza && <p className="v-note">{stima.avvertenza}</p>}
       </section>
 
-      {/* e' caro o no? — solo se c'e' un prezzo chiesto da confrontare */}
-      {input.prezzoRichiesto ? (
+      {/* il prezzo contro la stima */}
+      {mostraConfronto && (
         <section className="v-wrap v-chapter">
           <Reveal>
             <div className="v-chapter__head">
               <span className="v-numeral">{cap()}</span>
-              <h2 className="v-h2">È caro o no?</h2>
+              <h2 className="v-h2">{T.confronto}</h2>
             </div>
-            <AskingPrice richiesto={input.prezzoRichiesto} stima={stima} />
+            <AskingPrice richiesto={input.prezzoRichiesto ?? null} stima={stima} intento={intento} />
           </Reveal>
         </section>
-      ) : null}
+      )}
 
-      {/* come si posiziona */}
-      <section className="v-wrap v-chapter">
-        <Reveal>
-          <div className="v-chapter__head">
-            <span className="v-numeral">{cap()}</span>
-            <h2 className="v-h2">Come si posiziona nella zona</h2>
-          </div>
-          <MarketRange zona={input.zona} tipo={input.tipo} euroMq={stima.euroMq} />
-        </Reveal>
-      </section>
-
-      {/* 03 — perche' vale questa cifra */}
+      {/* perche' vale questa cifra */}
       <section className="v-wrap v-chapter">
         <Reveal>
           <div className="v-chapter__head">
@@ -544,50 +659,28 @@ function Risultato({
         </Reveal>
       </section>
 
-      {/* 04 — il quartiere */}
+      {/* ristrutturazione */}
       <section className="v-wrap v-chapter">
         <Reveal>
           <div className="v-chapter__head">
             <span className="v-numeral">{cap()}</span>
-            <h2 className="v-h2">Il quartiere</h2>
-          </div>
-          <p className="v-lead v-measure">
-            Zona OMI <b>{input.zona}</b> — {zonaDesc}. Le quotazioni sono pubblicate ogni semestre
-            dall&apos;Agenzia delle Entrate e qui sono aggiornate all&apos;indice Istat dei prezzi delle abitazioni.
-          </p>
-          <p style={{ marginTop: "var(--s-5)" }}>
-            <Link className="v-btn v-btn--quiet" href="/quartieri">Vedi tutte le zone di Milano</Link>
-          </p>
-        </Reveal>
-      </section>
-
-      {/* 05 — ristrutturata */}
-      <section className="v-wrap v-chapter">
-        <Reveal>
-          <div className="v-chapter__head">
-            <span className="v-numeral">{cap()}</span>
-            <h2 className="v-h2">Quanto potrebbe valere ristrutturata</h2>
+            <h2 className="v-h2">{intento === "compro" ? "Se la sistemi: costi e valore" : "Conviene sistemarla prima di vendere?"}</h2>
           </div>
           <p className="v-lead v-measure" style={{ marginBottom: "clamp(28px,4vw,44px)" }}>
-            Le quotazioni ufficiali distinguono due stati di conservazione, non tre. Per questo
-            tre livelli di spesa possono arrivare a due soli livelli di valore: quando succede
-            te lo diciamo, invece di far salire il numero per farlo sembrare più interessante.
+            Tre pacchetti per partire, poi ogni intervento si tiene, si toglie, si segna come già fatto o si sostituisce
+            con un preventivo. Il valore atteso dipende dai lavori che restano, non dal nome del pacchetto.
           </p>
-          <RenovationSelector
-            attuale={stima.centro} prospetti={prospetti}
-            scelto={scenario} onSceglie={onScenario}
-            primaCasa={primaCasa} onPrimaCasa={onPrimaCasa}
-          />
+          <RenovationSelector input={input} stima={stima} primaCasa={primaCasa} onPrimaCasa={onPrimaCasa} intento={intento} />
         </Reveal>
       </section>
 
-      {/* 06 — se la affitti */}
+      {/* affitto */}
       {affitto && (
         <section className="v-wrap v-chapter">
           <Reveal>
             <div className="v-chapter__head">
               <span className="v-numeral">{cap()}</span>
-              <h2 className="v-h2">Se la affitti</h2>
+              <h2 className="v-h2">{intento === "compro" ? "Se la compri per affittarla" : "Se invece la affitti"}</h2>
             </div>
             <p className="v-lead v-measure" style={{ marginBottom: "clamp(28px,4vw,44px)" }}>
               L&apos;Agenzia delle Entrate pubblica anche i canoni di locazione della zona. Li portiamo su questa
@@ -599,7 +692,6 @@ function Risultato({
         </section>
       )}
 
-      {/* affitto breve, scenario */}
       {affitto && (
         <section className="v-wrap v-chapter">
           <Reveal>
@@ -616,37 +708,71 @@ function Risultato({
         </section>
       )}
 
-      {/* 07 — la zona dal 2014 */}
-      {storia && (
-        <section className="v-wrap v-chapter">
-          <Reveal>
-            <div className="v-chapter__head">
-              <span className="v-numeral">{cap()}</span>
-              <h2 className="v-h2">La zona dal 2014</h2>
-            </div>
-            <ZoneHistory a={storia} zona={input.zona} />
-          </Reveal>
-        </section>
-      )}
-
-      {/* 08 — chiusura */}
+      {/* il quartiere: posizione nella zona, storia, altre zone */}
       <section className="v-wrap v-chapter">
         <Reveal>
           <div className="v-chapter__head">
             <span className="v-numeral">{cap()}</span>
-            <h2 className="v-h2">Tieni la stima</h2>
+            <h2 className="v-h2">Il quartiere</h2>
           </div>
           <p className="v-lead v-measure">
-            Questa valutazione è già salvata. La ritrovi fra le tue stime, con la data e i dati che hai inserito.
+            Zona OMI <b>{input.zona}</b> — {zonaDesc}. Le quotazioni sono pubblicate ogni semestre
+            dall&apos;Agenzia delle Entrate e qui sono aggiornate all&apos;indice Istat dei prezzi delle abitazioni.
+          </p>
+          <h3 className="v-h3" style={{ marginTop: "var(--s-7)" }}>Come si posiziona nella zona</h3>
+          <MarketRange zona={input.zona} tipo={input.tipo} euroMq={stima.euroMq} />
+          {storia && (
+            <>
+              <h3 className="v-h3" style={{ marginTop: "var(--s-8)", marginBottom: "var(--s-4)" }}>La zona dal 2014</h3>
+              <ZoneHistory a={storia} zona={input.zona} />
+            </>
+          )}
+          <p style={{ marginTop: "var(--s-6)" }}>
+            <Link className="v-btn v-btn--quiet" href="/quartieri">Vedi tutte le zone di Milano</Link>
+          </p>
+        </Reveal>
+      </section>
+
+      {/* fonti, note e chiusura */}
+      <section className="v-wrap v-chapter">
+        <Reveal>
+          <div className="v-chapter__head">
+            <span className="v-numeral">{cap()}</span>
+            <h2 className="v-h2">Fonti, note e la tua stima</h2>
+          </div>
+          <p className="v-lead v-measure">
+            Questa valutazione è già salvata{intento === "compro" ? " come casa che stai valutando per comprare" : " come casa da vendere"}.
+            La ritrovi fra le tue stime, con la data e i dati che hai inserito.
           </p>
           <div className="v-actions">
             <Link className="v-btn" href="/stime">Le mie stime</Link>
             <button className="v-btn v-btn--quiet" onClick={onModifica}>Modifica i dati</button>
           </div>
-          <p className="v-disclaimer" style={{ marginTop: "var(--s-8)" }}>
-            Stima automatica indicativa costruita sulle quotazioni OMI {stima.semestre} della zona {input.zona},
-            aggiornate con l&apos;indice Istat. Non costituisce perizia né valutazione ai sensi degli standard
-            estimativi. Fonte: {stima.fonte}.
+          <div className="v-fonti">
+            <p className="v-small v-measure">
+              <b>Valore.</b> Quotazioni OMI {stima.semestre} della zona {input.zona}, aggiornate con l&apos;indice Istat dei prezzi
+              delle abitazioni, con coefficienti dichiarati per piano, ascensore, classe, luce e pertinenze. Superficie commerciale
+              secondo il DPR 138/1998, allegato C. Motore tarato su 201 annunci milanesi verificati (settembre 2026): errore
+              mediano −0,3%, dispersione 10–13%. La stessa casa vale lo stesso per chi compra e per chi vende.
+            </p>
+            <p className="v-small v-measure">
+              <b>Prezzi.</b> Il prezzo richiesto è un&apos;intenzione, non un valore. Il prezzo di pubblicazione possibile è la mediana
+              osservata sugli annunci di taratura, il 6% sopra il valore. L&apos;intervallo per un&apos;offerta è la metà bassa
+              dell&apos;intervallo di stima. Nessuna di queste è una percentuale di trattativa garantita.
+            </p>
+            <p className="v-small v-measure">
+              <b>Lavori.</b> Costi medi di fascia per Milano, IVA esclusa, da prezzari e guide 2026; IVA 10% sui lavori con la regola
+              dei beni significativi; spese tecniche 10% con cassa e IVA 22%; detrazione 50%/36% entro 96.000 € in dieci rate
+              (legge di bilancio 2026). Il valore dopo i lavori dipende dallo stato raggiunto, non dalla spesa; la classe
+              energetica non viene stimata.
+            </p>
+            <p className="v-small v-measure">
+              <b>Affitti.</b> Canoni OMI {stima.semestre}; cedolare 21%, un mese di sfitto; IMU e straordinarie escluse. L&apos;affitto
+              breve è uno scenario con ipotesi di settore, non un dato.
+            </p>
+          </div>
+          <p className="v-disclaimer" style={{ marginTop: "var(--s-6)" }}>
+            Stima automatica indicativa. Non costituisce perizia né valutazione ai sensi degli standard estimativi. Fonte: {stima.fonte}.
           </p>
         </Reveal>
       </section>

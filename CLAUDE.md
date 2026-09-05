@@ -28,6 +28,7 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 | Calibrazione del motore | `scripts/calibra.mjs`, `scripts/comparabili.mjs`, `scripts/annunci.mjs`, `data/annunci/` | propone, non scrive: i parametri cambiano con un commit; l'archivio cresce per lotti, non si riscrive |
 | Canoni di locazione e storico | `src/lib/affitto.ts`, `data/locazioni-omi-*.json`, `data/omi-storico.json` | rigenerati da `scripts/ingest-storico.mjs`; non toccano la stima del valore |
 | Lettura del testo di un annuncio | `src/lib/annuncio.ts` | espressioni regolari nel browser, niente rete, niente modelli; ogni campo e' un suggerimento da confermare |
+| Ristrutturazione per interventi | `src/lib/ristrutturazione.ts` | catalogo, pacchetti, stato atteso: i prezzi unitari hanno la fonte in commento |
 | Categoria catastale -> tipologia OMI | `src/lib/catasto.ts` | la mappa A/1..A/11 e' documentata riga per riga |
 | Indirizzario di Milano | `src/lib/indirizzario.ts`, `data/vie-milano.json`, `data/civici-milano.json` | rigenerati da `scripts/ingest-civici.mjs` |
 | API | `src/app/api/estimate`, `src/app/api/geocode`, `src/app/api/vie` | contratto stabile |
@@ -40,8 +41,8 @@ percentuale o una detrazione. Nemmeno "solo per la demo".
 ## Come si consuma il motore dal frontend
 
 - Stima: `POST /api/estimate` con un `Input` (vedi `src/lib/types.ts`).
-- Ristrutturazione: stessa chiamata con `{ ristrutturazione: "base"|"completa"|"design", primaCasa }`.
-- Più scenari: più chiamate in parallelo. Il motore è puro, costano niente.
+- Ristrutturazione: `prospettoRistrutturazione(input, pacchetto, primaCasa, scelte)` da `src/lib/ristrutturazione.ts`, calcolata nel browser (il modulo è puro) perché cambia a ogni scelta; la rotta la accetta anche con `{ ristrutturazione, primaCasa, scelte }`.
+- L'intento (`Input.intento`: compro | vendo) cambia parole e strumenti, mai il valore: il motore lo ignora.
 - Geocodifica: `GET /api/geocode?q=…`. Prova nell'ordine anagrafe comunale, geocoder, dizionario dei quartieri, e dichiara quale ha risposto in `metodo`.
 - Suggerimenti mentre si scrive: `GET /api/vie?q=…`. È roba nostra: si può chiamare a ogni tasto.
 

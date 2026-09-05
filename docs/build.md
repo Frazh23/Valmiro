@@ -30,3 +30,4 @@ i casi essenziali ripetuti sul dominio pubblico (`docs/verifica-browser.md` elen
 | 2026-09-05 | `701eb9c` | VM bridge (tsc + test) | ok | 57/57 | non eseguibile | Vercel ha compilato e pubblicato il commit: i casi 1–3 sono stati riprodotti da Francesco sul sito pubblico |
 | 2026-09-05 | `78ef3be` | VM bridge (tsc + test) | ok | 62/62 | non eseguibile qui | pushato come `c58bcf8`; Vercel ha compilato e pubblicato: i casi 1–4 di `docs/verifica-browser.md` ripetuti su valmiro.it il 5/9/2026, tutti superati |
 | 2026-09-05 | `52454df` | GitHub Actions, build #1 (ubuntu, Node 22) | ok | ok | **ok** | prima build riproducibile con `npm ci`: typecheck, test e `next build` in 56 s |
+| 2026-09-06 | `d7203de` | GitHub Actions, build #3 | ok | ok | **ok** | pushato da Francesco (pull --rebase); su valmiro.it verificato che dopo una simulazione la stima confermata viene salvata come secondo record |

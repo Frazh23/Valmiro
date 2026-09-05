@@ -102,7 +102,9 @@ function Valuta() {
   const [avviso, setAvviso] = useState<string | null>(null);
   const [primaCasa, setPrimaCasa] = useState(true);
   const [esito, setEsito] = useState<Esito | null>(null);
-  const [salvata, setSalvata] = useState(false);
+  /* l'ultimo modulo salvato, serializzato: ogni valutazione con dati diversi e' una stima nuova
+     (una simulazione e la stima confermata che la segue sono due record, com'e' giusto) */
+  const [ultimoSalvato, setUltimoSalvato] = useState<string | null>(null);
   const [mappaAperta, setMappaAperta] = useState(false);
   const [testoAnnuncio, setTestoAnnuncio] = useState("");
   const [letto, setLetto] = useState<Letto | null>(null);
@@ -201,8 +203,7 @@ function Valuta() {
     setModifiche(modo === "aggiorna" ? a.modifiche : null);
     setAnnuncioNota(null);
     setAvviso(null);
-    /* una nuova valutazione va salvata: quella di prima riguardava altri dati */
-    setSalvata(false);
+    setUltimoSalvato(null);
     setEsito(null);
     if (modo === "nuovo") {
       /* un altro immobile: niente di quello di prima sopravvive, nemmeno indirizzo, avvisi e scelte sui lavori */
@@ -259,13 +260,14 @@ function Valuta() {
 
   function fatto(e: Esito) {
     setEsito(e); setVista("risultato");
-    if (!salvata && zona) {
+    const impronta = JSON.stringify(i);
+    if (impronta !== ultimoSalvato && zona) {
       const da = {
         indirizzo: indirizzo || `Zona ${i.zona}`, zona: i.zona, descrizioneZona: zona.d,
         input: i, stima: e.stima, prezzoEsposto: i.prezzoRichiesto || undefined,
       };
       if (utente) salvaStimaAccount(utente.id, da); else salvaStima(da);
-      setSalvata(true);
+      setUltimoSalvato(impronta);
     }
   }
 

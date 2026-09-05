@@ -40,8 +40,35 @@ export const RISTRUTTURAZIONE = [
 /** Il costo dei lavori dipende dalla fascia: accessi, ponteggi, livello di finitura atteso. */
 export const MOLTIPLICATORE_RISTRUTTURAZIONE = { B: 1.2, C: 1.08, D: 0.98, E: 0.92, R: 0.98 };
 
-/** Detrazioni edilizie 2026. Da riverificare a ogni legge di bilancio. */
+/**
+ * Detrazioni edilizie 2026 (art. 16-bis TUIR, confermate dalla legge di
+ * bilancio 2026): 50% sull'abitazione principale, 36% sugli altri immobili,
+ * tetto 96.000 euro, dieci rate annuali. Dal 2027 scendono a 36% e 30%.
+ * Da riverificare a ogni legge di bilancio.
+ */
 export const DETRAZIONE = { primaCasa: 0.5, altri: 0.36, tetto: 96000, rate: 10 };
+
+/**
+ * Quello che un preventivo "al metro" non dice. I costi di RISTRUTTURAZIONE sono
+ * imponibili dei lavori; sopra ci vanno:
+ * - IVA al 10% sui lavori (manutenzione straordinaria e ristrutturazione su
+ *   abitazioni). Sui "beni significativi" — infissi, caldaia, sanitari,
+ *   condizionatori — il 10% vale solo fino al valore della manodopera, il resto
+ *   e' al 22%: un cantiere con molti infissi paga qualcosa in piu' di questo 10%.
+ * - Spese tecniche: progetto, direzione lavori, pratica edilizia, sicurezza.
+ *   Fra l'8 e il 12% dei lavori nella pratica milanese; qui il 10%. Le parcelle
+ *   hanno il 4% di cassa previdenziale e l'IVA al 22%, sempre.
+ * - Pratiche: diritti di segreteria della CILA o SCIA, aggiornamento catastale,
+ *   attestato energetico a fine lavori. Una cifra fissa, non una percentuale.
+ * Tutte queste voci entrano nella base della detrazione, fino al tetto.
+ */
+export const ONERI = {
+  ivaLavori: 0.10,
+  spesaTecnica: 0.10,
+  cassaTecnici: 0.04,
+  ivaTecnici: 0.22,
+  pratiche: 800,
+};
 
 /**
  * Quanto vale il salto di stato conservativo.
@@ -201,7 +228,11 @@ export function prospettoRistrutturazione(i: Input, livelloId: string, primaCasa
   if (!liv) throw new Error(`Livello sconosciuto: ${livelloId}`);
   const fascia = ZONE[i.zona].f as keyof typeof MOLTIPLICATORE_RISTRUTTURAZIONE;
   const euroMq = liv.euroMq * (MOLTIPLICATORE_RISTRUTTURAZIONE[fascia] ?? 1);
-  const costo = euroMq * i.mq;
+  const lavori = euroMq * i.mq;
+  const iva = lavori * ONERI.ivaLavori;
+  const tecnici = lavori * ONERI.spesaTecnica * (1 + ONERI.cassaTecnici) * (1 + ONERI.ivaTecnici);
+  const pratiche = ONERI.pratiche;
+  const costo = lavori + iva + tecnici + pratiche;
   const aliquota = primaCasa ? DETRAZIONE.primaCasa : DETRAZIONE.altri;
   const detrazione = Math.min(costo, DETRAZIONE.tetto) * aliquota;
   const prima = stima(i);
@@ -212,6 +243,11 @@ export function prospettoRistrutturazione(i: Input, livelloId: string, primaCasa
   return {
     livello: liv.nome,
     euroMq,
+    /* le voci del costo, una per riga: chi legge deve poterle sommare */
+    lavori,
+    iva,
+    tecnici,
+    pratiche,
     costo,
     detrazione,
     rate: DETRAZIONE.rate,

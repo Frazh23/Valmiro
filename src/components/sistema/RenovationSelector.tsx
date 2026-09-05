@@ -2,10 +2,13 @@
 import NumeroAnimato from "./NumeroAnimato";
 import BeforeAfter from "./BeforeAfter";
 import { eur } from "@/lib/formato";
-import { RISTRUTTURAZIONE } from "@/lib/engine";
+import { RISTRUTTURAZIONE, ONERI } from "@/lib/engine";
+import { pct } from "@/lib/formato";
 
 export type Prospetto = {
-  livello: string; euroMq: number; costo: number; detrazione: number; rate: number;
+  livello: string; euroMq: number;
+  lavori: number; iva: number; tecnici: number; pratiche: number;
+  costo: number; detrazione: number; rate: number;
   costoNetto: number; valorePrima: number; valoreDopo: number;
   valoreDopoMin: number; valoreDopoMax: number; sigmaDopo: number;
   margine: number;
@@ -87,8 +90,24 @@ export default function RenovationSelector({
           <>
             <div className="v-reno__lines">
               <div className="v-factor">
-                <span className="v-factor__n">Lavori · {eur(p.euroMq)} €/mq</span>
-                <span className="v-factor__v neg">−{eur(p.costo)} €</span>
+                <span className="v-factor__n">Lavori · {eur(p.euroMq)} €/mq, imponibile</span>
+                <span className="v-factor__v neg">−{eur(p.lavori)} €</span>
+              </div>
+              <div className="v-factor">
+                <span className="v-factor__n">IVA sui lavori al {pct(ONERI.ivaLavori)}</span>
+                <span className="v-factor__v neg">−{eur(p.iva)} €</span>
+              </div>
+              <div className="v-factor">
+                <span className="v-factor__n">Progetto, direzione lavori, pratiche · {pct(ONERI.spesaTecnica)} + cassa e IVA 22%</span>
+                <span className="v-factor__v neg">−{eur(p.tecnici)} €</span>
+              </div>
+              <div className="v-factor">
+                <span className="v-factor__n">Diritti comunali, catasto, attestato energetico</span>
+                <span className="v-factor__v neg">−{eur(p.pratiche)} €</span>
+              </div>
+              <div className="v-factor v-factor--sub">
+                <span className="v-factor__n">Costo complessivo</span>
+                <span className="v-factor__v">{eur(p.costo)} €</span>
               </div>
               <div className="v-factor">
                 <span className="v-factor__n">Detrazione fiscale in {p.rate} anni</span>
@@ -105,6 +124,9 @@ export default function RenovationSelector({
             <p className="v-caveat">
               Il costo dei lavori è una media della fascia di zona, non un preventivo: un
               preventivo vero cambia sensibilmente con il palazzo, il piano e gli accessi.
+              L&apos;IVA al 10% vale sulla manodopera e, per infissi, caldaia e sanitari, solo
+              fino al suo valore: il resto è al 22%, e un cantiere con molti infissi paga
+              qualcosa in più.
               Il margine somma l&apos;incertezza della stima a quella del costo, ed è per
               questo il numero meno solido di tutta la pagina: leggilo come ordine di
               grandezza, non come una previsione di guadagno.
@@ -114,7 +136,7 @@ export default function RenovationSelector({
             <label className="v-toggle" style={{ marginTop: "var(--s-6)" }}>
               <span>
                 È la tua prima casa
-                <small>Prima casa 50%, altri immobili 36%. Tetto {eur(96000)} €.</small>
+                <small>Nel 2026 prima casa 50%, altri immobili 36%, tetto {eur(96000)} € su tutto il costo. Dal 2027 scendono a 36% e 30%.</small>
               </span>
               <input type="checkbox" checked={primaCasa} onChange={(e) => onPrimaCasa(e.target.checked)} />
             </label>

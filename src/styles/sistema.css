@@ -674,3 +674,5 @@ button { font: inherit; letter-spacing: inherit; }
 .v-history__lbl { font-size: 12px; fill: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .v-history__lbl--strong { fill: var(--ink); font-weight: 600; }
 .v-history__anno { font-size: 11px; fill: var(--ink-ghost); letter-spacing: .04em; }
+.v-factor--sub { border-top: 1px solid var(--line-strong); }
+.v-factor--sub .v-factor__n { color: var(--ink); }

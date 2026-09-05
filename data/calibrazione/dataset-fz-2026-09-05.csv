@@ -1,0 +1,131 @@
+id;fonte;data;indirizzo;zona;tipo;mq;stato;piano;ascensore;classe;balconi;cantina;box;epoca;affaccio;metro;prezzo_richiesto;prezzo_venduto;note
+ds-1;idealista;2026-09-05;Via Fiori Chiari;B15;sig;100;otti;terra;si;D;0;no;nessuno;;;;950000;;Brera · Trilocale · stato orig: Ristrutturato · segm: Lusso
+ds-2;idealista;2026-09-05;Via Pontaccio;B18;sig;30;abit;1-2;si;D;0;no;nessuno;;;;670000;;Brera · Bilocale · stato orig: Buono · segm: Lusso
+ds-3;idealista;2026-09-05;Via dell'Annunciata;B15;sig;90;otti;1-2;si;D;0;no;nessuno;;;;1600000;;Brera · Bilocale · stato orig: Ristrutturato · segm: Lusso
+ds-4;idealista;2026-09-05;;B15;sig;80;otti;terra;si;D;0;no;nessuno;;;;780000;;Brera · Bilocale · stato orig: Ristrutturato · segm: Lusso
+ds-5;idealista;2026-09-05;;B15;sig;75;abit;3-5;si;D;0;no;nessuno;;;;795000;;Brera · Bilocale · stato orig: Buono · segm: Lusso
+ds-6;idealista;2026-09-05;Via Ponte Vetero 10;B15;sig;156;rist;1-2;si;D;1;si;nessuno;;;;2600000;;Brera · Appartamento · stato orig: Da ristrutturare / personalizzare · segm: Lusso
+ds-7;idealista;2026-09-05;;B15;sig;160;abit;3-5;si;D;0;no;nessuno;;;;2400000;;Brera · Quadrilocale · stato orig: Buono · segm: Lusso
+ds-8;idealista;2026-09-05;Via San Carpoforo 6;B15;civ;21;abit;terra;si;D;0;no;nessuno;;;;380000;;Brera · Monolocale · stato orig: Buono · segm: Standard
+ds-9;idealista;2026-09-05;Via San Carpoforo 3;B15;sig;76;otti;1-2;si;D;0;no;nessuno;;;;1150000;;Brera · Trilocale · stato orig: Ottimo / ristrutturato · segm: Lusso
+ds-10;idealista;2026-09-05;Via Mercato;B15;sig;200;otti;3-5;si;D;0;no;nessuno;;;;3200000;;Brera · Quadrilocale · stato orig: Ottimo · segm: Lusso
+ds-11;idealista;2026-09-05;Via Giuseppe Sacchi 4;B15;sig;135;abit;3-5;no;D;1;no;nessuno;;;;1550000;;Brera · Trilocale · stato orig: Buono · segm: Lusso
+ds-12;idealista;2026-09-05;Via Monte di Pietà;B15;sig;92;otti;3-5;si;D;0;no;nessuno;;;;1897000;;Brera · Bilocale · stato orig: Ottimo · segm: Lusso
+ds-13;idealista;2026-09-05;Via Fiori Chiari;B15;sig;154;abit;1-2;si;D;1;no;nessuno;;;;2500000;;Brera · Trilocale · stato orig: Buono · segm: Lusso
+ds-14;idealista;2026-09-05;Via Fiori Oscuri 11;B15;sig;55;abit;1-2;si;D;0;no;nessuno;;;;950000;;Brera · Bilocale · stato orig: Buono · segm: Lusso
+ds-15;idealista;2026-09-05;Viale Stelvio 53;C15;civ;142;abit;1-2;si;D;1;no;nessuno;;;;845000;;Isola · Quadrilocale · stato orig: Buono · segm: Standard
+ds-16;idealista;2026-09-05;Via Menabrea 24A;C15;civ;58;otti;3-5;si;D;0;no;nessuno;;;;320000;;Isola · Bilocale · stato orig: Ristrutturato · segm: Standard
+ds-17;idealista;2026-09-05;Viale Marche;C15;civ;125;abit;3-5;si;D;1;no;nessuno;;;;525000;;Isola · Trilocale · stato orig: Buono · segm: Standard
+ds-18;idealista;2026-09-05;Via Ippolito Rosellini 8;C15;civ;58;abit;3-5;si;D;0;no;nessuno;;;;510000;;Isola · Bilocale · stato orig: Buono · segm: Standard
+ds-19;idealista;2026-09-05;Piazzale Carlo Archinto 7;C12;civ;56;nuov;1-2;si;D;0;no;nessuno;;;;567000;;Isola · Bilocale · stato orig: Nuovo / recente · segm: Standard
+ds-20;idealista;2026-09-05;Via Menabrea 24;C15;civ;41;nuov;1-2;si;D;0;no;nessuno;;;;210000;;Isola · Monolocale · stato orig: Ristrutturato / nuovo · segm: Standard
+ds-21;idealista;2026-09-05;Via Carlo Farini 27;C12;civ;90;abit;1-2;si;D;0;no;nessuno;;;;470000;;Isola · Trilocale · stato orig: Buono · segm: Standard
+ds-22;idealista;2026-09-05;Via Pastrengo 4;C12;civ;25;otti;3-5;no;D;0;no;nessuno;;;;260000;;Isola · Monolocale · stato orig: Ristrutturato · segm: Standard
+ds-23;idealista;2026-09-05;;C15;civ;90;abit;3-5;si;D;0;no;nessuno;;;;490000;;Isola · Trilocale · stato orig: Da modernizzare · segm: Standard
+ds-24;idealista;2026-09-05;Via Pietro Borsieri 27;C12;civ;102;abit;3-5;si;D;0;no;nessuno;;;;730000;;Isola · Trilocale · stato orig: Buono · segm: Standard
+ds-25;idealista;2026-09-05;Via Carlo Farini 81;C15;civ;55;abit;1-2;si;D;0;no;nessuno;;;;265000;;Isola · Bilocale · stato orig: Buono · segm: Standard
+ds-26;idealista;2026-09-05;Via Cola Montano 6;C12;civ;65;abit;1-2;si;D;1;si;nessuno;;;;375000;;Isola · Bilocale · stato orig: Buono · segm: Standard
+ds-27;idealista;2026-09-05;Via Francesco Arese;C15;civ;68;abit;3-5;si;D;1;no;nessuno;;;;385000;;Isola · Bilocale · stato orig: Buono · segm: Standard
+ds-28;idealista;2026-09-05;Via Ercole Oldofredi;C15;civ;96;abit;1-2;si;D;0;no;nessuno;;;;495000;;Isola · Trilocale · stato orig: Buono · segm: Standard
+ds-29;idealista;2026-09-05;Via Lazzaro Palazzi;C12;civ;84;abit;1-2;si;D;1;si;nessuno;;;;620000;;Porta Venezia · Trilocale · stato orig: Buono · segm: Standard
+ds-30;idealista;2026-09-05;Via Lambro 11;C12;civ;90;abit;1-2;no;D;0;no;nessuno;;;;590000;;Porta Venezia · Trilocale · stato orig: Buono · segm: Standard
+ds-31;idealista;2026-09-05;Viale Vittorio Veneto 14;C12;civ;49;otti;1-2;si;D;0;no;nessuno;;;;400000;;Porta Venezia · Bilocale · stato orig: Ristrutturato · segm: Standard
+ds-32;idealista;2026-09-05;Piazza Oberdan;C12;sig;90;otti;3-5;si;D;0;no;nessuno;;;;728000;;Porta Venezia · Bilocale · stato orig: Ristrutturato · segm: Lusso
+ds-33;idealista;2026-09-05;Viale Regina Giovanna;C12;sig;145;abit;3-5;si;D;0;no;nessuno;;;;1190000;;Porta Venezia · Quadrilocale · stato orig: Buono · segm: Lusso
+ds-34;idealista;2026-09-05;Piazza Oberdan;C12;civ;43;rist;1-2;si;D;0;no;nessuno;;;;245000;;Porta Venezia · Bilocale · stato orig: Da ristrutturare · segm: Standard
+ds-35;idealista;2026-09-05;Piazza Oberdan;C12;civ;60;otti;3-5;si;D;0;no;nessuno;;;;428000;;Porta Venezia · Trilocale · stato orig: Ristrutturato · segm: Standard
+ds-36;idealista;2026-09-05;Viale Vittorio Veneto 24;C12;civ;90;rist;3-5;si;D;0;no;nessuno;;;;598000;;Porta Venezia · Bilocale · stato orig: Da personalizzare · segm: Standard
+ds-37;idealista;2026-09-05;Viale Tunisia 27;C12;civ;59;nuov;1-2;si;D;0;no;nessuno;;;;445000;;Porta Venezia · Bilocale · stato orig: Nuovo / mai abitato · segm: Standard
+ds-38;idealista;2026-09-05;Via Degli Scipioni 1;C12;sig;132;otti;rialzato;si;D;0;no;nessuno;;;;920000;;Porta Venezia · Quadrilocale · stato orig: Ristrutturato · segm: Lusso
+ds-39;idealista;2026-09-05;Piazza della Repubblica;C12;sig;191;otti;6+;si;D;0;no;nessuno;;;;2200000;;Porta Venezia · Quadrilocale · stato orig: Ristrutturato · segm: Lusso
+ds-40;idealista;2026-09-05;Viale Abruzzi;D12;civ;40;otti;rialzato;si;D;0;no;nessuno;;;;250000;;Porta Venezia · Monolocale · stato orig: Ristrutturato · segm: Standard
+ds-41;idealista;2026-09-05;Via Clericetti 36;D12;civ;146;abit;1-2;si;D;0;no;nessuno;;;;740000;;Città Studi · Quadrilocale · stato orig: Buono · segm: Standard
+ds-42;idealista;2026-09-05;Via Strambio 4;D12;civ;55;abit;3-5;si;D;0;no;nessuno;;;;395000;;Città Studi · Bilocale · stato orig: Buono · segm: Standard
+ds-43;idealista;2026-09-05;Via Moretto da Brescia 19;D12;civ;65;otti;terra;si;D;0;no;nessuno;;;;369000;;Città Studi · Bilocale · stato orig: Ristrutturato · segm: Standard
+ds-44;idealista;2026-09-05;Via Clericetti 38;D12;civ;40;otti;1-2;no;D;0;no;nessuno;;;;199000;;Città Studi · Bilocale · stato orig: Ristrutturato · segm: Standard
+ds-45;idealista;2026-09-05;Via Temistocle Calzecchi 6;D12;civ;60;otti;1-2;si;D;0;no;nessuno;;;;350000;;Città Studi · Trilocale · stato orig: Ristrutturato · segm: Standard
+ds-46;idealista;2026-09-05;Via Sangallo 39;D12;civ;85;nuov;terra;no;D;0;no;nessuno;;;;470000;;Città Studi · Trilocale · stato orig: Nuovo · segm: Standard
+ds-47;idealista;2026-09-05;Via Sangallo 39;D12;civ;72;nuov;terra;no;D;0;no;nessuno;;;;468000;;Città Studi · Bilocale · stato orig: Nuovo · segm: Standard
+ds-48;idealista;2026-09-05;Via Filippo Tajani 3;D12;civ;28;otti;1-2;si;D;0;no;nessuno;;;;199000;;Città Studi · Monolocale · stato orig: Ristrutturato · segm: Standard
+ds-49;idealista;2026-09-05;Via Valvassori Peroni 41;D12;civ;104;rist;1-2;si;D;0;no;nessuno;;;;475000;;Città Studi · Quadrilocale · stato orig: Da personalizzare · segm: Standard
+ds-50;idealista;2026-09-05;Via Averardo Buschi 37;D12;civ;85;otti;1-2;no;D;0;no;nessuno;;;;445000;;Città Studi · Trilocale · stato orig: Ristrutturato / buono · segm: Standard
+ds-51;idealista;2026-09-05;Via Temistocle Calzecchi 6;D12;civ;95;abit;6+;si;D;0;no;nessuno;;;;495000;;Città Studi · Trilocale · stato orig: Buono · segm: Standard
+ds-52;idealista;2026-09-05;Piazza Leonardo da Vinci 8 - B;D12;civ;45;otti;1-2;si;D;0;no;nessuno;;;;349000;;Città Studi · Bilocale · stato orig: Ristrutturato · segm: Standard
+ds-53;idealista;2026-09-05;Piazza Leonardo da Vinci 8 - A;D12;civ;45;otti;1-2;si;D;0;no;nessuno;;;;339000;;Città Studi · Bilocale · stato orig: Ristrutturato · segm: Standard
+ds-54;idealista;2026-09-05;Via Averardo Buschi 23;D12;civ;70;otti;1-2;si;D;0;no;nessuno;;;;533000;;Città Studi · Bilocale · stato orig: Ristrutturato · segm: Standard
+ds-55;idealista;2026-09-05;Via Vigilio Inama 9;D12;civ;114;otti;terra;si;D;0;no;nessuno;;;;619000;;Città Studi · Trilocale · stato orig: Ristrutturato · segm: Standard
+ds-56;idealista;2026-09-05;Viale Isonzo 27;D20;civ;77;abit;1-2;si;D;0;no;nessuno;;;;595000;;Porta Romana · Trilocale · stato orig: Buono · segm: Standard
+ds-57;idealista;2026-09-05;Viale Umbria 27;C20;civ;65;rist;terra;si;D;0;no;nessuno;;;;307000;;Porta Romana · Trilocale · stato orig: Da personalizzare · segm: Standard
+ds-58;idealista;2026-09-05;Viale Umbria 27;C20;civ;45;rist;terra;si;D;0;no;nessuno;;;;208000;;Porta Romana · Bilocale · stato orig: Da personalizzare · segm: Standard
+ds-59;idealista;2026-09-05;Via Contardo Ferrini 3;C20;sig;111;nuov;1-2;si;D;0;no;nessuno;;;;810000;;Porta Romana · Trilocale · stato orig: Nuovo / progetto ristrutturazione · segm: Lusso
+ds-60;idealista;2026-09-05;Viale Isonzo 24;C19;civ;86;abit;1-2;si;D;0;no;nessuno;;;;575000;;Porta Romana · Trilocale · stato orig: Buono · segm: Standard
+ds-61;idealista;2026-09-05;Via Friuli;C20;civ;87;abit;3-5;si;D;0;no;nessuno;;;;560000;;Porta Romana · Trilocale · stato orig: Buono · segm: Standard
+ds-62;idealista;2026-09-05;Piazzale Medaglie d'Oro;B19;civ;20;otti;1-2;si;D;0;no;nessuno;;;;190000;;Porta Romana · Monolocale · stato orig: Ristrutturato · segm: Standard
+ds-63;idealista;2026-09-05;Viale Isonzo 8;C19;civ;55;otti;6+;si;D;1;no;nessuno;;;;395000;;Porta Romana · Bilocale · stato orig: Ristrutturato · segm: Standard
+ds-64;idealista;2026-09-05;Corso Lodi 12;C19;civ;32;abit;1-2;no;D;0;no;nessuno;;;;219000;;Porta Romana · Monolocale · stato orig: Buono · segm: Standard
+ds-65;idealista;2026-09-05;Via Friuli;C20;civ;102;abit;3-5;no;D;0;no;nessuno;;;;649000;;Porta Romana · Quadrilocale · stato orig: Buono · segm: Standard
+ds-66;idealista;2026-09-05;;B19;sig;220;otti;3-5;si;D;0;no;nessuno;;;;2190000;;Porta Romana · Quadrilocale · stato orig: Pronto da abitare / lusso · segm: Lusso
+ds-67;idealista;2026-09-05;Via Lodovico Muratori 29;C20;sig;189;abit;1-2;si;D;0;no;nessuno;;;;1350000;;Porta Romana · Quadrilocale · stato orig: Buono · segm: Lusso
+ds-68;idealista;2026-09-05;Corso Lodi 34;C19;civ;95;abit;3-5;si;D;0;no;nessuno;;;;619000;;Porta Romana · Trilocale · stato orig: Buono · segm: Standard
+ds-69;idealista;2026-09-05;Viale Cirene;C20;civ;118;rist;1-2;si;D;0;no;nessuno;;;;790000;;Porta Romana · Quadrilocale · stato orig: Da ristrutturare · segm: Standard
+ds-70;idealista;2026-09-05;Via Giorgio Vasari;C20;sig;370;otti;6+;si;D;0;no;nessuno;;;;2490000;;Porta Romana · Attico · stato orig: Ottimo / lusso · segm: Lusso
+ds-101;immobiliare;2026-09-05;Via Alserio 10;C12;sig;65;otti;3-5;si;D;0;no;nessuno;;;;680000;;Isola · Bilocale · stato orig: Ottimo / recente · segm: Lusso
+ds-103;immobiliare;2026-09-05;;C15;civ;48;nuov;1-2;si;D;0;si;nessuno;;;;280000;;Isola · Monolocale · stato orig: Nuovo · segm: Standard
+ds-107;immobiliare;2026-09-05;Via Fatebenefratelli;B15;sig;250;rist;1-2;si;D;1;si;nessuno;;;;2990000;;Brera · Appartamento · stato orig: Da ristrutturare / personalizzare · segm: Lusso
+ds-108;immobiliare;2026-09-05;Via Ponte Vetero 10;B15;sig;164;rist;1-2;si;D;1;si;nessuno;;;;2600000;;Brera · Appartamento · stato orig: Da ristrutturare / personalizzare · segm: Lusso
+ds-109;immobiliare;2026-09-05;Via Magolfa 5;C18;civ;100;otti;terra;si;D;0;no;nessuno;;;;665000;;Navigli - Darsena · Trilocale · stato orig: Ottimo / ristrutturato · segm: Standard
+ds-110;immobiliare;2026-09-05;Viale Gorizia 6;C18;sig;135;abit;3-5;si;D;1;si;nessuno;;;;950000;;Navigli - Darsena · Trilocale · stato orig: Buono · segm: Lusso
+ds-112;immobiliare;2026-09-05;Alzaia Naviglio Pavese;C18;civ;101;abit;6+;si;D;1;no;nessuno;;;;580000;;Navigli - Darsena · Trilocale · stato orig: Buono · segm: Standard
+ds-113;immobiliare;2026-09-05;Corso di Porta Romana 124;B20;civ;48;otti;6+;si;D;0;no;nessuno;;;;385000;;Porta Romana / Crocetta · Bilocale · stato orig: Ottimo · segm: Standard
+ds-114;immobiliare;2026-09-05;Corso di Porta Romana 107;B19;sig;85;otti;1-2;si;D;1;no;nessuno;;;;675000;;Porta Romana / Crocetta · Trilocale · stato orig: Ottimo · segm: Lusso
+ds-115;immobiliare;2026-09-05;Piazzale Medaglie d'Oro;B19;civ;80;rist;1-2;si;D;0;no;nessuno;;;;480000;;Porta Romana - Medaglie d'Oro · Trilocale · stato orig: Da ristrutturare · segm: Standard
+ds-116;immobiliare;2026-09-05;Via Lambro 7;C12;sig;100;otti;1-2;si;D;1;no;nessuno;;;;850000;;Porta Venezia · Trilocale · stato orig: Ottimo / ristrutturato · segm: Lusso
+ds-117;immobiliare;2026-09-05;Via Lambro 12;C12;sig;110;abit;1-2;si;D;1;si;nessuno;;;;930000;;Porta Venezia · Quadrilocale · stato orig: Buono · segm: Lusso
+ds-118;immobiliare;2026-09-05;Via San Benigno 4;D12;civ;90;abit;3-5;si;D;1;no;nessuno;;;;419000;;Città Studi · Trilocale · stato orig: Buono · segm: Standard
+ds-119;immobiliare;2026-09-05;Via Aselli 22;D12;civ;95;rist;3-5;si;D;1;si;nessuno;;;;540000;;Città Studi · Trilocale · stato orig: Da ristrutturare / personalizzare · segm: Standard
+ds-120;immobiliare;2026-09-05;Via Giovanni Paisiello 6;D12;sig;136;nuov;1-2;si;D;1;si;nessuno;;;;1100000;;Città Studi · Quadrilocale · stato orig: Nuovo · segm: Lusso
+ds-121;immobiliare;2026-09-05;Via Garofalo 4;D12;sig;140;abit;3-5;si;D;1;si;nessuno;;;;895000;;Città Studi · Trilocale · stato orig: Buono · segm: Lusso
+ds-122;immobiliare;2026-09-05;Via Filippo Tajani 1;D12;civ;67;abit;6+;si;D;1;si;nessuno;;;;365000;;Città Studi · Trilocale · stato orig: Buono · segm: Standard
+ds-123;immobiliare;2026-09-05;;D12;civ;140;otti;terra;no;D;0;no;nessuno;;;;379000;;Città Studi · Quadrilocale · stato orig: Ottimo · segm: Standard
+ds-124;immobiliare;2026-09-05;Corso di Porta Nuova 52;B18;sig;40;otti;1-2;si;D;0;no;nessuno;;;;409000;;Porta Nuova · Monolocale · stato orig: Ottimo · segm: Lusso
+ds-125;immobiliare;2026-09-05;;C14;sig;140;otti;3-5;si;D;1;no;nessuno;;;;1090000;;Porta Nuova · Trilocale · stato orig: Ottimo / ristrutturato · segm: Lusso
+ds-126;immobiliare;2026-09-05;Corso di Porta Nuova 52;B18;sig;20;abit;3-5;si;D;0;no;nessuno;;;;235000;;Porta Nuova · Monolocale · stato orig: Buono · segm: Lusso
+ds-127;immobiliare;2026-09-05;Corso di Porta Nuova 52;B18;sig;62;otti;6+;si;D;0;no;nessuno;;;;585000;;Porta Nuova · Bilocale · stato orig: Ottimo / ristrutturato · segm: Lusso
+ds-128;immobiliare;2026-09-05;Corso di Porta Nuova;B18;sig;100;otti;3-5;si;D;1;no;nessuno;;;;1200000;;Turati / Porta Nuova · Trilocale · stato orig: Ottimo / ristrutturato · segm: Lusso
+ds-129;immobiliare;2026-09-05;Via Melchiorre Gioia 1;C12;sig;112;otti;3-5;si;D;1;si;nessuno;;;;795000;;Garibaldi / Porta Nuova · Trilocale · stato orig: Ottimo · segm: Lusso
+ds-130;immobiliare;2026-09-05;Piazzale Principessa Clotilde 6;B18;civ;45;abit;rialzato;si;D;0;no;nessuno;;;;320000;;Porta Nuova · Monolocale · stato orig: Buono · segm: Standard
+ds-132;immobiliare;2026-09-05;Piazza della Repubblica;C12;sig;140;otti;1-2;si;D;1;no;nessuno;;;;1600000;;Porta Nuova · Trilocale · stato orig: Ottimo · segm: Lusso
+ds-133;immobiliare;2026-09-05;Via Antonio Tolomeo Trivulzio 3;C17;civ;58;otti;rialzato;si;D;0;no;nessuno;;;;355000;;De Angeli · Bilocale · stato orig: Ottimo · segm: Standard
+ds-134;immobiliare;2026-09-05;Via Moncucco 24;D21;civ;103;otti;3-5;si;D;1;si;nessuno;;;;586000;;Famagosta · Trilocale · stato orig: Ottimo · segm: Standard
+ds-135;immobiliare;2026-09-05;Viale dell'Innovazione 13;D34;civ;116;otti;3-5;si;D;1;si;nessuno;;;;640000;;Bicocca · Trilocale · stato orig: Ottimo · segm: Standard
+ds-151;immobiliare;2026-09-05;Via dei Giardini;B15;sig;100;otti;1-2;si;D;0;no;nessuno;;;;1600000;;Brera · Bilocale · stato orig: Ristrutturato · segm: Lusso
+ds-152;immobiliare;2026-09-05;;B15;sig;100;otti;6+;si;D;0;si;nessuno;;;;1250000;;Brera · Trilocale · stato orig: Ristrutturato · segm: Lusso
+ds-154;immobiliare;2026-09-05;Piazza San Marco;B18;sig;127;abit;3-5;si;D;0;no;nessuno;;;;995000;;Brera · Mansarda / Bilocale · stato orig: Buono / raffinato · segm: Lusso
+ds-155;immobiliare;2026-09-05;;B15;sig;95;otti;terra;si;D;0;no;nessuno;;;;1400000;;Brera · Bilocale · stato orig: Ristrutturato · segm: Lusso
+ds-156;immobiliare;2026-09-05;Via del Lauro 10;B12;sig;95;otti;terra;si;D;0;no;nessuno;;;;1400000;;Brera · Bilocale · stato orig: Ristrutturato · segm: Lusso
+ds-157;immobiliare;2026-09-05;Via Brera;B15;sig;290;otti;6+;si;D;1;no;nessuno;;;;3350000;;Brera · Attico · stato orig: Ottimo / lusso · segm: Lusso
+ds-158;immobiliare;2026-09-05;Via Solferino 3;B18;sig;242;otti;terra;no;D;0;no;nessuno;;;;3500000;;Brera · Appartamento · stato orig: Ristrutturato · segm: Lusso
+ds-159;immobiliare;2026-09-05;Via Fiori Chiari 21;B15;sig;205;otti;3-5;si;D;1;si;nessuno;;;;2950000;;Brera · Attico · stato orig: Ottimo / lusso · segm: Lusso
+ds-162;immobiliare;2026-09-05;Via San Carpoforo 5;B15;sig;76;otti;1-2;si;D;0;no;nessuno;;;;1150000;;Brera · Trilocale · stato orig: Ristrutturato · segm: Lusso
+ds-163;immobiliare;2026-09-05;Viale Nazario Sauro 14;C15;civ;100;otti;3-5;si;D;1;no;box;;;;545000;;Isola · Trilocale · stato orig: Ottimo · segm: Standard
+ds-164;immobiliare;2026-09-05;Viale Nazario Sauro 5;C15;civ;79;abit;rialzato;no;D;0;no;nessuno;;;;385000;;Isola · Trilocale · stato orig: Buono · segm: Standard
+ds-165;immobiliare;2026-09-05;Via Ugo Bassi;C12;civ;95;otti;1-2;si;D;1;si;nessuno;;;;650000;;Isola · Trilocale · stato orig: Ottimo · segm: Standard
+ds-166;immobiliare;2026-09-05;Via Timavo 12;C15;sig;120;nuov;3-5;si;D;0;no;box;;;;1230000;;Isola · Trilocale · stato orig: Nuovo · segm: Lusso
+ds-167;immobiliare;2026-09-05;Via Luigi Porro Lambertenghi 25;C12;civ;122;rist;1-2;si;D;0;si;nessuno;;;;820000;;Isola · Trilocale · stato orig: Da ristrutturare · segm: Standard
+ds-168;immobiliare;2026-09-05;Via Volturno 33;C12;sig;110;otti;3-5;si;D;0;no;box;;;;1490000;;Isola · Trilocale · stato orig: Ottimo / recente · segm: Lusso
+ds-169;immobiliare;2026-09-05;Via Garigliano 8;C12;civ;80;abit;1-2;si;D;0;si;nessuno;;;;470000;;Isola · Trilocale · stato orig: Buono · segm: Standard
+ds-170;immobiliare;2026-09-05;Via Ippolito Rosellini 27;C15;civ;60;nuov;3-5;si;D;0;si;nessuno;;;;525000;;Isola · Bilocale · stato orig: Nuovo / recente · segm: Standard
+ds-171;immobiliare;2026-09-05;Via Ippolito Rosellini 26;C15;sig;206;otti;6+;si;D;1;no;box;;;;1890000;;Isola · Quadrilocale · stato orig: Ottimo / lusso · segm: Lusso
+ds-172;immobiliare;2026-09-05;Piazzale Segrino 1;C12;civ;100;otti;1-2;si;D;0;no;nessuno;;;;530000;;Isola · Trilocale · stato orig: Ristrutturato · segm: Standard
+ds-173;immobiliare;2026-09-05;Viale Monte Nero 29;B19;civ;25;otti;1-2;si;D;1;no;nessuno;;;;225000;;Porta Romana · Monolocale · stato orig: Ottimo · segm: Standard
+ds-174;immobiliare;2026-09-05;Via Gerolamo Tiraboschi 6;C20;civ;70;otti;1-2;si;D;1;no;nessuno;;;;540000;;Porta Romana · Bilocale · stato orig: Ottimo · segm: Standard
+ds-175;immobiliare;2026-09-05;Via Giorgio Vasari 19;C20;civ;49;nuov;1-2;si;D;0;si;nessuno;;;;430000;;Porta Romana · Bilocale · stato orig: Nuovo · segm: Standard
+ds-176;immobiliare;2026-09-05;Via Lodovico Muratori 13;C20;sig;190;otti;6+;si;D;1;si;box;;;;2190000;;Porta Romana · Attico · stato orig: Ottimo / lusso · segm: Lusso
+ds-177;immobiliare;2026-09-05;Viale Monte Nero 8;C20;civ;49;otti;6+;si;D;0;si;nessuno;;;;388000;;Porta Romana · Bilocale · stato orig: Ristrutturato · segm: Standard
+ds-178;immobiliare;2026-09-05;Viale Monte Nero 21;B19;sig;60;abit;1-2;si;D;0;si;nessuno;;;;470000;;Porta Romana · Bilocale · stato orig: Buono / abitabile · segm: Lusso
+ds-180;immobiliare;2026-09-05;Via Mantova 17;C19;civ;55;otti;ultimo;no;D;0;no;nessuno;;;;405000;;Porta Romana · Bilocale · stato orig: Ottimo · segm: Standard
+ds-181;immobiliare;2026-09-05;Via Lazzaro Papi 10;C20;civ;102;abit;1-2;si;D;0;no;nessuno;;;;589000;;Porta Romana · Bilocale · stato orig: Buono · segm: Standard
+ds-182;immobiliare;2026-09-05;Viale Monte Nero;C20;civ;45;rist;3-5;si;D;0;no;nessuno;;;;298000;;Porta Romana · Bilocale · stato orig: Da personalizzare · segm: Standard
+ds-183;immobiliare;2026-09-05;Via Altaguardia 17;C19;civ;45;nuov;rialzato;si;D;0;si;nessuno;;;;320000;;Porta Romana · Loft · stato orig: Nuovo / ristrutturato · segm: Standard
+ds-184;immobiliare;2026-09-05;Via Gaetana Agnesi 2;C19;sig;55;otti;1-2;si;D;1;si;nessuno;;;;450000;;Porta Romana · Bilocale · stato orig: Ottimo / ristrutturato · segm: Lusso
+ds-185;immobiliare;2026-09-05;Via Lodovico Muratori 54;C20;civ;47;rist;6+;si;D;1;no;nessuno;;;;353000;;Porta Romana · Bilocale · stato orig: Da personalizzare / piccola ristrutturazione · segm: Standard

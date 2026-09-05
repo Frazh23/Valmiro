@@ -41,3 +41,9 @@ Il confronto avviene tra `prezzo_richiesto` e il **prezzo di pubblicazione** che
 il motore suggerirebbe (`pubblica`), non con il valore centrale: un annuncio è un
 prezzo chiesto, non un prezzo fatto. Se c'è `prezzo_venduto`, si confronta con il
 valore centrale.
+
+## I dataset presenti
+
+| File | Origine | Stato |
+|---|---|---|
+| `dataset-fz-2026-09-05.csv` | 130 vendite raccolte da Francesco il 5/9/2026 facendo cercare gli annunci a un'IA con navigazione (GPT), poi convertite in questo formato. Affitti e duplicati esclusi, zona OMI risolta dall'indirizzo. | **Reale ma non verificato**: civici confermati dall'anagrafe (83/83), ma classe energetica assente (tutti "D"), metri non confermati, ~6 righe con errori evidenti di trascrizione (es. 30 m² a 670.000 €). Sbilanciato sul centro. Prima passata: livello +3,2%, premio dello stato troppo forte (compressione suggerita 0,45–0,50). Da promuovere solo dopo una verifica a campione. |

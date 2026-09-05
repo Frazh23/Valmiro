@@ -60,6 +60,8 @@ for (const riga of righe) {
   const prezzo = Number(colonna(r, "prezzo_richiesto"));
   const venduto = Number(colonna(r, "prezzo_venduto")) || null;
   if (!zona || !(mq > 0) || !(prezzo > 0)) { scartati.push({ id, motivo: !zona ? "zona non risolta" : "mq o prezzo mancanti" }); continue; }
+  // una zona scritta a mano puo' non esistere fra quelle quotate: si scarta e si dice, non si esplode
+  try { motore.scala(zona, "civ"); } catch { scartati.push({ id, motivo: `zona ${zona} non quotata` }); continue; }
   annunci.push({
     id, zona, prezzo, venduto, fonte: colonna(r, "fonte"),
     input: {

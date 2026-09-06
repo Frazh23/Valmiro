@@ -1,6 +1,6 @@
 import type { Input, Piano } from "./types";
 import type { Letto } from "./annuncio";
-import { CAMPI, NOME_CAMPO, type Campo, type Provenienze } from "./provenienza";
+import { NOME_CAMPO, type Campo } from "./provenienza";
 export { NOME_CAMPO };
 /** @deprecated il nome storico: oggi e' `Campo` in provenienza.ts */
 export type CampoConfermabile = Campo;
@@ -11,8 +11,8 @@ export type CampoConfermabile = Campo;
    Due gesti diversi, con due esiti diversi:
    - «Importa un nuovo immobile»: il modulo riparte da zero. Niente di quello che
      c'era prima — caratteristiche, pertinenze, box a parte, prezzi, avvisi —
-     sopravvive. Cio' che il nuovo annuncio non dice resta al valore predefinito
-     ed e' segnato «da confermare», perche' un predefinito non e' un dato.
+     sopravvive. Cio' che il nuovo annuncio non dice resta al valore predefinito,
+     e il riepilogo della lettura dice quali campi sono: si controllano lì.
    - «Aggiorna questo immobile»: si parte dal modulo com'e' e si cambia solo
      cio' che il testo dichiara. Ogni cambiamento viene elencato, cosi' si vede.
    L'indirizzo non decide niente: due case allo stesso indirizzo sono due case,
@@ -26,10 +26,6 @@ export const INPUT_INIZIALE: Input = {
   mqBalconi: 0, mqTerrazzi: 0, cantina: false, box: "nessuno", boxSeparato: null,
   stato: "abit", piano: "1-2", pianoDichiarato: null, simulazionePiano: false, ascensore: true, classe: "nd", luce: "media",
   epoca: null, affaccio: null, metro: null, prezzoRichiesto: null,
-  /* un modulo appena nato e' fatto di predefiniti: nessuno e' un dato finche' qualcuno non lo
-     conferma. La classe non e' qui: «non la conosco» e' gia' un'ignoranza dichiarata, senza effetto. */
-  provenienza: { mq: "ipotesi", stato: "ipotesi", piano: "ipotesi", ascensore: "ipotesi", pertinenze: "ipotesi", box: "ipotesi" },
-  simulazioneDati: false,
 };
 
 export type ModoImport = "nuovo" | "aggiorna";
@@ -71,6 +67,7 @@ function dichiarato(r: Letto): Partial<Input> {
   return d;
 }
 
+/** I campi di cui il testo non dice niente: nel modulo restano al predefinito. */
 function nonDichiarati(r: Letto): Campo[] {
   const out: Campo[] = [];
   if (!r.mq) out.push("mq");
@@ -81,14 +78,6 @@ function nonDichiarati(r: Letto): Campo[] {
   if (r.presenze.balcone === "?" || r.presenze.terrazzo === "?" || r.presenze.cantina === "?") out.push("pertinenze");
   if (r.presenze.box === "?") out.push("box");
   return out;
-}
-
-/** La provenienza di cio' che il testo dichiara: «annuncio». Il resto non compare. */
-function provenienzaAnnuncio(r: Letto): Provenienze {
-  const nd = new Set(nonDichiarati(r));
-  const p: Provenienze = {};
-  for (const c of CAMPI) if (!nd.has(c) && c !== "classe") p[c] = "annuncio";
-  return p;
 }
 
 const eur = (n: number | null | undefined) => (n ? `${n.toLocaleString("it-IT")} €` : "—");
@@ -123,16 +112,12 @@ export function differenze(prima: Input, dopo: Input): string[] {
 export function applicaLettura(base: Input, r: Letto, modo: ModoImport): Applicazione {
   const d = dichiarato(r);
   if (modo === "nuovo") {
-    const input: Input = {
-      ...INPUT_INIZIALE, intento: base.intento, ...d,
-      provenienza: { ...INPUT_INIZIALE.provenienza, ...provenienzaAnnuncio(r) }, simulazioneDati: false,
-    };
+    const input: Input = { ...INPUT_INIZIALE, intento: base.intento, ...d };
     return { input, daConfermare: nonDichiarati(r), modifiche: [], avvisi: [...r.avvisi] };
   }
-  /* in aggiornamento cio' che il testo dichiara diventa «annuncio»; il resto tiene la sua provenienza */
-  const input: Input = { ...base, ...d, provenienza: { ...base.provenienza, ...provenienzaAnnuncio(r) }, simulazioneDati: false };
+  const input: Input = { ...base, ...d };
   /* includere il box a parte e' una scelta di chi legge, non un dato del testo: se il nuovo
      testo offre ancora il box a parte, la scelta resta; se non lo offre piu', cade con lui */
-  if (d.boxSeparato && base.boxSeparato?.incluso) { input.boxSeparato = { ...d.boxSeparato, incluso: true }; input.box = "box"; input.provenienza = { ...input.provenienza, box: "utente" }; }
+  if (d.boxSeparato && base.boxSeparato?.incluso) { input.boxSeparato = { ...d.boxSeparato, incluso: true }; input.box = "box"; }
   return { input, daConfermare: [], modifiche: differenze(base, input), avvisi: [...r.avvisi] };
 }

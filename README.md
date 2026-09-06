@@ -111,15 +111,14 @@ confronto (`src/lib/confronto.ts`) mette ciascuna componente contro il proprio v
 il prezzo del box si giudica la sola abitazione e il totale è dichiarato non confrontabile; il
 valore stimato del box non fa mai da prezzo. Vale per i due percorsi e per le stime salvate.
 
-**Provenienza dei dati.** Ogni campo del modulo sa da dove viene (`Input.provenienza`,
-`src/lib/provenienza.ts`): dichiarato nell'annuncio, confermato dall'utente, predefinito non
-confermato (ipotesi) o «non lo so». Stato, piano e ascensore sono *materiali*: finché uno è
-un'ipotesi il motore rifiuta di stimare e il modulo mostra, campo per campo, «Confermo questo
-valore» e «Non lo so». Su richiesta esplicita («Simulazione con dati incompleti») calcola
-comunque, elenca le ipotesi accanto al numero (`Stima.ipotesi`), le salva con la stima e non
-esprime giudizi, offerte né prezzo di pubblicazione. L'incertezza dichiarata non cambia: non è
-stata misurata una percentuale per i dati mancanti, e non se ne inventa una. La classe «non la
-conosco» non è un'ipotesi: nessun aggiustamento, e il dettaglio lo scrive.
+**Dati che l'annuncio non dichiara.** Il modulo non chiede conferme campo per campo: i campi
+che il testo non dichiara restano al valore predefinito e il riepilogo della lettura li elenca
+(«Non dice: stato conservativo, piano, ascensore…»), perché si controllino lì. Il motore
+conserva il meccanismo della provenienza (`Input.provenienza`, `src/lib/provenienza.ts`,
+`Stima.ipotesi`): non è più alimentato dal modulo, ma continua a valere per le chiamate dirette
+all'API e per le stime salvate prima del 6 settembre 2026, che riaperte mostrano ancora i loro
+avvisi. La classe «non la conosco» resta un'ignoranza dichiarata: nessun aggiustamento, e il
+dettaglio lo scrive.
 
 **Metro quadro.** `Stima.euroMq` è il valore della sola abitazione diviso per i metri
 commerciali: è il numero confrontabile con l'OMI residenziale, usato dal posizionamento in

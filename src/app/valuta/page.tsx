@@ -25,7 +25,7 @@ import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
 import { rendita, andamento } from "@/lib/affitto";
 import { leggiAnnuncio, type Letto } from "@/lib/annuncio";
 import { INPUT_INIZIALE, applicaLettura, type ModoImport } from "@/lib/modulo";
-import { NOME_CAMPO, MATERIALI, ipotesiDi, ipotesiMateriali, valoreInParole, descriviIpotesi, DATI_NON_CONFERMATI, type Campo } from "@/lib/provenienza";
+import { NOME_CAMPO, type Campo } from "@/lib/provenienza";
 import { LAVORI_INIZIALI, type SceltaLavori } from "@/lib/ristrutturazione";
 import AskingPrice from "@/components/sistema/AskingPrice";
 import RentalYield from "@/components/sistema/RentalYield";
@@ -120,39 +120,10 @@ function Valuta() {
 
   const [i, setI] = useState<Input>(INPUT_INIZIALE);
   const set = (p: Partial<Input>) => setI((v) => ({ ...v, ...p }));
-  /* La provenienza di ogni campo vive nel modulo (Input.provenienza): cambiare o confermare un
-     valore lo rende «utente»; «non lo so» lo rende «sconosciuto», che per il calcolo resta
-     un'ipotesi dichiarata. Un predefinito non confermato e' «ipotesi» e non diventa un fatto. */
-  const segna = (c: Campo, p: "utente" | "sconosciuto") => setI((v) => {
-    const n: Input = { ...v, provenienza: { ...v.provenienza, [c]: p } };
-    /* quando non restano ipotesi materiali, la richiesta di simulazione non ha piu' oggetto */
-    if (!ipotesiMateriali(n).length) n.simulazioneDati = false;
-    return n;
-  });
-  const tocca = (c: Campo) => segna(c, "utente");
-  const prov = (c: Campo) => i.provenienza?.[c];
-  const daConfermare = (Object.keys(NOME_CAMPO) as Campo[]).filter((c) => prov(c) === "ipotesi" || prov(c) === "sconosciuto");
-  /* Sotto ogni campo non confermato: lo stato del dato e i due gesti espliciti. Riselezionare
-     un'opzione gia' attiva conferma anch'esso, ma il bottone toglie l'ambiguita'. */
-  const conferma = (c: Campo) => {
-    const p = prov(c);
-    if (p !== "ipotesi" && p !== "sconosciuto") return null;
-    if (c === "mq" && !(i.mq > 0)) return null; /* senza metri il messaggio e' un altro: «manca la superficie» */
-    const materiale = MATERIALI.includes(c);
-    return (
-      <div className="v-conferma" role="group" aria-label={`Stato del dato: ${NOME_CAMPO[c]}`}>
-        <span className={"v-field__hint" + (p === "ipotesi" ? " v-field__hint--conferma" : "")}>
-          {p === "ipotesi"
-            ? <>{letto ? "Non dichiarato nell'annuncio" : "Non ancora confermato"}: «{valoreInParole(i, c)}» è il valore predefinito, non un dato{materiale ? " — senza conferma non c'è valutazione" : ""}.</>
-            : <>Non lo sai: il calcolo userà «{valoreInParole(i, c)}» come ipotesi dichiarata, e lo scriverà accanto al numero.</>}
-        </span>
-        <span className="v-conferma__azioni">
-          <button type="button" className="v-btn v-btn--quiet v-btn--xs" onClick={() => tocca(c)}>Confermo questo valore</button>
-          {p === "ipotesi" && <button type="button" className="v-btn v-btn--bare v-btn--xs" onClick={() => segna(c, "sconosciuto")}>Non lo so</button>}
-        </span>
-      </div>
-    );
-  };
+  /* I campi che l'annuncio non dichiara restano al valore predefinito e si vedono nel
+     riepilogo della lettura: si controllano lì, campo per campo, senza conferme da spuntare.
+     `daConfermare` viene da applicaLettura, non dal modulo: dice cosa il testo non diceva. */
+  const [daConfermare, setDaConfermare] = useState<Campo[]>([]);
   const boxSeparato = i.boxSeparato ?? null;
   const zona = i.zona ? ZONE[i.zona] : null;
   const intento: Intento | undefined = i.intento;
@@ -226,6 +197,7 @@ function Valuta() {
     setLetto(r);
     setAvvisiAnnuncio(a.avvisi);
     setModifiche(modo === "aggiorna" ? a.modifiche : null);
+    setDaConfermare(a.daConfermare);
     setAnnuncioNota(null);
     setAvviso(null);
     setUltimoSalvato(null);
@@ -267,7 +239,7 @@ function Valuta() {
   );
   const notaLettura = haImmobile ? (
     <p className="v-small">
-      <b>Nuovo immobile</b>: il modulo riparte da zero e ciò che il testo non dice resta da confermare.
+      <b>Nuovo immobile</b>: il modulo riparte da zero e ciò che il testo non dice torna al valore predefinito.
       <b> Aggiorna</b>: cambia solo ciò che il testo dichiara, e ti mostro cosa è cambiato.
     </p>
   ) : null;
@@ -328,11 +300,9 @@ function Valuta() {
   function includiBox(incluso: boolean) {
     if (!boxSeparato) return;
     set({ box: incluso ? "box" : "nessuno", boxSeparato: { ...boxSeparato, incluso } });
-    tocca("box");
   }
   /* Il piano dal menu: uno quotato, oppure uno che il modello non quota, che resta scritto. */
   function scegliPiano(v: string) {
-    tocca("piano");
     if ((PIANI_NON_QUOTATI as readonly string[]).includes(v)) set({ pianoDichiarato: v as PianoNonQuotato, piano: "terra", simulazionePiano: false });
     else set({ piano: v as Input["piano"], pianoDichiarato: null, simulazionePiano: false });
   }
@@ -486,8 +456,8 @@ function Valuta() {
                       ? " I metri del terrazzo non erano scritti: se li conosci e non sono già nella superficie, inseriscili qui sotto."
                       : ""}
                     {daConfermare.length > 0 && (
-                      <> <b>Non dice</b>: {daConfermare.map((c) => NOME_CAMPO[c]).join(", ")}{letto.classe ? "" : ", classe energetica"}. Nel modulo stanno ai valori
-                      predefiniti, che non sono dati della casa: confermali, correggili o segna «non lo so», campo per campo.</>
+                      <> <b>Non dice</b>: {daConfermare.map((c) => NOME_CAMPO[c]).join(", ")}{letto.classe ? "" : ", classe energetica"}. Nel modulo
+                      stanno ai valori predefiniti: guardali qui sotto e correggi quelli che conosci.</>
                     )}
                   </p>
                 )}
@@ -505,7 +475,7 @@ function Valuta() {
                   <div className="v-row2">
                     <input className={"v-input" + (errori.mq ? " v-input--errore" : "")} type="number" inputMode="numeric" min={0} placeholder="93"
                            aria-labelledby="lbl-mq" aria-invalid={!!errori.mq}
-                           value={i.mq || ""} onChange={(e) => { tocca("mq"); set({ mq: numero(e.target.value) }); }} />
+                           value={i.mq || ""} onChange={(e) => { set({ mq: numero(e.target.value) }); }} />
                     <select className="v-select" aria-label="Tipo di superficie" value={i.superficie || "commerciale"}
                             onChange={(e) => set({ superficie: e.target.value as Input["superficie"] })}>
                       <option value="commerciale">metri commerciali</option>
@@ -513,7 +483,6 @@ function Valuta() {
                     </select>
                   </div>
                   {errori.mq && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.mq}</span>}
-                  {conferma("mq")}
                   <span className="v-field__hint">
                     {i.superficie === "calpestabile"
                       ? "La calpestabile è la superficie interna, senza muri. L'OMI ragiona in commerciale, muri compresi: aggiungiamo il 12%, che è una media, e le pertinenze qui sotto."
@@ -525,10 +494,9 @@ function Valuta() {
                   <label className="v-toggle">
                     <span>Balconi, terrazzi e cantina sono già compresi in questi metri<small>Negli annunci quasi sempre sì. Se togli la spunta, li aggiungiamo noi dai campi qui sotto.</small></span>
                     <input type="checkbox" checked={i.pertinenzeIncluse !== false}
-                           onChange={(e) => { tocca("pertinenze"); set({ pertinenzeIncluse: e.target.checked }); }} />
+                           onChange={(e) => { set({ pertinenzeIncluse: e.target.checked }); }} />
                   </label>
                 )}
-                {conferma("pertinenze")}
 
                 {pertinenzeDaChiedere && (
                   <>
@@ -537,7 +505,7 @@ function Valuta() {
                         <span className="v-field__lbl">Balconi, m²</span>
                         <input className={"v-input" + (errori.mqBalconi ? " v-input--errore" : "")} type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
                                aria-invalid={!!errori.mqBalconi}
-                               value={i.mqBalconi || ""} onChange={(e) => { tocca("pertinenze"); set({ mqBalconi: numero(e.target.value) }); }} />
+                               value={i.mqBalconi || ""} onChange={(e) => { set({ mqBalconi: numero(e.target.value) }); }} />
                         {errori.mqBalconi && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.mqBalconi}</span>}
                         <span className="v-field__hint">Sporgono dalla facciata, di solito stretti: si sta in piedi, non a tavola.</span>
                       </label>
@@ -545,7 +513,7 @@ function Valuta() {
                         <span className="v-field__lbl">Terrazzi, m²</span>
                         <input className={"v-input" + (errori.mqTerrazzi ? " v-input--errore" : "")} type="number" inputMode="decimal" min={0} step="0.5" placeholder="0"
                                aria-invalid={!!errori.mqTerrazzi}
-                               value={i.mqTerrazzi || ""} onChange={(e) => { tocca("pertinenze"); set({ mqTerrazzi: numero(e.target.value) }); }} />
+                               value={i.mqTerrazzi || ""} onChange={(e) => { set({ mqTerrazzi: numero(e.target.value) }); }} />
                         {errori.mqTerrazzi && <span className="v-field__hint v-field__hint--errore" role="alert">{errori.mqTerrazzi}</span>}
                         <span className="v-field__hint">Sopra un altro locale o in arretramento, abbastanza larghi da viverci.</span>
                       </label>
@@ -556,7 +524,7 @@ function Valuta() {
                     </p>
                     <label className="v-toggle">
                       <span>Cantina o soffitta<small>Aggiunge 2,5 m² commerciali: il 25% di una cantina da 10 m², come nel DPR 138/1998</small></span>
-                      <input type="checkbox" checked={!!i.cantina} onChange={(e) => { tocca("pertinenze"); set({ cantina: e.target.checked }); }} />
+                      <input type="checkbox" checked={!!i.cantina} onChange={(e) => { set({ cantina: e.target.checked }); }} />
                     </label>
                   </>
                 )}
@@ -566,12 +534,11 @@ function Valuta() {
                   <div className="v-choices" role="group" aria-labelledby="lbl-stato">
                     {STATI.map((s) => (
                       <button key={s.id} className="v-choice" aria-pressed={i.stato === s.id}
-                              onClick={() => { tocca("stato"); set({ stato: s.id }); }}>
+                              onClick={() => { set({ stato: s.id }); }}>
                         <b>{s.t}</b><small>{s.d}</small>
                       </button>
                     ))}
                   </div>
-                  {conferma("stato")}
                 </div>
 
                 <div className="v-row2">
@@ -585,17 +552,15 @@ function Valuta() {
                         {PIANI_NON_QUOTATI.map((p) => <option key={p} value={p}>{p}</option>)}
                       </optgroup>
                     </select>
-                    {conferma("piano")}
                   </label>
                   <label className="v-field">
                     <span className="v-field__lbl">Classe energetica</span>
                     <select className="v-select" value={i.classe}
-                            onChange={(e) => { tocca("classe"); set({ classe: e.target.value as Input["classe"] }); }}>
+                            onChange={(e) => { set({ classe: e.target.value as Input["classe"] }); }}>
                       <option value="nd">Non la conosco</option>
                       {CLASSI.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                     {i.classe === "nd" && <span className="v-field__hint">Senza classe la stima non applica nessun aggiustamento, e lo scrive nel dettaglio. Una classe vera la sposta fino al ±10%.</span>}
-                    {conferma("classe")}
                   </label>
                 </div>
 
@@ -615,9 +580,8 @@ function Valuta() {
                 <label className="v-toggle">
                   <span>Ascensore<small>Dal terzo piano in su pesa molto</small></span>
                   <input type="checkbox" checked={i.ascensore}
-                         onChange={(e) => { tocca("ascensore"); set({ ascensore: e.target.checked }); }} />
+                         onChange={(e) => { set({ ascensore: e.target.checked }); }} />
                 </label>
-                {conferma("ascensore")}
 
                 {/* La categoria catastale decide la tipologia OMI, che in centro vale un
                     quinto del prezzo. Sta sulla visura e sul rogito: chi possiede la casa
@@ -671,7 +635,7 @@ function Valuta() {
                 {!pertinenzeDaChiedere && (
                   <label className="v-toggle">
                     <span>Cantina o soffitta<small>Se è già dentro i metri commerciali non la contiamo di nuovo: qui serve solo alla descrizione</small></span>
-                    <input type="checkbox" checked={!!i.cantina} onChange={(e) => { tocca("pertinenze"); set({ cantina: e.target.checked }); }} />
+                    <input type="checkbox" checked={!!i.cantina} onChange={(e) => { set({ cantina: e.target.checked }); }} />
                   </label>
                 )}
 
@@ -712,12 +676,11 @@ function Valuta() {
                   <div className="v-choices v-choices--4" role="group" aria-labelledby="lbl-box">
                     {([["nessuno", "Nessuno"], ["posto", "Posto auto"], ["box", "Box"]] as const).map(([id, t]) => (
                       <button key={id} className="v-choice" aria-pressed={i.box === id}
-                              onClick={() => { tocca("box"); set({ box: id, ...(boxSeparato ? { boxSeparato: { ...boxSeparato, incluso: id === "box" } } : {}) }); }}>
+                              onClick={() => { set({ box: id, ...(boxSeparato ? { boxSeparato: { ...boxSeparato, incluso: id === "box" } } : {}) }); }}>
                         <b>{t}</b>
                       </button>
                     ))}
                   </div>
-                  {conferma("box")}
                 </div>
 
                 <div className="v-field">
@@ -732,23 +695,6 @@ function Valuta() {
                   </span>
                 </div>
 
-                {ipotesiMateriali(i).length > 0 && i.mq > 0 && (
-                  <div className={"v-note" + (i.simulazioneDati ? "" : " v-note--errore")} role={i.simulazioneDati ? undefined : "alert"}>
-                    <p style={{ margin: 0 }}>
-                      <b>Dati non confermati: {ipotesiMateriali(i).map((x) => NOME_CAMPO[x.campo]).join(", ")}.</b> Sono predefiniti o «non lo so»,
-                      non fatti della casa: finché restano così non c&apos;è una valutazione. Confermali qui sopra, oppure chiedi una simulazione.
-                    </p>
-                    <label className="v-toggle" style={{ marginTop: "var(--s-3)" }}>
-                      <span>Simulazione con dati incompleti<small>Il calcolo usa le ipotesi elencate e le scrive accanto al numero. Niente giudizi caro/conveniente, niente offerte, niente prezzo di pubblicazione: sono ipotesi, e l&apos;incertezza dichiarata non le copre.</small></span>
-                      <input type="checkbox" checked={!!i.simulazioneDati} onChange={(e) => set({ simulazioneDati: e.target.checked })} />
-                    </label>
-                    {i.simulazioneDati && (
-                      <ul className="v-ipotesi">
-                        {ipotesiDi(i).map((x) => <li key={x.campo}>{descriviIpotesi(x)}</li>)}
-                      </ul>
-                    )}
-                  </div>
-                )}
                 {avviso && <p className="v-note">{avviso}</p>}
               </div>
 
@@ -756,7 +702,6 @@ function Valuta() {
                 <button className="v-btn v-btn--accent v-btn--lg"
                         onClick={() => erroriAttivi.length ? setAvviso(`Correggi prima: ${erroriAttivi.join(" ")}`)
                                      : pianoBloccato ? setAvviso(PIANO_NON_VALUTABILE(i.pianoDichiarato!))
-                                     : ipotesiMateriali(i).length && !i.simulazioneDati && i.mq > 0 ? setAvviso(DATI_NON_CONFERMATI(ipotesiMateriali(i)))
                                      : i.mq > 0 ? (setAvviso(null), setVista("calcolo"))
                                      : setAvviso("Manca la superficie: senza metri quadri non c'è stima.")}>
                   Valuta

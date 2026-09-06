@@ -210,9 +210,12 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 }
 .v-hero__in { position: relative; z-index: 1; width: 100%; }
 .v-hero__col { max-width: 520px; }
+/* Il riquadro della fotografia. Le immagini stanno tutte qui dentro, sovrapposte:
+   cambia solo l'opacita', quindi il titolo, il campo e il marchio non si muovono
+   di un pixel durante il cambio. */
 .v-hero__foto {
   position: absolute; top: 0; right: 0; bottom: 0; z-index: 0;
-  width: 60%; height: 100%; object-fit: cover; object-position: 72% 50%;
+  width: 60%; height: 100%;
   /* La dissolvenza e' una maschera, non un velo sopra: la carta resta carta.
      Due gradienti intersecati: da sinistra, perche' il testo stia sul panna;
      un filo dall'alto, perche' la barra di navigazione si legga sulla foto. */
@@ -223,19 +226,54 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
   -webkit-mask-composite: source-in;
           mask-composite: intersect;
 }
+.v-hero__scatto { position: absolute; inset: 0; opacity: 0; transition: opacity 1s var(--e-soft); }
+.v-hero__scatto.on { opacity: 1; }
+.v-hero__scatto picture { display: block; height: 100%; }
+.v-hero__scatto img {
+  display: block; width: 100%; height: 100%;
+  object-fit: cover; object-position: var(--pos, 60% 50%);
+}
+/* i comandi stanno fuori dalla maschera: non sbiadiscono mai */
+.v-hero__cmd {
+  position: absolute; z-index: 2; right: clamp(16px, 3vw, 36px); bottom: clamp(16px, 3vw, 32px);
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 6px 8px 6px 12px; border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+.v-hero__cmd-b {
+  background: none; border: 0; padding: 2px 2px; cursor: pointer; font: inherit;
+  font-size: var(--t-micro); font-weight: 500; color: var(--ink-soft);
+}
+.v-hero__cmd-b:hover { color: var(--ink); }
+.v-hero__punti { display: flex; align-items: center; gap: 2px; }
+/* il bersaglio e' comodo (24 px), il segno e' piccolo */
+.v-hero__punto {
+  background: none; border: 0; cursor: pointer; padding: 0;
+  width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%;
+}
+.v-hero__punto i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-ghost); transition: background var(--d-base) var(--e-soft), transform var(--d-base) var(--e-soft); }
+.v-hero__punto:hover i { background: var(--ink-soft); }
+.v-hero__punto.on i { background: var(--accent); transform: scale(1.25); }
+.v-hero__punto:disabled { cursor: default; opacity: .4; }
 @media (min-width: 1700px) { .v-hero__foto { width: 56%; } }
+@media (prefers-reduced-motion: reduce) { .v-hero__scatto { transition: none; } }
 @media (max-width: 900px) {
   /* prima il campo, poi la foto: l'ordine e' del layout, non del DOM */
   .v-hero--foto { display: flex; flex-direction: column; min-height: 0; padding-bottom: 0; margin-top: 0; padding-top: clamp(32px, 6vw, 56px); }
   .v-hero__col { max-width: 100%; }
   .v-hero__foto {
     order: 2; position: relative; display: block; width: 100%; height: auto;
-    aspect-ratio: 3 / 2; object-position: 50% 58%;
+    aspect-ratio: 3 / 2;
     margin-top: var(--s-7);
     -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
             mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
     -webkit-mask-composite: source-over; mask-composite: add;
   }
+  /* sul telefono il cortile si guarda intero: nessun ritaglio verso destra */
+  .v-hero__scatto img { object-position: 50% 55%; }
+  .v-hero__cmd { display: none; }
 }
 
 /* ---------- campo indirizzo ---------- */
@@ -456,7 +494,8 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 /* ---------- risultato ---------- */
 .v-result__hero { padding-block: clamp(32px, 5vw, 64px) clamp(40px, 6vw, 80px); }
 .v-result__titolo { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2) var(--s-4); margin-top: var(--s-3); }
-/* dentro un titolo editoriale resta un comando, non una parola del titolo: torna al carattere dell'interfaccia */
+/* dentro un titolo editoriale resta un comando, non una parola del titolo:
+   torna al carattere dell'interfaccia e non eredita corsivo, peso o crenatura del serif */
 .v-result__modifica { font-family: var(--font-ui); font-variation-settings: normal; letter-spacing: 0;
   font-size: var(--t-small); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
 .v-result__strumenti { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s-4); margin-top: clamp(28px, 4vw, 44px); padding-top: var(--s-5); border-top: 1px solid var(--line); }
@@ -708,12 +747,6 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 .v-note--errore { border-color: color-mix(in srgb, var(--neg) 45%, transparent); background: color-mix(in srgb, var(--neg) 7%, var(--surface)); }
 .v-input--errore { border-color: var(--neg); }
 .v-field__hint--errore { color: var(--neg); }
-/* Un campo al valore predefinito, non dichiarato dall'annuncio: si vede finche' non lo si tocca. */
-.v-field__hint--conferma { color: var(--accent-ink); font-weight: 600; }
-.v-field__hint--conferma::before { content: "○ "; }
-/* Lo stato di un dato non confermato, con i due gesti espliciti, sotto il campo. */
-.v-conferma { display: grid; gap: var(--s-2); margin-top: var(--s-2); }
-.v-conferma__azioni { display: flex; gap: var(--s-2); flex-wrap: wrap; }
 .v-btn--xs { padding: 6px 12px; font-size: 13px; min-height: 0; }
 .v-ipotesi { margin: var(--s-3) 0 0; padding-left: 1.2em; font-size: 14px; display: grid; gap: 4px; }
 .v-promemoria { margin: 0 0 var(--s-5); padding: var(--s-3) var(--s-4); border-left: 3px solid var(--neg); color: var(--ink-soft); max-width: 60ch; }

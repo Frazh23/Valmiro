@@ -1,0 +1,27 @@
+Integra queste quattro immagini nella home di Valmiro come rotazione fotografica discreta, mantenendo le modifiche UX/UI e il logo Finestra già approvati. Controlla prima lo stato attuale del progetto e preserva il lavoro recente.
+
+FILE INCLUSI
+01-balconi-liberty.png: balconi in ferro battuto, persiane verdi e pietra scolpita.
+02-cortile-milanese.png: ingresso aperto verso un cortile con piante.
+03-ingresso-ferro-vetro.png: nuovo ingresso ad arco in ferro e vetro.
+04-ingresso-pietra-bronzo.png: nuovo ingresso sobrio in pietra, bronzo e vetro.
+Sono immagini generate illustrative, non fotografie documentali di indirizzi verificati. Il portone chiuso in legno della proposta precedente è escluso. Nel cortile approvato rimane un'anta laterale in legno come parte della scena.
+
+INTEGRAZIONE
+Usa questi file fotografici senza ricrearli e senza incorporarvi testi o logo. Conserva gli originali e crea copie ottimizzate per il sito. Le immagini devono stare nello spazio della foto attuale. Titolo, sottotitolo, indirizzo, pulsanti e logo devono rimanere fermi durante il cambio. Mantieni la sfumatura crema nel CSS per leggere sempre i testi. Conserva il logo Finestra definitivo, senza prenderlo dalle vecchie anteprime.
+
+SEQUENZA
+Apri con 02-cortile-milanese, poi 01-balconi-liberty, 03-ingresso-ferro-vetro e 04-ingresso-pietra-bronzo. Circa 8 secondi per immagine e dissolvenza di circa 1 secondo. Nessuno zoom, parallasse o scorrimento laterale. Il cambio non deve ricreare il modulo né perdere dati, selezione o focus.
+
+CONTROLLI E ACCESSIBILITÀ
+Piccolo pulsante Pausa/Riprendi e quattro indicatori selezionabili con nomi accessibili, focus visibile e area cliccabile comoda. Rispetta la pausa dell'utente. Sospendi la rotazione quando la scheda non è visibile, la sezione è fuori vista o l'utente sta compilando il modulo. Con prefers-reduced-motion mostra una sola immagine senza animazione. Non annunciare automaticamente le immagini ai lettori di schermo: sono decorative, non informazioni sulla valutazione.
+
+TELEFONO
+Mostra solo il cortile statico e non caricare gli altri file se non necessari. Adatta il ritaglio mantenendo visibile il cortile. Conserva la priorità di titolo, scelta comprare/vendere e indirizzo.
+
+PRESTAZIONI
+Converti le copie web in WebP/AVIF e prepara dimensioni responsive senza ingrandire gli originali. Imposta dimensioni/aspect-ratio per evitare salti. Dai priorità solo alla prima foto e carica le successive progressivamente. Se una foto non carica, resta sulla precedente. Verifica ritaglio e peso individualmente.
+
+VERIFICHE
+Controlla desktop e larghezze 320, 390 e 768 pixel, leggibilità su tutte le immagini, elementi tagliati, caricamento lento, tastiera, pausa, riduzione del movimento e conservazione del modulo durante le transizioni. Esegui build e test pertinenti. Mostra schermate desktop/mobile e distingui verifiche locali da quelle sulla versione pubblicata.
+

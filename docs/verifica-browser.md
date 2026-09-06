@@ -6,14 +6,11 @@ comparire; se manca, il deploy non è finito.
 1. **Nuovo immobile dopo un altro.** Importa Porro Lambertenghi 25 (seminterrato, box a
    parte), poi «Modifica i dati» → «Cambia» → incolla Farini 81 (55 mq, 265.000) →
    «Importa un nuovo immobile». Devono comparire: abitabile / 1-2 / ascensore ai
-   predefiniti, nessun box a parte, e sotto stato, piano, ascensore, pertinenze e box il
-   riquadro «Non dichiarato nell'annuncio … Confermo questo valore / Non lo so».
-2. **Dati non confermati.** Con Farini 81 appena importato premi «Valuta»: deve comparire il
-   blocco «Dati non confermati: stato conservativo, piano, ascensore» e nessun risultato.
-   Attiva «Simulazione con dati incompleti» → «Valuta»: titolo «simulazione con dati
-   incompleti», elenco delle ipotesi accanto al numero, capitolo «Prezzi e valori dello
-   scenario» con «Nessun giudizio», niente offerta. Poi torna, premi «Confermo questo
-   valore» sui tre campi e «Valuta»: risultato normale, con giudizio e offerta.
+   predefiniti, nessun box a parte, e nel riepilogo della lettura la riga «Non dice: stato
+   conservativo, piano, ascensore, …». Nessun bottone di conferma sotto i campi.
+2. **Dall'annuncio al risultato.** Con Farini 81 appena importato premi «Valuta»: il
+   risultato arriva subito, con i predefiniti che il riepilogo ha appena elencato. Nessun
+   blocco, nessuna simulazione da attivare.
 3. **Box a parte senza prezzo.** Porro Lambertenghi 25 con «includilo nella valutazione»:
    «Al metro quadro · abitazione» è il valore della sola abitazione; riga «Di cui
    abitazione … box … con il box dentro sarebbero … €/mq»; confronto: abitazione contro

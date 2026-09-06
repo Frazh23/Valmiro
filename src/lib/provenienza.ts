@@ -17,9 +17,14 @@ import type { Input } from "./types";
    e lo scrive. Pertinenze e box, ai predefiniti, non spostano il valore: si
    elencano fra le ipotesi ma non bloccano.
 
-   Un modulo senza `provenienza` (stime salvate prima del 6/9/2026, chiamate
-   dirette all'API) e' trattato come tutto confermato: e' il comportamento di
-   prima, non si riscrive la storia.
+   Un modulo senza `provenienza` e' trattato come tutto confermato.
+
+   Dal 6 settembre 2026 **il modulo del sito non compila piu' questo campo**: le
+   conferme campo per campo sono state tolte e la stima parte con i predefiniti,
+   che il riepilogo della lettura elenca. Il meccanismo resta qui, e nel motore,
+   per due ragioni: le chiamate diritte a /api/estimate possono ancora dichiarare
+   la provenienza dei dati, e le stime salvate prima di quella data riaperte
+   mostrano ancora gli avvisi con cui erano nate.
    -------------------------------------------------------------------------- */
 
 export type Provenienza = "annuncio" | "utente" | "ipotesi" | "sconosciuto";

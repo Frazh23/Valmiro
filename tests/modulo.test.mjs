@@ -94,23 +94,23 @@ test("due immobili diversi allo stesso indirizzo restano due immobili: l'indiriz
   assert.ok(differenze(prima, aggiornato).some((m) => m.startsWith("piano: seminterrato → 3-5")));
 });
 
-test("la provenienza segue ogni campo: annuncio, ipotesi (predefinito), utente; un nuovo import azzera le conferme", () => {
+test("cio' che il testo non dice resta al predefinito, ed e' elencato: nessuna conferma da spuntare", () => {
   const a = applicaLettura({ ...INPUT_INIZIALE, intento: "compro" }, leggiAnnuncio(SECONDO), "nuovo");
-  assert.equal(a.input.provenienza.mq, "annuncio");
-  assert.equal(a.input.provenienza.stato, "ipotesi");
-  assert.equal(a.input.provenienza.piano, "ipotesi");
-  assert.equal(a.input.provenienza.ascensore, "ipotesi");
-  assert.equal(a.input.provenienza.classe, undefined, "la classe «non la conosco» e' un'ignoranza dichiarata, non un'ipotesi");
-  assert.equal(a.input.simulazioneDati, false);
+  assert.equal(a.input.provenienza, undefined, "il modulo non porta piu' la provenienza dei campi");
+  assert.equal(a.input.simulazioneDati, undefined);
+  assert.ok(a.daConfermare.includes("stato"), "lo stato non era nel testo: si dice");
+  assert.ok(a.daConfermare.includes("piano"));
+  assert.ok(a.daConfermare.includes("ascensore"));
+  assert.ok(!a.daConfermare.includes("mq"), "i metri c'erano: non si chiede di controllarli");
   const b = applicaLettura(INPUT_INIZIALE, leggiAnnuncio(PRIMO), "nuovo");
-  for (const c of ["mq", "stato", "piano", "ascensore", "pertinenze", "box"]) assert.equal(b.input.provenienza[c], "annuncio", c);
-  /* chi legge conferma stato e piano, poi importa un altro immobile: le conferme non passano */
-  const confermato = { ...a.input, provenienza: { ...a.input.provenienza, stato: "utente", piano: "utente" } };
-  const c = applicaLettura(confermato, leggiAnnuncio(SECONDO), "nuovo");
-  assert.equal(c.input.provenienza.stato, "ipotesi", "una conferma data su un'altra casa non vale per questa");
-  /* in aggiornamento le conferme restano, e cio' che il testo dichiara diventa «annuncio» */
-  const d = applicaLettura(confermato, leggiAnnuncio("Ribassato: ora 250.000 euro, 3° piano con ascensore."), "aggiorna");
-  assert.equal(d.input.provenienza.stato, "utente");
-  assert.equal(d.input.provenienza.piano, "annuncio");
-  assert.equal(d.input.provenienza.ascensore, "annuncio");
+  assert.deepEqual(b.daConfermare, [], "un annuncio completo non lascia niente da controllare");
+  /* un nuovo immobile riparte dai predefiniti, qualunque cosa ci fosse prima */
+  const c = applicaLettura({ ...b.input, stato: "nuov" }, leggiAnnuncio(SECONDO), "nuovo");
+  assert.equal(c.input.stato, INPUT_INIZIALE.stato, "lo stato della casa precedente non passa a questa");
+  /* in aggiornamento cambia solo cio' che il testo dichiara */
+  const d = applicaLettura(a.input, leggiAnnuncio("Ribassato: ora 250.000 euro, 3° piano con ascensore."), "aggiorna");
+  assert.equal(d.input.piano, "3-5");
+  assert.equal(d.input.ascensore, true);
+  assert.equal(d.input.stato, a.input.stato, "lo stato non era nel testo: resta com'era");
+  assert.deepEqual(d.daConfermare, [], "in aggiornamento non si riparte da zero: niente elenco");
 });

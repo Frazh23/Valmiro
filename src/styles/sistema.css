@@ -352,13 +352,13 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 .v-step p { color: var(--ink-soft); margin: 0; max-width: 34ch; }
 
 /* ---------- fascia di chiusura ---------- */
-/* La banda che segue l'hero non ha bordi: entrerebbero come una riga netta
-   proprio dove la fotografia si sta dissolvendo. Il colore piu' profondo arriva
-   con una sfumatura, cosi' la pagina cambia tono senza che si veda un taglio. */
+/* La banda che segue l'hero non ha bordo in alto: entrerebbe come una riga netta
+   proprio dove la fotografia si sta dissolvendo, e il colore piu' profondo arriva
+   con una sfumatura. In basso invece la riga serve: li' finisce un capitolo e ne
+   comincia un altro, e un confine netto e' quello che si vuole. */
 .v-band {
-  background: linear-gradient(to bottom,
-    var(--paper) 0, var(--paper-deep) 200px,
-    var(--paper-deep) calc(100% - 160px), var(--paper) 100%);
+  background: linear-gradient(to bottom, var(--paper) 0, var(--paper-deep) 200px);
+  border-bottom: 1px solid var(--line);
 }
 .v-statement {
   font-family: var(--font-editorial); font-variation-settings: var(--voce-editorial);

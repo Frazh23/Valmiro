@@ -66,7 +66,7 @@ esiste lì, prima si aggiunge lì. Nessun valore letterale nei componenti.
 | `Header` | header sticky, si posa su vetro allo scroll |
 | `AddressSearch` | campo indirizzo: dizionario locale mentre si scrive, geocoder alla conferma |
 | `HomeSearch` | porta la scelta nel flusso via URL |
-| `HeroFoto` | le fotografie della home: quattro in rotazione su schermo largo, il solo cortile su telefono; pausa, indicatori, stop quando la scheda e' nascosta, la sezione e' fuori vista o si compila il modulo |
+| `HeroFoto` | le fotografie della home: quattro in rotazione automatica su schermo largo, il solo cortile su telefono; nessun comando, si ferma da sola quando la scheda e' nascosta, la sezione e' fuori vista o si compila il modulo |
 | `Logo` | il marchio: simbolo inline + scritta; link alla home nell'header |
 | `ZoneList` | le 42 zone con ricerca per nome o codice |
 | `ValuationReveal` | transizione a fasi legate al lavoro reale |

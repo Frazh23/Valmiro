@@ -233,30 +233,6 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
   display: block; width: 100%; height: 100%;
   object-fit: cover; object-position: var(--pos, 60% 50%);
 }
-/* i comandi stanno fuori dalla maschera: non sbiadiscono mai */
-.v-hero__cmd {
-  position: absolute; z-index: 2; right: clamp(16px, 3vw, 36px); bottom: clamp(16px, 3vw, 32px);
-  display: flex; align-items: center; gap: var(--s-3);
-  padding: 6px 8px 6px 12px; border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--paper) 78%, transparent);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-}
-.v-hero__cmd-b {
-  background: none; border: 0; padding: 2px 2px; cursor: pointer; font: inherit;
-  font-size: var(--t-micro); font-weight: 500; color: var(--ink-soft);
-}
-.v-hero__cmd-b:hover { color: var(--ink); }
-.v-hero__punti { display: flex; align-items: center; gap: 2px; }
-/* il bersaglio e' comodo (24 px), il segno e' piccolo */
-.v-hero__punto {
-  background: none; border: 0; cursor: pointer; padding: 0;
-  width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%;
-}
-.v-hero__punto i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-ghost); transition: background var(--d-base) var(--e-soft), transform var(--d-base) var(--e-soft); }
-.v-hero__punto:hover i { background: var(--ink-soft); }
-.v-hero__punto.on i { background: var(--accent); transform: scale(1.25); }
-.v-hero__punto:disabled { cursor: default; opacity: .4; }
 @media (min-width: 1700px) { .v-hero__foto { width: 56%; } }
 @media (prefers-reduced-motion: reduce) { .v-hero__scatto { transition: none; } }
 @media (max-width: 900px) {
@@ -273,7 +249,6 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
   }
   /* sul telefono il cortile si guarda intero: nessun ritaglio verso destra */
   .v-hero__scatto img { object-position: 50% 55%; }
-  .v-hero__cmd { display: none; }
 }
 
 /* ---------- campo indirizzo ---------- */

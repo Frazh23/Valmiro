@@ -13,11 +13,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * zoom e nessuno spostamento: titolo, campo indirizzo e marchio non si muovono,
  * perche' le foto vivono in un livello sotto e cambiano solo di opacita'.
  *
- * La rotazione si ferma da sola quando la scheda non e' visibile, quando la
- * sezione esce dallo schermo e quando qualcuno sta scrivendo nel modulo; la pausa
- * chiesta a mano vale finche' non si riprende. Con «riduci le animazioni» resta
- * una sola immagine. Su telefono resta il cortile, e gli altri file non partono
- * nemmeno: il DOM iniziale ne contiene una sola.
+ * Nessun comando in vista: le foto vanno da sole. La rotazione si ferma quando la
+ * scheda non e' visibile, quando la sezione esce dallo schermo e quando qualcuno
+ * sta scrivendo nel modulo — cosi' non si muove niente mentre si guarda altro o si
+ * compila. Con «riduci le animazioni» resta una sola immagine, ferma. Su telefono
+ * resta il cortile, e gli altri file non partono nemmeno: il DOM iniziale ne
+ * contiene una sola.
  */
 
 export type Foto = { slug: string; nome: string; pos: string };
@@ -63,8 +64,7 @@ export default function HeroFoto() {
   const [rotta, setRotta] = useState<number[]>([]);
   /* le altre foto entrano nel DOM solo dopo la prima: il primo schermo non le aspetta */
   const [tante, setTante] = useState(false);
-  const [inPausa, setInPausa] = useState(false); /* pausa chiesta a mano */
-  const [fermo, setFermo] = useState(false);     /* pausa automatica: scheda, vista, modulo */
+  const [fermo, setFermo] = useState(false); /* pausa automatica: scheda, vista, modulo */
   const box = useRef<HTMLDivElement>(null);
 
   /* Schermo largo e animazioni: la decisione sta qui, non nel CSS, perche' decide
@@ -116,7 +116,7 @@ export default function HeroFoto() {
   useEffect(() => { if (!rotta.includes(attiva)) precedente.current = attiva; }, [attiva, rotta]);
 
   useEffect(() => {
-    if (!tante || inPausa || fermo || buone.length < 2) return;
+    if (!tante || fermo || buone.length < 2) return;
     const t = setTimeout(() => {
       setAttiva((n) => {
         const i = buone.indexOf(n);
@@ -124,7 +124,7 @@ export default function HeroFoto() {
       });
     }, DURATA);
     return () => clearTimeout(t);
-  }, [tante, inPausa, fermo, attiva, buone.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tante, fermo, attiva, buone.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* su telefono, o con le animazioni ridotte, c'e' solo il cortile: l'indice torna a zero,
      altrimenti dopo un ridimensionamento resterebbe acceso uno scatto che non e' piu' nel DOM */
@@ -132,36 +132,10 @@ export default function HeroFoto() {
   const mostra = tante ? FOTO : FOTO.slice(0, 1);
 
   return (
-    <>
-      <div className="v-hero__foto" ref={box} aria-hidden="true">
-        {mostra.map((f, n) => (
-          <Scatto key={f.slug} foto={f} prima={n === 0} attiva={n === indice} onErrore={() => guasta(n)} />
-        ))}
-      </div>
-
-      {tante && buone.length > 1 && (
-        <div className="v-hero__cmd" role="group" aria-label="Fotografie della pagina">
-          <button
-            type="button" className="v-hero__cmd-b"
-            aria-pressed={inPausa}
-            onClick={() => setInPausa((v) => !v)}
-          >
-            {inPausa ? "Riprendi" : "Pausa"}
-          </button>
-          <span className="v-hero__punti">
-            {FOTO.map((f, n) => (
-              <button
-                key={f.slug} type="button" className={`v-hero__punto${n === attiva ? " on" : ""}`}
-                aria-label={f.nome} aria-current={n === attiva ? "true" : undefined}
-                disabled={rotta.includes(n)}
-                onClick={() => { setAttiva(n); setInPausa(true); }}
-              >
-                <i aria-hidden="true" />
-              </button>
-            ))}
-          </span>
-        </div>
-      )}
-    </>
+    <div className="v-hero__foto" ref={box} aria-hidden="true">
+      {mostra.map((f, n) => (
+        <Scatto key={f.slug} foto={f} prima={n === 0} attiva={n === indice} onErrore={() => guasta(n)} />
+      ))}
+    </div>
   );
 }

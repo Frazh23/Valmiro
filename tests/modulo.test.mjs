@@ -96,7 +96,9 @@ test("due immobili diversi allo stesso indirizzo restano due immobili: l'indiriz
 
 test("cio' che il testo non dice resta al predefinito, ed e' elencato: nessuna conferma da spuntare", () => {
   const a = applicaLettura({ ...INPUT_INIZIALE, intento: "compro" }, leggiAnnuncio(SECONDO), "nuovo");
-  assert.equal(a.input.provenienza, undefined, "il modulo non porta piu' la provenienza dei campi");
+  assert.equal(a.input.provenienza.stato, "ipotesi");
+  assert.equal(a.input.provenienza.mq, "annuncio");
+  assert.equal(a.input.versioneProvenienza, 2);
   assert.equal(a.input.simulazioneDati, undefined);
   assert.ok(a.daConfermare.includes("stato"), "lo stato non era nel testo: si dice");
   assert.ok(a.daConfermare.includes("piano"));

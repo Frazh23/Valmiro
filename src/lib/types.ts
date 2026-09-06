@@ -70,6 +70,9 @@ export type Input = {
       («non lo so»). Assente = tutto confermato (moduli precedenti al 6/9/2026, chiamate dirette).
       Vedi provenienza.ts. */
   provenienza?: Provenienze;
+  /** v2: provenienza informativa, senza conferme obbligatorie. */
+  versioneProvenienza?: 2;
+  origineDatiParziale?: boolean;
   /** chi valuta chiede in modo esplicito una simulazione con dati incompleti: il motore calcola con
       le ipotesi in uso e le elenca in `Stima.ipotesi`; senza questo campo, con ipotesi materiali
       non confermate, il motore rifiuta. */
@@ -89,8 +92,7 @@ export type Stima = {
   min: number;
   max: number;
   centro: number;
-  /** il prezzo a cui, in mediana, case cosi' vengono messe in vendita: centro piu' il
-      margine tipico fra richiesta e valore, misurato sugli annunci di calibrazione */
+  /** prezzo di pubblicazione convenzionale: valore centrale +6%; il margine non è misurato separatamente */
   pubblica: number;
   /** @deprecated simmetrico di `pubblica`, non e' un dato di mercato: l'interfaccia non lo usa piu' */
   offerta: number;
@@ -114,6 +116,8 @@ export type Stima = {
   /** predefiniti non confermati che non spostano il valore (pertinenze comprese, nessun box): non fanno
       della stima uno scenario, ma si dicono */
   noteDati?: string[];
+  ipotesiUsate?: string[];
+  origineDatiRegistrata?: boolean;
   /** euro al metro quadro commerciale della sola abitazione: e' il numero da confrontare con le
       quotazioni OMI residenziali. Il box, se c'e', sta in `valoreBox` e non entra qui. */
   euroMq: number;

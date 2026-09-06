@@ -28,8 +28,13 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
+import { impronta, sha } from "./verifica-lib.mjs";
 const RADICE = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+const verifica = process.argv.includes("--verifica");
+const raccoltaInizio = new Date().toISOString();
+const modello = impronta(RADICE);
+if (verifica && !existsSync(join(RADICE, `data/annunci/congelamenti/${modello.hash}.json`))) throw new Error("Prima della raccolta serve il congelamento completo del modello corrente");
 // ------------------------------------------------------------ credenziali
 const env = {};
 const envFile = join(RADICE, ".env.local");
@@ -95,17 +100,18 @@ function piano(x) {
   if (f === "bj" || f === "0") return "terra";
   if (f === "en" || f === "st") return "rialzato";
   const n = parseInt(f, 10);
-  if (!Number.isFinite(n)) return "1-2";
+  if (!Number.isFinite(n)) return "";
+  if (n < 0) return "seminterrato";
   if (x.topFloor) return "ultimo";
   return n <= 2 ? "1-2" : n <= 5 ? "3-5" : "6+";
 }
-const classe = (x) => (x.energyCertification?.[0] || "").toUpperCase().match(/[A-G]/)?.[0] || "D";
+const classe = (x) => (x.energyCertification?.[0] || "").toUpperCase().match(/[A-G]/)?.[0] || "nd";
 
 // ------------------------------------------------------------ esecuzione
 const CENTRI = { centro: "45.4642,9.1900", nord: "45.5000,9.1800", sud: "45.4350,9.2000" };
 const tok = await token();
 /* `rif` e' il codice dell'annuncio sul portale: con `fonte` identifica la casa anche se ripubblicata (docs/verifica.md) */
-const righe = ["id;fonte;data;indirizzo;zona;tipo;mq;stato;piano;ascensore;classe;balconi;cantina;box;epoca;affaccio;metro;prezzo_richiesto;prezzo_venduto;note;rif"];
+const righe = ["id;fonte;data;indirizzo;zona;tipo;mq;stato;piano;ascensore;classe;balconi;cantina;box;epoca;affaccio;metro;prezzo_richiesto;prezzo_venduto;note;rif;box_incluso"];
 const oggi = new Date().toISOString().slice(0, 10);
 const visti = new Set();
 let fuori = 0;
@@ -126,16 +132,17 @@ for (const [nome, centro] of Object.entries(CENTRI)) {
     righe.push([
       `ide-${x.propertyCode}`, "idealista", oggi,
       (x.address || "").replace(/;/g, ","), zona, "civ", Math.round(x.size), stato(x), piano(x),
-      x.hasLift ? "si" : "no", classe(x), "", "", x.parkingSpace?.hasParkingSpace && x.parkingSpace?.isParkingSpaceIncludedInPrice ? "box" : "nessuno",
-      "", "", "", Math.round(x.price), "", note.replace(/;/g, ","), String(x.propertyCode),
+      x.hasLift == null ? "" : x.hasLift ? "si" : "no", classe(x), "", "", x.parkingSpace?.hasParkingSpace && x.parkingSpace?.isParkingSpaceIncludedInPrice ? "box" : "nessuno",
+      "", "", "", Math.round(x.price), "", note.replace(/;/g, ","), String(x.propertyCode), x.parkingSpace?.isParkingSpaceIncludedInPrice ? "si" : "no",
     ].join(";"));
   }
   console.log(`${nome}: ${lista.length} annunci ricevuti`);
 }
 
-const RUOLO = process.argv.includes("--verifica") ? "-verifica" : "";
-const out = join(RADICE, `data/annunci/${oggi}-idealista${RUOLO}.csv`);
-writeFileSync(out, righe.join("\n"));
+const RUOLO = verifica ? "-verifica" : "";
+const out = join(RADICE, `data/annunci/${oggi}-idealista${RUOLO}-${Date.now()}.csv`);
+writeFileSync(out, righe.join("\n"), {flag:"wx"});
+writeFileSync(out.replace(/\.csv$/, ".meta.json"), JSON.stringify({ruolo:verifica?"verifica":"taratura",modelloHash:modello.hash,csvHash:sha(readFileSync(out)),raccoltaInizio,fonte:"Idealista API",metodoRaccolta:"API autorizzata; campionamento geografico; copertura da verificare"},null,2), {flag:"wx"});
 console.log(`\n${righe.length - 1} annunci di Milano scritti in ${out} (${fuori} fuori Milano o senza zona OMI, scartati)`);
 console.log("Rileggili prima di usarli: lo stato 'abit'/'otti' e' dedotto dal testo, il tipo e' sempre 'civ'.");
 console.log(RUOLO ? "Poi: npm run verifica  (misura soltanto; il modello deve essere gia' congelato)" : `Poi: npm run calibra ${out.replace(RADICE + "/", "")}`);

@@ -37,7 +37,7 @@ export default function Home() {
                 Quanto vale questa casa?
               </h1>
               <p className="v-lead v-hero__lead">
-                Una stima per decidere meglio.
+                Una stima spiegata, voce per voce. Con i costi per ristrutturarla.
               </p>
 
               <div className="v-hero__form">

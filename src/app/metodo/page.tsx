@@ -83,8 +83,11 @@ export default function Metodo() {
             Il motore è stato tarato il 5 settembre 2026 su <b>201 annunci di vendita</b> a Milano, raccolti dai portali con una ricerca
             assistita e verificati a campione (12 riletti a mano: prezzi e metri confermati in tutti, due stati corretti). Per ogni annuncio
             il motore riceve gli stessi dati che riceverebbe da te e produce il prezzo di pubblicazione stimato; lo si confronta con il prezzo
-            richiesto, in logaritmo. Risultato: scarto mediano −0,3%, dispersione (MAD) del 10% fuori dal segmento di pregio e del 13% con il
-            pregio dentro, 37% degli annunci entro ±10%. Sono pochi parametri (quattro), scelti a griglia con la mediana come bersaglio.
+            richiesto, in logaritmo. Rimisurato sul codice di oggi (7 settembre 2026): scarto mediano +1,9%, dispersione (MAD) 13,7%,
+            35% degli annunci entro ±10% e 63% entro ±20%; sulle sole tipologie civili, fuori dal segmento di pregio, MAD 11,6% e 44%
+            entro ±10%. Sono pochi parametri (quattro), scelti a griglia con la mediana come bersaglio. I coefficienti sono rimasti
+            quelli scelti il 5 settembre: da allora quotazioni e conversione dei dati sono cambiate, e la mediana non è più a zero.
+            Non l&apos;abbiamo riportata a zero: sarebbe inseguire il campione su cui il modello è già stato tarato.
           </p>
           <p>
             <b>Che cosa misurano questi numeri.</b> Quanto le stime somigliano a ciò che i venditori chiedono, non a ciò che gli acquirenti
@@ -105,8 +108,7 @@ export default function Metodo() {
           <p>
             Non conosce la vista, il piano nobile, il palazzo, il condominio, i vincoli, le spese straordinarie in arrivo. Non ha un
             trattamento validato per i piani sotto il livello stradale: per il seminterrato non dà una valutazione, solo una simulazione
-            esplicita che ipotizza un piano terra. Non finge di sapere i dati che non le hai confermato: un predefinito non è un fatto, e
-            senza conferma non c&apos;è valutazione. È una stima automatica indicativa, non una perizia.
+            esplicita che ipotizza un piano terra. I valori predefiniti sono ipotesi: li mostriamo accanto al risultato, senza chiedere conferme aggiuntive. Puoi modificarli nel modulo. È una stima automatica indicativa, non una perizia.
           </p>
 
           <p style={{ marginTop: "var(--s-8)" }}>

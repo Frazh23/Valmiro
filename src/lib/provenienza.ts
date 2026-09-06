@@ -1,42 +1,18 @@
 import type { Input } from "./types";
 
-/* --------------------------------------------------------------------------
-   Da dove viene ogni dato del modulo.
-
-   Un valore nel modulo puo' essere quattro cose diverse, e il risultato deve
-   saperlo: dichiarato dall'annuncio («annuncio»), confermato o inserito da chi
-   valuta («utente»), un predefinito che nessuno ha confermato («ipotesi»), o un
-   «non lo so» esplicito («sconosciuto»), che per il motore e' comunque un'ipotesi
-   perche' il calcolo usa un valore.
-
-   I campi MATERIALI muovono il valore in modo sensibile. Finche' uno di loro e'
-   un'ipotesi non confermata, il motore non stima: si puo' solo chiedere una
-   «simulazione con dati incompleti», che elenca le ipotesi accanto al numero e
-   non da' giudizi, offerte ne' prezzi di pubblicazione. La classe energetica
-   «non la conosco» non e' un'ipotesi: il motore non applica nessun aggiustamento,
-   e lo scrive. Pertinenze e box, ai predefiniti, non spostano il valore: si
-   elencano fra le ipotesi ma non bloccano.
-
-   Un modulo senza `provenienza` e' trattato come tutto confermato.
-
-   Dal 6 settembre 2026 **il modulo del sito non compila piu' questo campo**: le
-   conferme campo per campo sono state tolte e la stima parte con i predefiniti,
-   che il riepilogo della lettura elenca. Il meccanismo resta qui, e nel motore,
-   per due ragioni: le chiamate diritte a /api/estimate possono ancora dichiarare
-   la provenienza dei dati, e le stime salvate prima di quella data riaperte
-   mostrano ancora gli avvisi con cui erano nate.
-   -------------------------------------------------------------------------- */
-
+/** Provenienza dei dati. La versione 2 annota le ipotesi senza bloccare il calcolo.
+ * Le vecchie simulazioni conservano la semantica originaria. */
 export type Provenienza = "annuncio" | "utente" | "ipotesi" | "sconosciuto";
-export type Campo = "mq" | "stato" | "piano" | "ascensore" | "classe" | "pertinenze" | "box";
+export type Campo = "mq" | "stato" | "piano" | "ascensore" | "classe" | "pertinenze" | "box" | "mqBalconi" | "mqTerrazzi" | "cantina" | "superficie" | "pertinenzeIncluse" | "tipo" | "luce" | "epoca" | "affaccio" | "metro";
 export type Provenienze = Partial<Record<Campo, Provenienza>>;
 
-export const CAMPI: readonly Campo[] = ["mq", "stato", "piano", "ascensore", "classe", "pertinenze", "box"];
+export const CAMPI: readonly Campo[] = ["mq", "stato", "piano", "ascensore", "classe", "pertinenze", "box", "mqBalconi", "mqTerrazzi", "cantina", "superficie", "pertinenzeIncluse", "tipo", "luce", "epoca", "affaccio", "metro"];
 /** i campi che, non confermati, impediscono una valutazione */
 export const MATERIALI: readonly Campo[] = ["mq", "stato", "piano", "ascensore"];
 
 export const NOME_CAMPO: Record<Campo, string> = {
   mq: "superficie", stato: "stato conservativo", piano: "piano", ascensore: "ascensore",
+  mqBalconi: "balconi", mqTerrazzi: "terrazzi", cantina: "cantina", superficie: "tipo di superficie", pertinenzeIncluse: "pertinenze nella superficie", tipo: "tipologia", luce: "luminosità", epoca: "epoca", affaccio: "affaccio", metro: "metropolitana",
   classe: "classe energetica", pertinenze: "balconi, terrazzi e cantina", box: "box o posto auto",
 };
 
@@ -45,11 +21,19 @@ const STATO_NOME = { rist: "da ristrutturare", abit: "abitabile", otti: "ottimo 
 /** Il valore di un campo, in parole, per elencarlo fra le ipotesi. */
 export function valoreInParole(i: Input, c: Campo): string {
   switch (c) {
+    case "mqBalconi": return `${i.mqBalconi || 0} mq`;
+    case "mqTerrazzi": return `${i.mqTerrazzi || 0} mq`;
+    case "cantina": return i.cantina ? "presente" : "assente";
+    case "superficie": return i.superficie || "commerciale";
+    case "pertinenzeIncluse": return i.pertinenzeIncluse === false ? "escluse" : "incluse";
+    case "tipo": return ({civ: "civile", sig: "signorile", eco: "economico", vil: "ville e villini"})[i.tipo];
+    case "luce": return i.luce || "media";
+    case "epoca": case "affaccio": case "metro": return i[c] || "non indicato, nessun aggiustamento";
     case "mq": return `${i.mq || "—"} mq`;
     case "stato": return STATO_NOME[i.stato];
     case "piano": return i.pianoDichiarato ?? i.piano;
     case "ascensore": return i.ascensore ? "con ascensore" : "senza ascensore";
-    case "classe": return i.classe === "nd" ? "non nota" : i.classe;
+    case "classe": return i.classe === "nd" ? "non nota, nessun aggiustamento" : i.classe;
     case "pertinenze": return i.pertinenzeIncluse === false || i.superficie === "calpestabile"
       ? `balconi ${i.mqBalconi || 0} mq, terrazzi ${i.mqTerrazzi || 0} mq, cantina ${i.cantina ? "sì" : "no"}`
       : "comprese nella superficie";
@@ -77,3 +61,16 @@ export const descriviIpotesi = (x: Ipotesi) =>
 /** Il messaggio con cui il motore rifiuta di stimare su ipotesi materiali. */
 export const DATI_NON_CONFERMATI = (ip: Ipotesi[]) =>
   `Mancano conferme su ${ip.map((x) => NOME_CAMPO[x.campo]).join(", ")}: con dati predefiniti non confermati non c'è una valutazione. Conferma i valori, oppure chiedi una simulazione con dati incompleti, che elenca le ipotesi e non dà giudizi sul prezzo.`;
+
+export function provenienzaIniziale(): Provenienze {
+  return Object.fromEntries(CAMPI.filter(c => c !== "pertinenze").map(c => [c, "ipotesi"])) as Provenienze;
+}
+export function modificaUtente(i: Input, patch: Partial<Input>): Input {
+  const provenienza = { ...i.provenienza };
+  for (const c of CAMPI) if (c !== "pertinenze" && Object.hasOwn(patch, c)) provenienza[c] = "utente";
+  return { ...i, ...patch, provenienza, versioneProvenienza: 2, origineDatiParziale: i.origineDatiParziale || !i.provenienza };
+}
+export function noteIpotesi(i: Input): string[] {
+  return ipotesiDi(i).filter(x => x.campo !== "pertinenze" && !["epoca", "affaccio", "metro"].includes(x.campo))
+    .map(x => `${NOME_CAMPO[x.campo]}: ${valoreInParole(i, x.campo)}`);
+}

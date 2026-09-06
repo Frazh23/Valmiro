@@ -1,4 +1,5 @@
 "use client";
+import { misura } from "@/lib/telemetria";
 import { useEffect, useRef, useState } from "react";
 import type { Scelta } from "@/lib/types";
 
@@ -103,16 +104,17 @@ export default function AddressSearch({
       const c: Scelta[] = r.candidati || [];
       if (c.length === 1 && r.trovato && !r.motivo) { scegli(c[0]); return; }
       setRemoti(c);
-      if (!c.length) setNota(r.motivo || "Nessun indirizzo trovato. Prova con la via e il civico.");
+      if (!c.length) { misura("indirizzo_ko"); setNota(r.motivo || "Nessun indirizzo trovato. Prova con la via e il civico."); }
       else if (r.motivo) setNota(r.motivo);
     } catch {
+      misura("indirizzo_ko");
       setNota("Ricerca non riuscita. Riprova fra un istante.");
     } finally {
       setCerco(false);
     }
   }
 
-  function scegli(s: Scelta) { setQ(s.etichetta); chiudi(); setNota(null); onScegli(s); }
+  function scegli(s: Scelta) { misura("indirizzo_ok"); setQ(s.etichetta); chiudi(); setNota(null); onScegli(s); }
 
   /**
    * Scegliere una via dall'elenco non e' scegliere un indirizzo: se nel campo

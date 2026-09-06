@@ -62,7 +62,28 @@ sopra del 3%, quindi livello B da 1,05 a **1,02**; il resto invariato. Risultato
 | Al civico, senza «signorile» | 99 | −0,7% | 10,1% | 45% |
 | Solo «signorile» | 48 | +13,9% | 18,9% | 25% |
 
-I «10–13%» e il «−0,3%» della pagina vengono da qui.
+## Rimisurato il 7 settembre 2026
+
+Gli stessi 201 annunci, con il codice e i dati di oggi e la conversione corretta (classe non nota
+come `nd`, nessuna superficie dedotta dal numero di balconi, box contato solo dove documentato):
+
+| Taglio | n | scarto mediano | MAD | entro ±10% | entro ±20% |
+|---|---|---|---|---|---|
+| Tutti | 201 | **+1,9%** | **13,7%** | **35%** | 63% |
+| Senza «signorile» (tipo `civ`) | 124 | +0,7% | 11,6% | 44% | 73% |
+| Solo «signorile» | 77 | +10,5% | 18,3% | 21% | 47% |
+
+Riproducibile con `npm run calibra`, blocco «COM'È OGGI». I tagli qui sono per tipologia
+catastale, non «al civico»: sono quelli che lo script sa rifare da solo.
+
+**La mediana non è più a zero, e non l'abbiamo riportata a zero.** I coefficienti sono quelli
+scelti il 5 settembre; da allora sono cambiate le quotazioni e la conversione dei dati. Ritoccare
+il livello per far tornare lo zero significherebbe inseguire il campione su cui il modello è già
+tarato: il numero che conta verrà dal campione di verifica indipendente, che non esiste ancora.
+La differenza non viene dal box: con il box incluso come prima la mediana è +1,8%.
+
+Le pagine pubbliche (`/metodo` e le fonti del risultato) riportano i numeri di questa sezione,
+non più quelli del 5 settembre.
 
 ## Il 6%
 

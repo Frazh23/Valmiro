@@ -1,0 +1,71 @@
+id_grezzo,id_taratura,indirizzo,mq,prezzo
+201,ds-201,via Fiori Oscuri 13,258,5500000
+202,ds-202,via San Carpoforo 9,70,799000
+203,ds-203,via Montenapoleone,240,8000000
+204,ds-204,Piazza Fidia s.n.c,240,2680000
+205,ds-205,"Via Giulio Belinzaghi, 14",105,660000
+206,ds-206,"Via Luigi Federico Menabrea, 7",108,790000
+207,ds-207,"Via Sebenico, 28",56,390000
+208,ds-208,"Viale Stelvio, 16",115,560000
+209,ds-209,piazzale Lagosta 6,42,399000
+210,ds-210,via Pastrengo 9,45,259000
+211,ds-211,via Pola 19,55,399000
+212,ds-212,corso Lodi 13,180,1900000
+213,ds-213,corso Lodi 7,120,850000
+214,ds-214,via Atto Vannucci 11,47,374000
+215,ds-215,via Crema,50,345000
+216,ds-216,via G. Romano 17,55,360000
+217,ds-217,viale Umbria 21,65,357000
+218,ds-218,"Corso Buenos Aires, 5",120,1190000
+219,ds-219,"Via Giuseppe Sirtori, 5",141,982000
+220,ds-220,"Via Lecco, 5",65,365000
+221,ds-221,Via Panfilo Castaldi s.n.c,43,330000
+222,ds-222,"Viale Tunisia, 13",50,435000
+223,ds-223,"Piazza Enrico Bottini, 4",53,269000
+224,ds-224,"Via Alessandro Milesi, 4",60,285000
+225,ds-225,"Via Beato Angelico, 1",40,350000
+226,ds-226,"Via Giovanni Pacini, 38",136,690000
+227,ds-227,"Via Giuseppe Bardelli, 4",193,1000000
+228,ds-228,piazza Giovanni Giolitti,177,1100000
+229,ds-229,via Giovanni Pascoli 56,150,950000
+230,ds-230,via Giuseppe Colombo,210,1150000
+231,ds-231,piazzale Segrino 5,80,410000
+232,ds-232,via Abbadesse 46,50,528000
+233,ds-233,via Lario 14,50,340000
+234,ds-234,via Lario 8,65,370000
+235,ds-235,"via Monte Cristallo, 3",56,255000
+236,ds-236,via Torquato Taramelli 5,200,1295000
+237,ds-237,via Quinto Romano 22,160,450000
+238,ds-238,via Capri 6,39,149000
+239,ds-239,via Capri 9,51,168000
+240,ds-240,via Francesco Rismondo 110,48,189000
+241,ds-241,via Pietro Canevari 7,170,460000
+242,ds-242,via Pietro Colla 36,250,550000
+243,ds-243,via Valle Anzasca 20,55,225000
+244,ds-244,via delle Forze Armate 260,200,680000
+245,ds-245,via Alessandro Astesani 41,68,299000
+246,ds-246,via Alessandro Astesani 45,102,410000
+247,ds-247,via Carlo Bellerio 22,80,329000
+248,ds-248,via Chianciano 7,45,193000
+249,ds-249,via Gabbro 12,90,405000
+250,ds-250,via Gaetano Osculati 8,50,262000
+251,ds-251,"via Privata Publio Rutilio Rufo, 20161 Milano Italia",40,179000
+252,ds-252,via Don Bartolomeo Grazioli 57,50,210000
+253,ds-253,via Ripamonti 18,47,387000
+254,ds-254,via Litta Modignani 114,130,620000
+255,ds-255,piazza Filippo Meda,82,798000
+256,ds-256,via Broletto 37,136,1150000
+257,ds-257,via Broletto 39,55,825000
+258,ds-258,via Broletto 41,54,500000
+259,ds-259,via Luigi Galvani 15,68,519000
+260,ds-260,via Solferino 43,106,1390000
+261,ds-261,via Solferino 46,40,590000
+262,ds-262,via Solferino 56,93,980000
+263,ds-263,"via Solferino, 23",134,3100000
+264,ds-264,via Alessandro Tadino 2,27,267000
+265,ds-265,via Rosolino Pilo 12,77,450000
+266,ds-266,viale Tunisia 25,95,590000
+267,ds-267,"via Curtatone, 16",47,479000
+268,ds-268,viale Emilio Caldara 31,140,849000
+269,ds-269,via Ancona,150,1580000
+270,ds-270,via Solferino 12,113,1300000

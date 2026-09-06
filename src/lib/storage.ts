@@ -1,5 +1,6 @@
 "use client";
 import type { Input, Stima } from "./types";
+import { misura } from "./telemetria";
 import { supabase } from "./supabase";
 
 /* Le stime salvate. Per ora vivono nel browser di chi le fa: nessun account, nessun
@@ -44,12 +45,13 @@ export function leggiStime(): StimaSalvata[] {
   try { return JSON.parse(localStorage.getItem(CHIAVE) || "[]"); } catch { return []; }
 }
 
-export function salvaStima(s: Omit<StimaSalvata, "id" | "creataIl">): StimaSalvata {
+export function salvaStima(s: Omit<StimaSalvata, "id" | "creataIl">): StimaSalvata | null {
   const nuova: StimaSalvata = { ...s, id: crypto.randomUUID(), creataIl: new Date().toISOString() };
   try {
     const tutte = [nuova, ...leggiStime()].slice(0, 50);
     localStorage.setItem(CHIAVE, JSON.stringify(tutte));
-  } catch {}
+    misura("salvataggio_ok", s.input.intento || "nd");
+  } catch { misura("salvataggio_ko", s.input.intento || "nd"); return null; }
   return nuova;
 }
 
@@ -64,7 +66,7 @@ export function eliminaStima(id: string) {
 
 export async function salvaStimaAccount(utenteId: string, s: Omit<StimaSalvata, "id" | "creataIl">) {
   const sb = supabase();
-  if (!sb) return null;
+  if (!sb) { misura("salvataggio_ko", s.input.intento || "nd"); return null; }
   const { data, error } = await sb.from("stime").insert({
     utente: utenteId,
     indirizzo: s.indirizzo,
@@ -74,7 +76,8 @@ export async function salvaStimaAccount(utenteId: string, s: Omit<StimaSalvata, 
     risultato: s.stima,
     prezzo_esposto: s.prezzoEsposto ?? null,
   }).select().single();
-  if (error) { console.error("[stime] salvataggio fallito:", error.message); return null; }
+  if (error) { misura("salvataggio_ko", s.input.intento || "nd"); return null; }
+  misura("salvataggio_ok", s.input.intento || "nd");
   return data;
 }
 
@@ -82,7 +85,7 @@ export async function leggiStimeAccount(): Promise<StimaSalvata[]> {
   const sb = supabase();
   if (!sb) return [];
   const { data, error } = await sb.from("stime").select("*").order("creata_il", { ascending: false }).limit(100);
-  if (error) { console.error("[stime] lettura fallita:", error.message); return []; }
+  if (error) { console.warn("STIME_LETTURA_FALLITA"); return []; }
   return (data || []).map((r: any) => ({
     id: String(r.id),
     creataIl: r.creata_il,

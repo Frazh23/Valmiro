@@ -1,6 +1,6 @@
 import { ZONE, INDICE_ISTAT, SEMESTRE, FONTE } from "./data";
 import type { Input, Stima, Tipo, Stato, Voce, FasceOmi, PianoNonQuotato } from "./types";
-import { ipotesiMateriali, ipotesiDi, descriviIpotesi, DATI_NON_CONFERMATI } from "./provenienza";
+import { noteIpotesi, ipotesiMateriali, ipotesiDi, descriviIpotesi, DATI_NON_CONFERMATI } from "./provenienza";
 
 /* --------------------------------------------------------------------------
    Motore di stima.
@@ -204,12 +204,12 @@ export function stima(input: Input): Stima {
      le ipotesi accanto al numero: e' una simulazione, non una valutazione. L'incertezza
      (sigma) non cambia: non abbiamo misurato quanto valgano questi buchi, e inventare una
      percentuale sarebbe peggio che dirlo. */
-  const materiali = ipotesiMateriali(input);
+  const materiali = input.versioneProvenienza === 2 ? [] : ipotesiMateriali(input);
   if (materiali.length && !input.simulazioneDati) throw new Error(DATI_NON_CONFERMATI(materiali));
   /* e' uno scenario solo se c'e' almeno un'ipotesi materiale; allora si elencano tutte, anche quelle
      senza effetto. Se le ipotesi rimaste non muovono il valore, la stima e' una stima e le si annota. */
   const ipotesi = materiali.length ? ipotesiDi(input).map(descriviIpotesi) : undefined;
-  const noteDati = !materiali.length && ipotesiDi(input).length
+  const noteDati = input.versioneProvenienza !== 2 && !materiali.length && ipotesiDi(input).length
     ? ipotesiDi(input).map((x) => `${descriviIpotesi(x)}; al valore predefinito non sposta il valore`)
     : undefined;
 
@@ -317,6 +317,8 @@ export function stima(input: Input): Stima {
     simulazione,
     ipotesi,
     noteDati,
+    ipotesiUsate: input.versioneProvenienza === 2 ? noteIpotesi(input) : undefined,
+    origineDatiRegistrata: !!input.provenienza,
     dettaglio,
     semestre: SEMESTRE,
     fonte: FONTE,

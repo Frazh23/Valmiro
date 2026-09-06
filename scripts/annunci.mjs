@@ -23,16 +23,39 @@ export const ARCHIVIO = join(RADICE, "data/annunci");
 export const siNo = (v) => /^(si|sì|s|true|1|x)$/i.test(v || "");
 export const oNull = (v) => (v ? v : null);
 
-function leggiFile(percorso) {
-  const righe = readFileSync(percorso, "utf8").split(/\r?\n/).filter((r) => r.trim());
-  const testata = righe.shift().split(";").map((s) => s.trim());
-  const lotto = basename(percorso, ".csv");
-  return righe.map((riga) => {
-    const c = riga.split(";");
-    const r = { lotto };
-    testata.forEach((nome, i) => { r[nome] = (c[i] ?? "").trim(); });
-    return r;
+/** CSV con celle quotate, separatori e a-capo incorporati. */
+export function parseCsv(text, delimiter = ";") {
+  const rows = []; let row = [], cell = "", quoted = false;
+  text = text.replace(/^\uFEFF/, "");
+  for (let n = 0; n < text.length; n++) {
+    const c = text[n];
+    if (c === '"') {
+      if (quoted && text[n + 1] === '"') { cell += '"'; n++; }
+      else quoted = !quoted;
+    } else if (!quoted && c === delimiter) { row.push(cell.trim()); cell = ""; }
+    else if (!quoted && (c === "\n" || c === "\r")) {
+      if (c === "\r" && text[n+1] === "\n") n++;
+      row.push(cell.trim()); if (row.some(Boolean)) rows.push(row); row = []; cell = "";
+    } else cell += c;
+  }
+  if (quoted) throw new Error("CSV: cella quotata non chiusa");
+  row.push(cell.trim()); if (row.some(Boolean)) rows.push(row);
+  const header = rows.shift() || [];
+  return rows.map((cells, n) => {
+    if (cells.length !== header.length) throw new Error(`CSV: numero colonne errato alla riga ${n+2}`);
+    return Object.fromEntries(header.map((h, i) => [h, cells[i]]));
   });
+}
+export function leggiFile(percorso) {
+  return parseCsv(readFileSync(percorso, "utf8")).map(r => ({ ...r, lotto: basename(percorso, ".csv") }));
+}
+export function ruoloLotto(percorso) {
+  const manifest = percorso.replace(/\.csv$/, ".meta.json");
+  const byName = /-verifica(?:[.-]|$)/.test(basename(percorso));
+  if (!existsSync(manifest)) return byName ? "verifica" : "taratura";
+  const m = JSON.parse(readFileSync(manifest, "utf8"));
+  if (!["taratura", "verifica"].includes(m.ruolo) || (byName && m.ruolo !== "verifica")) throw new Error("Ruolo lotto incoerente");
+  return m.ruolo;
 }
 
 /** Chiave di duplicato: via e civico senza maiuscole/accenti, metri, prezzo. */
@@ -45,7 +68,7 @@ export function chiaveAnnuncio(r) {
  * @param {string} [percorso]  un file CSV; se manca, tutto l'archivio
  * @returns {{ annunci: object[], lotti: string[], duplicati: number, scartati: number }}
  */
-export function caricaAnnunci(percorso) {
+export function caricaAnnunci(percorso, { ruolo = "taratura" } = {}) {
   let file;
   if (percorso) {
     if (!existsSync(percorso)) throw new Error(`manca ${percorso}`);
@@ -56,6 +79,9 @@ export function caricaAnnunci(percorso) {
     file = existsSync(ARCHIVIO) ? readdirSync(ARCHIVIO).filter((f) => f.endsWith(".csv")).sort().map((f) => join(ARCHIVIO, f)) : [];
   }
 
+  if (percorso && statSync(percorso).isFile() && ruoloLotto(percorso) !== ruolo)
+    throw new Error(`Lotto ${ruoloLotto(percorso)} non ammesso per ${ruolo}`);
+  file = file.filter(f => ruoloLotto(f) === ruolo);
   const visti = new Map();
   let duplicati = 0, scartati = 0;
   for (const f of file) {
@@ -73,21 +99,40 @@ export function caricaAnnunci(percorso) {
   return { annunci: [...visti.values()], lotti: file.map((f) => basename(f)), duplicati, scartati };
 }
 
-/** Da riga dell'archivio a Input del motore. Vuoti -> valori piu' comuni. */
-export function inputDaRiga(r, zona) {
-  return {
-    zona,
-    tipo: r.tipo || "civ",
-    mq: Number(r.mq),
-    stato: r.stato || "abit",
-    piano: r.piano || "1-2",
-    ascensore: siNo(r.ascensore),
-    classe: (r.classe || "D").toUpperCase()[0],
-    balconi: Number(r.balconi) || 0,
-    cantina: siNo(r.cantina),
-    box: r.box || "nessuno",
-    epoca: oNull(r.epoca),
-    affaccio: oNull(r.affaccio),
-    metro: oNull(r.metro),
+/** Conversione corrente; i buchi restano espliciti nel rapporto. */
+export function conversioneRiga(r, zona) {
+  const mancanti = [], errori = [];
+  const required = (k, fallback) => { if (!r[k]) mancanti.push(k); return r[k] || fallback; };
+  const valid = (k, value, allowed) => { if (!allowed.includes(value)) errori.push(`${k}: ${value}`); return value; };
+  const mq = Number(r.mq);
+  if (!Number.isFinite(mq) || mq <= 0) errori.push("superficie non valida");
+  const rawClasse = (r.classe || "nd").trim().toUpperCase();
+  const classe = /^(ND|N\/D|NON NOTA)$/.test(rawClasse) ? "nd" : /^A[1-4]$/.test(rawClasse) ? "A" : rawClasse;
+  if (classe === "nd") mancanti.push("classe");
+  valid("classe", classe, ["nd","A","B","C","D","E","F","G"]);
+  const input = {
+    zona, tipo: valid("tipo", required("tipo", "civ"), ["civ","sig","eco"]), mq,
+    stato: valid("stato", required("stato", "abit"), ["rist","abit","otti","nuov"]),
+    piano: valid("piano", required("piano", "1-2"), ["terra","rialzato","1-2","3-5","6+","ultimo"]),
+    ascensore: siNo(required("ascensore", "si")), classe,
+    superficie: required("superficie", "commerciale"), pertinenzeIncluse: siNo(required("pertinenze_incluse", "si")),
+    mqBalconi: Number(r.mq_balconi) || 0, mqTerrazzi: Number(r.mq_terrazzi) || 0,
+    cantina: siNo(required("cantina", "no")), box: "nessuno",
+    epoca: oNull(r.epoca), affaccio: oNull(r.affaccio), metro: oNull(r.metro)
   };
+  for (const [k, allowed] of [["epoca",["ante1945","1946-1980","1981-2005","post2005"]],["affaccio",["interno","misto","strada"]],["metro",["vicina","media","lontana"]]]) if (r[k]) valid(k,r[k],allowed);
+  valid("superficie", input.superficie, ["commerciale","calpestabile"]);
+  for (const k of ["ascensore", "cantina", "pertinenze_incluse", "box_incluso"]) if (r[k] && !/^(si|sì|s|true|1|x|no|false|0)$/i.test(r[k])) errori.push(`${k}: valore non riconosciuto`);
+  for (const k of ["mq_balconi", "mq_terrazzi"]) if (r[k] && (!Number.isFinite(Number(r[k])) || Number(r[k]) < 0)) errori.push(`${k}: superficie non valida`);
+  if (Number(r.balconi) > 0 && !r.mq_balconi) mancanti.push("metri balconi (il conteggio non viene convertito)");
+  if (r.box && r.box !== "nessuno") {
+    if (siNo(r.box_incluso)) input.box = valid("box", r.box, ["box","posto"]);
+    else mancanti.push("box escluso: inclusione nel prezzo non documentata");
+  }
+  return { input, mancanti, errori };
+}
+export function inputDaRiga(r, zona) {
+  const c = conversioneRiga(r, zona);
+  if (c.errori.length) throw new Error(c.errori.join("; "));
+  return c.input;
 }

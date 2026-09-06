@@ -13,6 +13,8 @@ export const metadata: Metadata = {
  * legge deve capire cosa succede ai suoi dati senza un avvocato. Quando cambia
  * qualcosa nel prodotto che tocca i dati, cambia anche questa pagina.
  */
+export const dynamic = "force-dynamic";
+
 export default function Privacy() {
   return (
     <div className="v-page">
@@ -29,7 +31,9 @@ export default function Privacy() {
           <h2>Se usi il sito senza account</h2>
           <p>
             L&apos;indirizzo che scrivi e le caratteristiche della casa servono a calcolare la stima e
-            restano nel tuo browser. Non li salviamo sui nostri server e non li associamo a te. Le
+            vengono inviati al nostro server per calcolare la stima: il calcolo avviene e basta, non li
+            registriamo e non li associamo a te. Il testo dell’annuncio che incolli, invece, non esce mai
+            dal browser: lo legge il tuo computer. Le
             stime che decidi di conservare stanno nella memoria locale del tuo browser: se la
             svuoti, spariscono.
           </p>
@@ -48,8 +52,7 @@ export default function Privacy() {
           </p>
           <p>
             Le stime che salvi con l&apos;account — indirizzo, caratteristiche e risultato — restano
-            tue: le vedi solo tu, e puoi cancellarle una per una quando vuoi. Le usiamo, in forma
-            anonima e aggregata, per capire dove il modello sbaglia e migliorarlo.
+            tue: le vedi solo tu, e puoi cancellarle una per una quando vuoi. Non confluiscono nei contatori di utilizzo del sito.
           </p>
           <p>
             L&apos;email serve a farti entrare, a confermare l&apos;iscrizione e a mandarti il link
@@ -60,10 +63,14 @@ export default function Privacy() {
           <p>
             Il sito gira su <b>Vercel</b>, il database e l&apos;accesso su <b>Supabase</b>, le email
             partono da <b>Resend</b> (server in Irlanda). Sono fornitori tecnici: trattano i dati solo
-            per far funzionare Valmiro, secondo i loro accordi di trattamento conformi al GDPR. Non
-            usiamo strumenti di analisi del traffico né pubblicità.
+            per far funzionare Valmiro, secondo gli accordi di servizio e trattamento applicabili. Non usiamo pubblicità.
           </p>
 
+          <h2>Statistiche e diagnostica</h2>
+          <p>{process.env.TELEMETRIA_ENABLED === "true"
+            ? "Sono attivi contatori giornalieri aggregati dei passaggi e degli errori: tipo di evento, intento comprare/vendere, formato mobile/desktop, componente e versione del sito. Non conserviamo in questi contatori indirizzi, annunci, email, identificativi utente o IP. Non usiamo cookie analitici, fingerprint o registrazioni delle sessioni. I contatori sono conservati per 90 giorni e non misurano utenti unici."
+            : "I contatori di utilizzo e diagnostica aggregata sono predisposti ma non attivi."}</p>
+          <p>I fornitori di hosting possono trattare dati tecnici delle richieste per erogare e proteggere il servizio; questi log sono distinti dai nostri contatori aggregati.</p>
           <h2>Per quanto tempo</h2>
           <p>
             Finché hai l&apos;account. Se lo cancelli, cancelliamo email, profilo e stime salvate. Per
@@ -85,9 +92,9 @@ export default function Privacy() {
           </p>
 
           <p className="v-small" style={{ marginTop: "var(--s-8)", color: "var(--ink-faint)" }}>
-            Titolare del trattamento: Valmiro, <a href="mailto:privacy@valmiro.it">privacy@valmiro.it</a>.
+            Titolare del trattamento: {process.env.GESTORE_NOME || "Valmiro"}{process.env.GESTORE_INDIRIZZO ? `, ${process.env.GESTORE_INDIRIZZO}` : ""}, <a href="mailto:privacy@valmiro.it">privacy@valmiro.it</a>.
             Per tutto il resto, <a href="mailto:informazioni@valmiro.it">informazioni@valmiro.it</a>.
-            Ultimo aggiornamento: 4 settembre 2026. <Link href="/">Torna alla home</Link>.
+            Ultimo aggiornamento: 7 settembre 2026. <Link href="/">Torna alla home</Link>.
           </p>
         </article>
       </main>

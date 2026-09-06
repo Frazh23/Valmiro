@@ -1,6 +1,6 @@
 import type { Input, Piano } from "./types";
 import type { Letto } from "./annuncio";
-import { NOME_CAMPO, type Campo } from "./provenienza";
+import { NOME_CAMPO, provenienzaIniziale, CAMPI, type Campo } from "./provenienza";
 export { NOME_CAMPO };
 /** @deprecated il nome storico: oggi e' `Campo` in provenienza.ts */
 export type CampoConfermabile = Campo;
@@ -22,6 +22,7 @@ export type CampoConfermabile = Campo;
    -------------------------------------------------------------------------- */
 
 export const INPUT_INIZIALE: Input = {
+  versioneProvenienza: 2, provenienza: provenienzaIniziale(),
   zona: "", tipo: "civ", categoria: null, mq: 0, superficie: "commerciale", pertinenzeIncluse: true,
   mqBalconi: 0, mqTerrazzi: 0, cantina: false, box: "nessuno", boxSeparato: null,
   stato: "abit", piano: "1-2", pianoDichiarato: null, simulazionePiano: false, ascensore: true, classe: "nd", luce: "media",
@@ -111,13 +112,18 @@ export function differenze(prima: Input, dopo: Input): string[] {
  */
 export function applicaLettura(base: Input, r: Letto, modo: ModoImport): Applicazione {
   const d = dichiarato(r);
+  const provenienza = modo === "nuovo" ? provenienzaIniziale() : { ...base.provenienza };
+  for (const c of CAMPI) if (c !== "pertinenze" && Object.hasOwn(d, c)) provenienza[c] = "annuncio";
+  // La commerciale e l'inclusione delle pertinenze sono convenzioni del lettore, non dati riconosciuti.
+  if (r.mq) { provenienza.superficie = "ipotesi"; provenienza.pertinenzeIncluse = "ipotesi"; }
+
   if (modo === "nuovo") {
-    const input: Input = { ...INPUT_INIZIALE, intento: base.intento, ...d };
+    const input: Input = { ...INPUT_INIZIALE, intento: base.intento, ...d, provenienza, versioneProvenienza: 2 };
     return { input, daConfermare: nonDichiarati(r), modifiche: [], avvisi: [...r.avvisi] };
   }
-  const input: Input = { ...base, ...d };
+  const input: Input = { ...base, ...d, provenienza, versioneProvenienza: 2 };
   /* includere il box a parte e' una scelta di chi legge, non un dato del testo: se il nuovo
      testo offre ancora il box a parte, la scelta resta; se non lo offre piu', cade con lui */
-  if (d.boxSeparato && base.boxSeparato?.incluso) { input.boxSeparato = { ...d.boxSeparato, incluso: true }; input.box = "box"; }
+  if (d.boxSeparato && base.boxSeparato?.incluso) { input.boxSeparato = { ...d.boxSeparato, incluso: true }; input.box = "box"; input.provenienza = { ...provenienza, box: base.provenienza?.box || "utente" }; }
   return { input, daConfermare: [], modifiche: differenze(base, input), avvisi: [...r.avvisi] };
 }

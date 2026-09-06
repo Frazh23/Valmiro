@@ -25,7 +25,8 @@ import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
 import { rendita, andamento } from "@/lib/affitto";
 import { leggiAnnuncio, type Letto } from "@/lib/annuncio";
 import { INPUT_INIZIALE, applicaLettura, type ModoImport } from "@/lib/modulo";
-import { NOME_CAMPO, type Campo } from "@/lib/provenienza";
+import { misura, nuovoPercorso } from "@/lib/telemetria";
+import { NOME_CAMPO, modificaUtente, type Campo } from "@/lib/provenienza";
 import { LAVORI_INIZIALI, type SceltaLavori } from "@/lib/ristrutturazione";
 import AskingPrice from "@/components/sistema/AskingPrice";
 import RentalYield from "@/components/sistema/RentalYield";
@@ -119,11 +120,15 @@ function Valuta() {
   const [lavori, setLavori] = useState<SceltaLavori>(LAVORI_INIZIALI);
 
   const [i, setI] = useState<Input>(INPUT_INIZIALE);
-  const set = (p: Partial<Input>) => setI((v) => ({ ...v, ...p }));
+  const set = (p: Partial<Input>) => setI((v) => modificaUtente(v, p));
   /* I campi che l'annuncio non dichiara restano al valore predefinito e si vedono nel
      riepilogo della lettura: si controllano lì, campo per campo, senza conferme da spuntare.
      `daConfermare` viene da applicaLettura, non dal modulo: dice cosa il testo non diceva. */
   const [daConfermare, setDaConfermare] = useState<Campo[]>([]);
+  useEffect(() => { nuovoPercorso(); misura("avvio"); }, []);
+  useEffect(() => {
+    if (vista === "intento" || vista === "dove" || vista === "casa" || vista === "risultato") misura(`passo_${vista}`, i.intento || "nd");
+  }, [vista, i.intento]);
   const boxSeparato = i.boxSeparato ?? null;
   const zona = i.zona ? ZONE[i.zona] : null;
   const intento: Intento | undefined = i.intento;
@@ -164,7 +169,7 @@ function Valuta() {
       if (!s && utente) s = (await leggiStimeAccount()).find((x) => x.id === idStima);
       if (!s) { if (!pronto) return; setAvviso("Questa stima non è più disponibile su questo dispositivo: forse era salvata in un altro browser o è stata eliminata."); setVista("dove"); return; }
       const it = params.get("i");
-      setI({ ...INPUT_INIZIALE, ...s.input, intento: s.input.intento ?? (it === "vendo" ? "vendo" : "compro") });
+      setI({ ...INPUT_INIZIALE, ...s.input, provenienza: s.input.provenienza, versioneProvenienza: s.input.versioneProvenienza, intento: s.input.intento ?? (it === "vendo" ? "vendo" : "compro") });
       setIndirizzo(s.indirizzo); setFonte("anagrafe");
       setEsito({ stima: s.stima }); setUltimoSalvato(JSON.stringify({ ...INPUT_INIZIALE, ...s.input }));
       setRiaperta(s.creataIl); setVista("risultato");
@@ -178,6 +183,7 @@ function Valuta() {
   }
 
   function scegliIndirizzo(s: Scelta) {
+    misura("indirizzo_ok", i.intento || "nd");
     set({ zona: s.zona }); setIndirizzo(s.etichetta); setFonte(s.fonte);
     setAvviso(null); setVista("casa");
   }
@@ -191,7 +197,9 @@ function Valuta() {
 
   async function leggiTesto(modo: ModoImport) {
     const r = leggiAnnuncio(testoAnnuncio);
-    if (!r.trovati.length) { setAnnuncioNota("Nel testo non ho riconosciuto né metri, né prezzo, né indirizzo. Prova a incollare tutta la scheda dell'annuncio, non solo il titolo."); return; }
+    if (!r.trovati.length) { misura("import_ko", i.intento || "nd"); setAnnuncioNota("Nel testo non ho riconosciuto né metri, né prezzo, né indirizzo. Prova a incollare tutta la scheda dell'annuncio, non solo il titolo."); return; }
+    if (modo === "nuovo") nuovoPercorso();
+    misura("import_ok", i.intento || "nd");
     const a = applicaLettura(i, r, modo);
     setI(a.input);
     setLetto(r);
@@ -247,15 +255,21 @@ function Valuta() {
   /* La stima passa dalla rotta: e' il contratto pubblico del motore. I prospetti di
      ristrutturazione si calcolano nel browser, perche' cambiano a ogni scelta. */
   const calcola = useCallback(async (): Promise<Esito> => {
-    const r = await fetch("/api/estimate", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(i),
-    }).then((x) => x.json());
-    if (r.errore) throw new Error(r.errore);
-    return { stima: r.stima };
+    try {
+      const r = await fetch("/api/estimate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(i),
+      }).then((x) => x.json());
+      if (r.errore) throw new Error(r.errore);
+      misura("calcolo_ok", i.intento || "nd");
+      return { stima: r.stima };
+    } catch (e) {
+      misura("calcolo_ko", i.intento || "nd");
+      throw e;
+    }
   }, [i]);
 
-  function fatto(e: Esito) {
+  async function fatto(e: Esito) {
     setEsito(e); setVista("risultato");
     const impronta = JSON.stringify(i);
     if (impronta !== ultimoSalvato && zona) {
@@ -263,8 +277,10 @@ function Valuta() {
         indirizzo: indirizzo || `Zona ${i.zona}`, zona: i.zona, descrizioneZona: zona.d,
         input: i, stima: e.stima, prezzoEsposto: i.prezzoRichiesto || undefined,
       };
-      if (utente) salvaStimaAccount(utente.id, da); else salvaStima(da);
-      setUltimoSalvato(impronta);
+      try {
+        const salvata = utente ? await salvaStimaAccount(utente.id, da) : salvaStima(da);
+        if (salvata) setUltimoSalvato(impronta);
+      } catch { misura("salvataggio_ko", i.intento || "nd"); }
     }
   }
 
@@ -721,7 +737,7 @@ function Valuta() {
             primaCasa={primaCasa} onPrimaCasa={setPrimaCasa}
             lavori={lavori} onLavori={setLavori}
             onModifica={() => { setRiaperta(null); setVista("casa"); }}
-            riaperta={riaperta}
+            riaperta={riaperta} salvataggioRiuscito={ultimoSalvato === JSON.stringify(i)}
             onRicalcola={() => { setRiaperta(null); setUltimoSalvato(null); setVista("calcolo"); }}
           />
         )}
@@ -741,7 +757,7 @@ function Valuta() {
 
 function Risultato({
   stima, input, zonaDesc, indirizzo, insight, intento, switchIntento,
-  primaCasa, onPrimaCasa, lavori, onLavori, onModifica, riaperta, onRicalcola,
+  primaCasa, onPrimaCasa, lavori, onLavori, onModifica, riaperta, onRicalcola, salvataggioRiuscito,
 }: {
   stima: Stima; input: Input; zonaDesc: string;
   indirizzo: string; insight: React.ReactNode; intento: Intento; switchIntento: React.ReactNode;
@@ -751,7 +767,13 @@ function Risultato({
   /** presente quando si sta rileggendo una stima salvata: la data di allora */
   riaperta?: string | null;
   onRicalcola?: () => void;
+  salvataggioRiuscito: boolean;
 }) {
+  /* Nella riga breve stanno i campi che spostano davvero il valore; se sono tutti dichiarati,
+     si mostrano comunque i primi rimasti invece di una frase vaga. L'elenco intero sta nel dettaglio. */
+  const usate = stima.ipotesiUsate ?? [];
+  const materiali = usate.filter((x) => /^(stato conservativo|piano|ascensore):/.test(x));
+  const ipotesiInVista = materiali.length ? materiali : usate.slice(0, 3);
   const tacche = stima.affidabilita === "Alta" ? 3 : stima.affidabilita === "Media" ? 2 : 1;
   const affitto = rendita(input, stima);
   const storia = andamento(input.zona);
@@ -796,7 +818,7 @@ function Risultato({
           <span className="v-value__cur">€</span><NumeroAnimato valore={stima.centro} durata={1100} />
         </p>
         <p className="v-value__span">
-          {scenario ? "Intervallo della simulazione" : "Intervallo realistico"} {eur(stima.min)} – {eur(stima.max)} €
+          {scenario ? "Intervallo della simulazione" : "Intervallo indicativo del modello"} {eur(stima.min)} – {eur(stima.max)} €
         </p>
         {boxAParte && (
           <p className="v-small" style={{ marginTop: "var(--s-2)" }}>
@@ -809,6 +831,28 @@ function Risultato({
         <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
           Zona OMI <b>{input.zona}</b> · {zonaDesc} · quotazioni {stima.semestre}
         </p>
+        {(!input.provenienza || input.origineDatiParziale) && (
+          <p className="v-note" role="note" style={{ marginTop: "var(--s-4)" }}>
+            <b>Origine dei dati non registrata.</b> Questa stima viene da un modulo che non teneva traccia di quali
+            caratteristiche fossero dichiarate e quali predefinite.
+          </p>
+        )}
+        {!!ipotesiInVista.length && (
+          <div className="v-note" role="note" style={{ marginTop: "var(--s-4)" }}>
+            <p style={{ margin: 0 }}>
+              <b>Il calcolo presume:</b> {ipotesiInVista.join("; ")}. Non erano nell&apos;annuncio e non sono stati
+              cambiati nel modulo: sono ipotesi, non dati della casa.
+            </p>
+            <details className="v-more">
+              <summary>Tutte le ipotesi usate ({stima.ipotesiUsate!.length})</summary>
+              <ul className="v-ipotesi">{stima.ipotesiUsate!.map((x) => <li key={x}>{x}</li>)}</ul>
+              <p className="v-small">
+                Le correggi da «Modifica i dati». L&apos;intervallo qui sopra è l&apos;incertezza del modello a dati noti:
+                non misura quella dovuta a queste ipotesi.
+              </p>
+            </details>
+          </div>
+        )}
         {simulazione && (
           <p className="v-note v-note--errore" role="note" style={{ marginTop: "var(--s-4)" }}>
             <b>Non è una valutazione del {simulazione.pianoDichiarato}.</b> {simulazione.testo} Il piano dichiarato è salvato con la stima.
@@ -907,7 +951,7 @@ function Risultato({
       </section>
 
       {/* ristrutturazione */}
-      <section className="v-wrap v-chapter" id="lavori">
+      <section className="v-wrap v-chapter" id="lavori" onFocusCapture={() => misura("lavori_aperti", intento)} onClickCapture={() => misura("lavori_aperti", intento)}>
         <Reveal>
           <div className="v-chapter__head">
             <span className="v-numeral">{cap()}</span>
@@ -983,7 +1027,7 @@ function Risultato({
             <h2 className="v-h2">Fonti, note e la tua stima</h2>
           </div>
           <p className="v-body v-measure">
-            {riaperta ? "Questa è una stima salvata." : `Questa valutazione è già salvata${intento === "compro" ? " come casa che stai valutando per comprare" : " come casa da vendere"}.`}
+            {riaperta ? "Questa è una stima salvata." : !salvataggioRiuscito ? "Salvataggio non completato. Il risultato resta visibile in questa pagina." : `Questa valutazione è già salvata${intento === "compro" ? " come casa che stai valutando per comprare" : " come casa da vendere"}.`}
             {" "}La ritrovi fra le tue stime, con la data e i dati che hai inserito.
           </p>
           <div className="v-actions">
@@ -1002,8 +1046,9 @@ function Risultato({
               <b>Taratura, e cosa misura.</b> Il motore è stato tarato il 5 settembre 2026 su 201 annunci di vendita a Milano,
               raccolti dai portali con una ricerca assistita e verificati a campione (12 riletti a mano: prezzi e metri confermati
               in tutti, due stati corretti). La variabile di confronto è il <b>prezzo richiesto</b> nell&apos;annuncio contro il prezzo
-              di pubblicazione stimato; la metrica è il logaritmo del rapporto: scarto mediano −0,3%, dispersione (MAD) 10% fuori dal
-              segmento di pregio e 13% con il pregio dentro, 37% degli annunci entro ±10%. Sono numeri sul campione di taratura
+              di pubblicazione stimato; la metrica è il logaritmo del rapporto. Rimisurato sul codice di oggi (7 settembre 2026):
+              scarto mediano +1,9%, dispersione (MAD) 13,7%, 35% degli annunci entro ±10% e 63% entro ±20%; sulle sole tipologie
+              civili, fuori dal segmento di pregio, MAD 11,6% e 44% entro ±10%. Sono numeri sul campione di taratura
               stesso: <b>un campione di verifica indipendente non c&apos;è ancora</b> (previsto con l&apos;API di Idealista). E i prezzi
               richiesti non sono prezzi di compravendita: la taratura dice quanto le stime somigliano a ciò che i venditori chiedono,
               non quanto a ciò che gli acquirenti pagano. Il metodo per esteso: <Link href="/metodo" className="v-link">Come calcoliamo la stima</Link>.

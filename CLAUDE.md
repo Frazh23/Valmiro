@@ -78,7 +78,12 @@ Per rigenerare: si scarica il DS634 dal portale open data del Comune e si lancia
 ## Vincoli non negoziabili
 
 - **Chiavi.** Solo la chiave *publishable* di Supabase sta nel client; è protetta da RLS.
-  La chiave `service_role` non entra mai nel repository né nel browser.
+  La chiave `service_role` non entra mai nel repository né nel browser. Dal 7 settembre 2026
+  c'è **un solo** punto che la usa lato server, `src/app/api/eventi/route.ts` (contatori
+  aggregati), ed è spento per default: attivarlo significa mettere in Vercel una chiave che
+  scavalca ogni RLS, quindi anche la tabella `stime`. Vedi `docs/telemetria.md`; finché la
+  telemetria non serve davvero, la scelta più sicura è lasciarla spenta e non configurare la
+  chiave.
 - **Disclaimer.** Accanto a ogni risultato: stima automatica indicativa, non è una perizia,
   con l'attribuzione CC BY 4.0 all'Agenzia delle Entrate via Comune di Milano.
 - **Portali.** Non si fa scraping di immobiliare.it o simili: violano i termini d'uso

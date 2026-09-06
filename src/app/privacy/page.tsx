@@ -30,10 +30,9 @@ export default function Privacy() {
 
           <h2>Se usi il sito senza account</h2>
           <p>
-            L&apos;indirizzo che scrivi e le caratteristiche della casa servono a calcolare la stima e
-            vengono inviati al nostro server per calcolare la stima: il calcolo avviene e basta, non li
-            registriamo e non li associamo a te. Il testo dell’annuncio che incolli, invece, non esce mai
-            dal browser: lo legge il tuo computer. Le
+            L&apos;indirizzo che scrivi e le caratteristiche della casa vengono inviati al nostro server
+            per il calcolo: la stima viene fatta e basta, non li registriamo e non li associamo a te. Il
+            testo dell’annuncio che incolli, invece, non esce mai dal browser: lo legge il tuo computer. Le
             stime che decidi di conservare stanno nella memoria locale del tuo browser: se la
             svuoti, spariscono.
           </p>

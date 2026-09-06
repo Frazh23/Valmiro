@@ -178,7 +178,7 @@ export default function AddressSearch({
           value={q}
           onChange={(e) => digita(e.target.value)}
           onKeyDown={tasto}
-          placeholder="Via Savona 35, Milano"
+          placeholder="Inserisci via e numero civico"
           aria-label={etichetta ? undefined : "Indirizzo dell'immobile"}
           role="combobox" aria-autocomplete="list" aria-haspopup="listbox"
           aria-expanded={aperta} aria-controls={aperta ? idLista : undefined}

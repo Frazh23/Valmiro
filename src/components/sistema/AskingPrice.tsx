@@ -64,7 +64,7 @@ export default function AskingPrice({ input, stima, intento }: { input: Input; s
             <p className="v-body v-measure" style={{ marginTop: "var(--s-5)" }}>
               Il valore stimato {cosa} è <b>{eur(P.valore.centro)} €</b>, in un intervallo fra {eur(P.valore.min)} e {eur(P.valore.max)} €.
               {g!.dentro
-                ? " La richiesta sta dentro l'incertezza della stima: non è un affare né un abuso, è il mercato."
+                ? " Il prezzo richiesto rientra nell'intervallo stimato: la differenza è dentro l'incertezza del modello."
                 : g!.sopra
                 ? " Lo scarto è più grande dell'incertezza della stima: c'è spazio per trattare, oppure la casa ha qualcosa che il modulo non vede, come una vista o un piano nobile."
                 : " Un prezzo sotto la stima può essere un'occasione o un segnale: stato peggiore del dichiarato, vincoli, spese straordinarie in arrivo. Chiedi."}

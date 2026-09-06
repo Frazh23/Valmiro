@@ -61,7 +61,7 @@
   --t-body-lg: clamp(1.0625rem, 1.5vw, 1.25rem);
   --t-body:    1rem;
   --t-small:   0.875rem;
-  --t-micro:   0.75rem;
+  --t-micro:   0.8125rem;  /* 13px: le note si leggono, non si decifrano */
 
   --lh-tight:  1.02;
   --lh-snug:   1.18;

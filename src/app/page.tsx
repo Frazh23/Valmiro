@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Header from "@/components/sistema/Header";
 import HomeSearch from "@/components/sistema/HomeSearch";
+import Logo from "@/components/sistema/Logo";
 import Reveal from "@/components/sistema/Reveal";
 import { ZONE, SEMESTRE, FONTE } from "@/lib/data";
 
@@ -84,7 +85,7 @@ export default function Home() {
 
       <footer className="v-footer">
         <div className="v-wrap v-footer__in">
-          <span className="v-brand" aria-label="Valmiro">Valmir<span aria-hidden="true">o</span></span>
+          <Logo link={false} size="sm" />
           <p className="v-micro">
             {FONTE}. Le stime sono indicative e non costituiscono perizia.
             {" "}<Link href="/privacy">Privacy</Link>

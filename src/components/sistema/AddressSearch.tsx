@@ -27,12 +27,16 @@ type Riga = { etichetta: string; zona: string; descrizione: string; nota: string
  * ricerca vive qui: sta tutta in lib/indirizzario e nelle rotte.
  */
 export default function AddressSearch({
-  onScegli, azione = "Valuta ora", valoreIniziale = "", autoFocus = false,
+  onScegli, azione = "Valuta ora", valoreIniziale = "", autoFocus = false, id = "indirizzo", etichetta,
 }: {
   onScegli: (s: Scelta) => void;
   azione?: string;
   valoreIniziale?: string;
   autoFocus?: boolean;
+  /** base per gli id del campo e della tendina: serve se ce ne sono due nella stessa pagina */
+  id?: string;
+  /** etichetta visibile sopra il campo; senza, resta quella accessibile */
+  etichetta?: string;
 }) {
   const [q, setQ] = useState(valoreIniziale);
   const [vie, setVie] = useState<Risposta>({ vie: [] });
@@ -45,6 +49,16 @@ export default function AddressSearch({
   /* L'ultima richiesta partita. Le risposte possono tornare fuori ordine e una
      lenta di tre lettere fa non deve sovrascrivere quella che si sta leggendo. */
   const turno = useRef(0);
+  /* l'attesa prima di chiedere i suggerimenti e la richiesta in volo: ogni tasto
+     cancella l'attesa precedente, svuotare il campo o chiudere annulla la richiesta */
+  const attesa = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inVolo = useRef<AbortController | null>(null);
+  const annulla = () => {
+    if (attesa.current) { clearTimeout(attesa.current); attesa.current = null; }
+    if (inVolo.current) { inVolo.current.abort(); inVolo.current = null; }
+    turno.current++;
+  };
+  useEffect(() => annulla, []);
 
   useEffect(() => {
     const fuori = (e: MouseEvent) => {
@@ -54,26 +68,35 @@ export default function AddressSearch({
     return () => removeEventListener("mousedown", fuori);
   }, []);
 
-  const chiudi = () => { setVie({ vie: [] }); setRemoti(null); setAttivo(-1); };
+  const chiudi = () => { annulla(); setVie({ vie: [] }); setRemoti(null); setAttivo(-1); };
 
   function digita(v: string) {
     setQ(v); setRemoti(null); setNota(null); setAttivo(-1);
+    annulla();
     if (v.trim().length < 2) { setVie({ vie: [] }); return; }
-    const mio = ++turno.current;
-    const t = setTimeout(async () => {
+    const mio = turno.current;
+    attesa.current = setTimeout(async () => {
+      attesa.current = null;
+      const ctrl = new AbortController(); inVolo.current = ctrl;
       try {
-        const r: Risposta = await fetch(`/api/vie?q=${encodeURIComponent(v)}`).then((x) => x.json());
+        const r: Risposta = await fetch(`/api/vie?q=${encodeURIComponent(v)}`, { signal: ctrl.signal }).then((x) => x.json());
         if (turno.current === mio) setVie(r.vie ? r : { vie: [] });
-      } catch { /* i suggerimenti sono un di più: se cadono, si cerca lo stesso */ }
+      } catch { /* i suggerimenti sono un di più: se cadono o vengono annullati, si cerca lo stesso */ }
+      finally { if (inVolo.current === ctrl) inVolo.current = null; }
     }, 130);
-    return () => clearTimeout(t);
   }
 
   async function conferma(testo = q) {
     if (cerco) return;
-    /* Meglio riportare il fuoco nel campo che presentare una CTA spenta:
-       un bottone disabilitato all'arrivo si legge come sito rotto. */
-    if (testo.trim().length < 3) { campo.current?.focus(); return; }
+    /* Meglio una riga che spiega e il fuoco nel campo che una CTA spenta:
+       un bottone disabilitato all'arrivo si legge come sito rotto, e il solo
+       spostamento del fuoco non si capisce. */
+    if (testo.trim().length < 3) {
+      setNota(testo.trim() ? "Scrivi almeno la via: ad esempio «Via Savona 35»." : "Scrivi via e numero civico, ad esempio «Via Savona 35», poi premi il bottone.");
+      campo.current?.focus();
+      return;
+    }
+    annulla();
     setCerco(true); setVie({ vie: [] }); setNota(null); setAttivo(-1);
     try {
       const r = await fetch(`/api/geocode?q=${encodeURIComponent(testo)}`).then((x) => x.json());
@@ -142,31 +165,40 @@ export default function AddressSearch({
     else if (e.key === "Escape") chiudi();
   }
 
+  const idLista = `${id}-suggerimenti`, idNota = `${id}-nota`;
+  const aperta = righe.length > 0;
+
   return (
     <div className="v-address" ref={box}>
+      {etichetta && <label className="v-field__lbl" htmlFor={id} style={{ display: "block", marginBottom: "var(--s-3)" }}>{etichetta}</label>}
       <div className="v-address__field">
         <input
+          id={id}
           ref={campo}
           value={q}
           onChange={(e) => digita(e.target.value)}
           onKeyDown={tasto}
           placeholder="Via Savona 35, Milano"
-          aria-label="Indirizzo dell'immobile"
+          aria-label={etichetta ? undefined : "Indirizzo dell'immobile"}
+          role="combobox" aria-autocomplete="list" aria-haspopup="listbox"
+          aria-expanded={aperta} aria-controls={aperta ? idLista : undefined}
+          aria-activedescendant={aperta && attivo >= 0 ? `${idLista}-${attivo}` : undefined}
+          aria-describedby={nota ? idNota : undefined} aria-invalid={nota ? true : undefined}
           autoComplete="off" autoCorrect="off" spellCheck={false}
           autoFocus={autoFocus}
           enterKeyHint="search"
         />
-        <button className="v-btn v-btn--accent v-address__go" onClick={() => conferma()} disabled={cerco}>
+        <button type="button" className="v-btn v-btn--accent v-address__go" onClick={() => conferma()} disabled={cerco}>
           {cerco ? "Cerco…" : azione}
         </button>
       </div>
 
-      {righe.length > 0 && (
-        <div className="v-suggest" role="listbox">
-          <div className="v-suggest__head">{titolo}</div>
+      {aperta && (
+        <div className="v-suggest" role="listbox" id={idLista} aria-label={titolo}>
+          <div className="v-suggest__head" aria-hidden="true">{titolo}</div>
           {righe.map((c, n) => (
-            <button key={c.etichetta + c.zona + n} role="option" aria-selected={n === attivo}
-                    data-active={n === attivo} onClick={c.scegli}>
+            <button key={c.etichetta + c.zona + n} type="button" role="option" id={`${idLista}-${n}`} aria-selected={n === attivo}
+                    tabIndex={-1} data-active={n === attivo} onClick={c.scegli}>
               <span className="v-suggest__name">
                 <b>{c.etichetta}</b>
                 <small>{c.nota ? `${c.descrizione} · ${c.nota}` : c.descrizione}</small>
@@ -180,7 +212,7 @@ export default function AddressSearch({
         </div>
       )}
 
-      {nota && <p className="v-small v-address__note">{nota}</p>}
+      {nota && <p className="v-small v-address__note" id={idNota} role="status">{nota}</p>}
     </div>
   );
 }

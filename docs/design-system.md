@@ -23,6 +23,18 @@ componente disegna da sé — un canvas, un SVG generato — i colori si leggono
 token con `getComputedStyle`, non si scelgono con un booleano chiaro/scuro.
 `Mappa.tsx` è l'esempio.
 
+## Il marchio
+
+La finestra ad arco con il montante centrale, in verde `--accent`, e la scritta «Valmiro» in
+Fraunces al taglio display (`opsz 144`, `SOFT 0`, `WONK 0`, peso 500): la scritta del marchio
+non ha la voce dei titoli, perché deve restare uguale al file vettoriale in `public/logo/`.
+Nel sito il marchio è il componente `Logo` (`src/components/sistema/Logo.tsx`): simbolo SVG
+inline che eredita il colore, scritta come testo. Nell'intestazione è un link alla home con
+nome accessibile; nel footer è un'immagine. Le versioni per stampa e social, la costruzione e
+la licenza del carattere sono in `public/logo/README.md`. Favicon e icona iOS stanno in
+`src/app/` (`icon.svg`, `icon.png`, `favicon.ico`, `apple-icon.png`); sotto i 48 px il
+tratto è più spesso e il montante tocca l'arco, unica semplificazione.
+
 ## Token — `src/styles/tokens.css`
 
 È l'unica fonte di verità. Se un colore, uno spazio, un raggio o una durata non
@@ -34,8 +46,8 @@ esiste lì, prima si aggiunge lì. Nessun valore letterale nei componenti.
 - **Accento** uno solo, verde profondo `--accent`. Usato con parsimonia: un bottone,
   una barra, un perno. Se compare tre volte in una schermata, ne bastava una.
 - **Tipografia**: due voci. **Fraunces** (`--font-editorial`, con la voce
-  `--voce-editorial`: SOFT 60, WONK 1) è il marchio e i titoli — `v-brand`,
-  `v-display`, `v-h1`, `v-h2`, `v-statement` — a peso 500, tracking
+  `--voce-editorial`: SOFT 60, WONK 1) è la voce dei titoli — `v-display`, `v-h1`,
+  `v-h2`, `v-statement` — a peso 500, tracking
   `--track-serif`. Il sans di sistema (`--font-display`, `--font-ui`) è tutto il
   resto, e **sempre i numeri**: una cifra si legge tabulare, non si ammira in
   serif. Fraunces viaggia con il repo (`@fontsource-variable/fraunces`, OFL,
@@ -54,13 +66,13 @@ esiste lì, prima si aggiunge lì. Nessun valore letterale nei componenti.
 | `Header` | header sticky, si posa su vetro allo scroll |
 | `AddressSearch` | campo indirizzo: dizionario locale mentre si scrive, geocoder alla conferma |
 | `HomeSearch` | porta la scelta nel flusso via URL |
-| `PropertyVisual` | composizione architettonica disegnata; `src` per passare a foto vere |
+| `Logo` | il marchio: simbolo inline + scritta; link alla home nell'header |
+| `ZoneList` | le 42 zone con ricerca per nome o codice |
 | `ValuationReveal` | transizione a fasi legate al lavoro reale |
 | `NumeroAnimato` | conteggio con easing, riparte dal valore precedente |
 | `MarketRange` | posizione dentro la forbice OMI della zona |
 | `FactorExplanation` | le voci di `stima.dettaglio`, in colonna |
 | `RenovationSelector` | scenari di ristrutturazione, cifre dal motore |
-| `BeforeAfter` | confronto trascinabile, pronto per le immagini vere |
 | `Reveal` | comparsa allo scroll, disattivabile |
 
 ## Regole di composizione

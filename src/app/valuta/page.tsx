@@ -771,6 +771,9 @@ function Risultato({
 }) {
   /* Nella riga breve stanno i campi che spostano davvero il valore; se sono tutti dichiarati,
      si mostrano comunque i primi rimasti invece di una frase vaga. L'elenco intero sta nel dettaglio. */
+  /* Stime salvate in un modulo che non registrava la provenienza: non e' un avviso, e' una
+     mezza riga dentro la nota della data. Non cambia i numeri, e non c'e' niente da fare. */
+  const origineIgnota = !input.provenienza || !!input.origineDatiParziale;
   const usate = stima.ipotesiUsate ?? [];
   const materiali = usate.filter((x) => /^(stato conservativo|piano|ascensore):/.test(x));
   const ipotesiInVista = materiali.length ? materiali : usate.slice(0, 3);
@@ -810,7 +813,8 @@ function Risultato({
         {riaperta && (
           <p className="v-note" style={{ marginTop: "var(--s-4)" }}>
             Stima salvata il <b>{new Date(riaperta).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</b>: i numeri e le quotazioni
-            sono quelli di allora, gli avvisi pure. {onRicalcola && <button type="button" className="v-link" onClick={onRicalcola}>Ricalcola con i dati di oggi</button>}
+            sono quelli di allora, gli avvisi pure{origineIgnota ? ", e di quali dati venissero dall'annuncio non è rimasta traccia" : ""}.
+            {onRicalcola && <button type="button" className="v-link" onClick={onRicalcola}>Ricalcola con i dati di oggi</button>}
             {onRicalcola ? " — crea una stima nuova, questa resta." : ""}
           </p>
         )}
@@ -831,12 +835,6 @@ function Risultato({
         <p className="v-small" style={{ marginTop: "var(--s-3)" }}>
           Zona OMI <b>{input.zona}</b> · {zonaDesc} · quotazioni {stima.semestre}
         </p>
-        {(!input.provenienza || input.origineDatiParziale) && (
-          <p className="v-note" role="note" style={{ marginTop: "var(--s-4)" }}>
-            <b>Origine dei dati non registrata.</b> Questa stima viene da un modulo che non teneva traccia di quali
-            caratteristiche fossero dichiarate e quali predefinite.
-          </p>
-        )}
         {!!ipotesiInVista.length && (
           <div className="v-note" role="note" style={{ marginTop: "var(--s-4)" }}>
             <p style={{ margin: 0 }}>

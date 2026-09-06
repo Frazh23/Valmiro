@@ -226,11 +226,12 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
   background-size: cover; background-position: 85% 50%;
   /* La dissolvenza e' una maschera, non un velo sopra: la carta resta carta.
      Due gradienti intersecati: da sinistra, perche' il testo stia sul panna;
-     un filo dall'alto, perche' la barra di navigazione si legga sulla foto. */
+     dall'alto un filo, perche' la barra di navigazione si legga sulla foto; e in
+     basso, perche' la fotografia finisca nella carta invece che con un taglio. */
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22%),
-                      linear-gradient(to bottom, rgba(0,0,0,.3) 0, #000 20%);
+                      linear-gradient(to bottom, rgba(0,0,0,.35) 0, #000 18%, #000 72%, transparent 100%);
           mask-image: linear-gradient(to right, transparent 0, #000 22%),
-                      linear-gradient(to bottom, rgba(0,0,0,.3) 0, #000 20%);
+                      linear-gradient(to bottom, rgba(0,0,0,.35) 0, #000 18%, #000 72%, transparent 100%);
   -webkit-mask-composite: source-in;
           mask-composite: intersect;
 }
@@ -251,8 +252,8 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
     order: 2; position: relative; display: block; width: 100%; height: auto;
     aspect-ratio: 3 / 2;
     margin-top: var(--s-7);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
-            mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 76%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 76%, transparent 100%);
     -webkit-mask-composite: source-over; mask-composite: add;
   }
   /* sul telefono il riquadro e' 3:2 come l'originale: si vede l'immagine intera */

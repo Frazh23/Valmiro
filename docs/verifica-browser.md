@@ -24,3 +24,28 @@ comparire; se manca, il deploy non è finito.
    capitoli lavori e affitto, `/stime` con l'avvertenza.
 5. **Vendo con box a 40.000.** Tre righe: abitazione, box, totale, ciascuna con il proprio
    valore.
+
+6. **Intestazione stretta.** A 320 e 390 px di larghezza: marchio (a 320 il solo simbolo),
+   «Valuta» e il bottone «Menu». Nessuno scorrimento orizzontale della pagina. «Menu» apre
+   Valuta, Quartieri, Le mie stime e Accedi in un pannello sotto la barra; si chiude con Esc,
+   toccando fuori e cambiando pagina. Il marchio porta alla home.
+7. **Ingresso da chi compra.** In home «Voglio comprare» fa comparire «Incolla il testo
+   dell'annuncio»: il link porta a `/valuta` con il campo di testo già a fuoco. «Valuta ora»
+   con il campo vuoto scrive «Scrivi via e numero civico…» invece di non fare niente.
+8. **Risultato.** Titolo «La valutazione della casa», indirizzo con «Modifica i dati» accanto,
+   poi valore, intervallo e limiti. Comprare/vendere sta sotto la riga di separazione, accanto
+   all'indice Valore · Lavori · Affitto · Quartiere · Fonti (i link portano alle sezioni).
+   L'affitto a notte è chiuso finché non lo si apre. Con il prezzo dentro l'intervallo il testo
+   è «Il prezzo richiesto rientra nell'intervallo stimato». In fondo, «Come calcoliamo la
+   stima» porta a `/metodo`.
+9. **Ristrutturazione a 320 px.** I quattro scenari (Oggi, Essenziale, Completa, Design) sono
+   tutti visibili su due righe, senza scorrimento. «Da pagare per i lavori · oggi» e «Recupero
+   fiscale · negli anni, non oggi» sono due blocchi distinti. Ogni intervento è una riga con
+   nome, stato e costo, che si apre solo se la si tocca; «Già fatto» e «Non lo faccio» restano
+   due scelte diverse.
+10. **Stime salvate.** Da telefono, «Le mie stime» è nel menu. Ogni scheda ha intento e data,
+    valore, intervallo, €/mq e gli avvisi di simulazione. «Apri stima» riapre dati e risultato
+    di allora con la nota della data e il comando «Ricalcola con i dati di oggi» (che crea una
+    stima nuova, non sostituisce). «Elimina» è secondario e per sette secondi si annulla.
+11. **Quartieri.** Il campo di ricerca filtra per nome di zona e per codice OMI (per esempio
+    «D10» o «isola»); il conteggio dei risultati si aggiorna.

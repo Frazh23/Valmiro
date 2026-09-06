@@ -74,7 +74,7 @@ export default function Home() {
         <section className="v-wrap v-section">
           <Reveal>
             <p className="v-statement">
-              Non una media presa da un annuncio. Una stima che ti dice <em>da dove esce ogni euro</em>.
+              Dalla parte di chi compra e di chi vende: lo stesso valore, <em>detto per intero</em>.
             </p>
           </Reveal>
         </section>

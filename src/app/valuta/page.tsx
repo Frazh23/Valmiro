@@ -456,7 +456,7 @@ function Valuta() {
                       ? " I metri del terrazzo non erano scritti: se li conosci e non sono già nella superficie, inseriscili qui sotto."
                       : ""}
                     {daConfermare.length > 0 && (
-                      <> <b>Non dice</b>: {daConfermare.map((c) => NOME_CAMPO[c]).join(", ")}{letto.classe ? "" : ", classe energetica"}. Nel modulo
+                      <> <b>Non dice</b>: {daConfermare.map((c) => NOME_CAMPO[c]).join(", ")}. Nel modulo
                       stanno ai valori predefiniti: guardali qui sotto e correggi quelli che conosci.</>
                     )}
                   </p>

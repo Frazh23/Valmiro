@@ -813,7 +813,7 @@ function Risultato({
         {riaperta && (
           <p className="v-note" style={{ marginTop: "var(--s-4)" }}>
             Stima salvata il <b>{new Date(riaperta).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</b>: i numeri e le quotazioni
-            sono quelli di allora, gli avvisi pure{origineIgnota ? ", e di quali dati venissero dall'annuncio non è rimasta traccia" : ""}.
+            sono quelli di allora, gli avvisi pure{origineIgnota ? ", e di quali dati venissero dall'annuncio non è rimasta traccia" : ""}.{" "}
             {onRicalcola && <button type="button" className="v-link" onClick={onRicalcola}>Ricalcola con i dati di oggi</button>}
             {onRicalcola ? " — crea una stima nuova, questa resta." : ""}
           </p>

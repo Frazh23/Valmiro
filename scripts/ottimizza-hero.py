@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Copie web delle fotografie della home: WebP e AVIF, tre larghezze, mai piu' grandi
-dell'originale. Gli originali restano dove sono: qui si scrive solo in public/hero."""
+dell'originale. Gli originali restano dove sono: qui si scrive solo in public/hero.
+Qualita' alta apposta: fregi e ferro battuto sono dettaglio fine, e a valori piu' bassi
+la pietra si impasta."""
 import os, sys
 from PIL import Image
 
 SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "hero")
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public", "hero")
 FILE = [
-    ("02-cortile-milanese.png", "cortile"),
     ("01-balconi-liberty.png", "balconi"),
-    ("03-ingresso-ferro-vetro.png", "ferro-vetro"),
-    ("04-ingresso-pietra-bronzo.png", "pietra-bronzo"),
+    ("02-ingresso-monumentale.png", "ingresso"),
+    ("03-finestra-decorata.png", "finestra"),
+    ("04-cortile-logge.png", "cortile"),
 ]
 LARGHEZZE = [768, 1152, 1536]
 
@@ -24,7 +26,7 @@ for nome, slug in FILE:
             continue
         h = round(H * w / W)
         r = im.resize((w, h), Image.LANCZOS)
-        for ext, kw in (("webp", dict(quality=74, method=6)), ("avif", dict(quality=52))):
+        for ext, kw in (("webp", dict(quality=82, method=6)), ("avif", dict(quality=66))):
             p = os.path.join(OUT, f"{slug}-{w}.{ext}")
             r.save(p, **kw)
             righe.append((os.path.basename(p), f"{w}x{h}", os.path.getsize(p) // 1024))

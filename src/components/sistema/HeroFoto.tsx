@@ -8,8 +8,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * per questo sono decorative (alt vuoto, nessun annuncio ai lettori di schermo) e
  * non portano nessuna informazione sulla valutazione.
  *
- * Su schermo largo scorrono: cortile, balconi, ingresso in ferro e vetro, ingresso
- * in pietra e bronzo. Otto secondi ciascuna, un secondo di dissolvenza, nessuno
+ * Su schermo largo scorrono: balconi Liberty, ingresso monumentale, finestra
+ * decorata, cortile con logge. Otto secondi ciascuna, un secondo di dissolvenza, nessuno
  * zoom e nessuno spostamento: titolo, campo indirizzo e marchio non si muovono,
  * perche' le foto vivono in un livello sotto e cambiano solo di opacita'.
  *
@@ -17,17 +17,22 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * scheda non e' visibile, quando la sezione esce dallo schermo e quando qualcuno
  * sta scrivendo nel modulo — cosi' non si muove niente mentre si guarda altro o si
  * compila. Con «riduci le animazioni» resta una sola immagine, ferma. Su telefono
- * resta il cortile, e gli altri file non partono nemmeno: il DOM iniziale ne
+ * resta la prima, e gli altri file non partono nemmeno: il DOM iniziale ne
  * contiene una sola.
  */
 
 export type Foto = { slug: string; nome: string; pos: string };
 
+/* Il punto focale di ogni fotografia e' scelto a mano: nel riquadro alto del
+   desktop il ritaglio e' orizzontale, e la sfumatura mangia la parte sinistra.
+   Le percentuali portano il soggetto — balcone, arco, bifora, loggiato — dentro
+   la zona che resta piena. Su telefono il riquadro e' 3:2 come l'originale:
+   nessun ritaglio, e il punto focale non serve. */
 export const FOTO: Foto[] = [
-  { slug: "cortile", nome: "Cortile milanese con le piante", pos: "56% 50%" },
-  { slug: "balconi", nome: "Balconi Liberty in ferro battuto", pos: "64% 50%" },
-  { slug: "ferro-vetro", nome: "Ingresso ad arco in ferro e vetro", pos: "60% 50%" },
-  { slug: "pietra-bronzo", nome: "Ingresso in pietra e bronzo", pos: "62% 50%" },
+  { slug: "balconi", nome: "Balconi Liberty in ferro battuto e pietra scolpita", pos: "85% 50%" },
+  { slug: "ingresso", nome: "Ingresso monumentale ad arco, con cancello in ferro", pos: "28% 50%" },
+  { slug: "finestra", nome: "Finestra decorata con mascherone e balconcino", pos: "15% 50%" },
+  { slug: "cortile", nome: "Cortile con logge e colonne", pos: "22% 50%" },
 ];
 
 const DURATA = 8000; /* quanto resta ferma un'immagine */
@@ -126,7 +131,7 @@ export default function HeroFoto() {
     return () => clearTimeout(t);
   }, [tante, fermo, attiva, buone.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* su telefono, o con le animazioni ridotte, c'e' solo il cortile: l'indice torna a zero,
+  /* su telefono, o con le animazioni ridotte, c'e' solo la prima: l'indice torna a zero,
      altrimenti dopo un ridimensionamento resterebbe acceso uno scatto che non e' piu' nel DOM */
   const indice = tante ? attiva : 0;
   const mostra = tante ? FOTO : FOTO.slice(0, 1);

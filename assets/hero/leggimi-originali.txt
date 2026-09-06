@@ -1,0 +1,6 @@
+Immagini generate con lo strumento integrato OpenAI, ispirate all’architettura milanese; non documentano immobili reali. Le prime due sono approvate; le altre due sono nuove proposte. Originali senza ingrandimento artificiale.
+
+01-balconi-liberty.png: 1536 × 1024 px
+02-ingresso-monumentale.png: 1536 × 1024 px
+03-finestra-decorata.png: 1536 × 1024 px
+04-cortile-logge.png: 1536 × 1024 px

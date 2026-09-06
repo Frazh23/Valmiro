@@ -204,7 +204,11 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
      appoggiata sopra (e' trasparente finche' non si scorre): l'hero risale di
      un'altezza di barra e prende quasi tutto lo schermo. */
   margin-top: -68px;
-  min-height: min(100dvh, 960px);
+  /* L'altezza e' anche una scelta di qualita': le fotografie sono 1536x1024, e in
+     un riquadro alto «cover» le ingrandisce. A 700 px il ritaglio e' solo
+     orizzontale — verticalmente si vede l'immagine intera — e su schermo Retina
+     l'ingrandimento resta intorno a 1,4x invece di 1,9x. */
+  min-height: min(88dvh, 700px);
   display: flex; align-items: center;
   padding-block: calc(68px + clamp(24px, 4vw, 56px)) clamp(40px, 6vw, 80px);
 }
@@ -216,16 +220,16 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 .v-hero__foto {
   position: absolute; top: 0; right: 0; bottom: 0; z-index: 0;
   width: 60%; height: 100%;
-  /* un'anteprima da 144 byte del cortile, sfocata, sotto le fotografie: nel mezzo
-     secondo prima che la prima immagine arrivi non c'e' un buco di carta */
-  background-image: url("data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAABQBQCdASogABUAPt1gqEyopaQiMAgBEBuJYwCdOUFUQBRXsaZ0U5dtRNXpj7XRDH+iggAA/tlZ6jtMR2OuQqrKtonTw7+ey7KBk7lArIHxkV4cPigA6bx5bcx+6E6Vtbs3poQkBjULU6IfddjqjUT/KqtfyLXcZA4Um/AA");
-  background-size: cover; background-position: 56% 50%;
+  /* un'anteprima sfocata della prima fotografia, sotto le altre: nel mezzo secondo
+     prima che l'immagine vera arrivi non c'e' un buco di carta */
+  background-image: url("data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAADQBACdASogABUAPtFYpkyoJSOiMAwBABoJZwC/OBanF/d/nAYyp18VlAgpcOYKogD90Sem/m4xNmabjf79bZDE1dpoSbf8l1Gq7bGAf4WHISzgHMUBpAtqB5hIIyg09nNXkLoft7TNX3RiPZjTUIHI8jlpJ5JlwW4nwnvliUP+gAAA");
+  background-size: cover; background-position: 85% 50%;
   /* La dissolvenza e' una maschera, non un velo sopra: la carta resta carta.
      Due gradienti intersecati: da sinistra, perche' il testo stia sul panna;
      un filo dall'alto, perche' la barra di navigazione si legga sulla foto. */
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 26%),
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22%),
                       linear-gradient(to bottom, rgba(0,0,0,.3) 0, #000 20%);
-          mask-image: linear-gradient(to right, transparent 0, #000 26%),
+          mask-image: linear-gradient(to right, transparent 0, #000 22%),
                       linear-gradient(to bottom, rgba(0,0,0,.3) 0, #000 20%);
   -webkit-mask-composite: source-in;
           mask-composite: intersect;
@@ -251,9 +255,9 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
             mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
     -webkit-mask-composite: source-over; mask-composite: add;
   }
-  /* sul telefono il cortile si guarda intero: nessun ritaglio verso destra */
-  .v-hero__scatto img { object-position: 50% 55%; }
-  .v-hero__foto { background-position: 50% 55%; }
+  /* sul telefono il riquadro e' 3:2 come l'originale: si vede l'immagine intera */
+  .v-hero__scatto img { object-position: 50% 50%; }
+  .v-hero__foto { background-position: 50% 50%; }
 }
 
 /* ---------- campo indirizzo ---------- */

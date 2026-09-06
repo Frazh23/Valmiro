@@ -755,3 +755,20 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 .v-annulla { display: flex; justify-content: space-between; align-items: center; gap: var(--s-4); margin-top: var(--s-5); }
 .v-card--vuota { margin-top: var(--s-7); display: grid; gap: var(--s-4); justify-items: start; }
 @media (max-width: 560px) { .v-scheda { padding: var(--s-4) var(--s-5); } .v-scheda__valore { text-align: left; } }
+
+/* ---------- gestionale: i numeri del sito ---------- */
+.v-dati { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--s-5) var(--s-6); margin-top: var(--s-5); }
+.v-dato { border-top: 1px solid var(--line); padding-top: var(--s-3); }
+.v-dato__n {
+  font-family: var(--font-display); font-size: clamp(1.75rem, 3.4vw, 2.25rem); font-weight: 600;
+  letter-spacing: var(--track-h); line-height: 1.05; margin: var(--s-2) 0 var(--s-1);
+  font-variant-numeric: tabular-nums;
+}
+/* otto colonne: serve la direzione, non il decimale */
+.v-settimane { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s-2); margin-top: var(--s-5); }
+.v-settimana { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.v-settimana__spazio { display: flex; align-items: flex-end; height: 120px; width: 100%; }
+.v-settimana__barra { width: 100%; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); border-radius: var(--r-sm) var(--r-sm) 0 0; }
+.v-settimana__n { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.v-settimana__data { color: var(--ink-ghost); }
+@media (max-width: 560px) { .v-settimana__data { display: none; } }

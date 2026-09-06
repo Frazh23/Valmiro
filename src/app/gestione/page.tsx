@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { notFound } from "next/navigation";
 import Header from "@/components/sistema/Header";
 import Logo from "@/components/sistema/Logo";
 import { useSessione } from "@/lib/sessione";
@@ -16,6 +16,10 @@ import { FONTE } from "@/lib/data";
  * una riga, mai un indirizzo, mai un'email. Per questo la pagina non ha bisogno di
  * nessuna chiave privilegiata: parla con Supabase come l'utente collegato, e se non e'
  * autorizzato e' il database a dire di no.
+ *
+ * Per chiunque non sia amministratore — compreso chi non e' collegato — questa pagina
+ * **non esiste**: risponde 404 come un indirizzo sbagliato. Non un «non hai accesso»,
+ * che direbbe comunque che qui c'e' qualcosa. Per entrare: prima /accedi, poi /gestione.
  *
  * Qui c'e' solo cio' che il database sa davvero. I visitatori non li contiamo, e le
  * stime fatte senza account restano nel browser di chi le fa: non arrivano mai qui.
@@ -68,43 +72,15 @@ export default function Gestione() {
     </>
   );
 
-  if (!accountAttivo || (pronto && !utente)) return (
-    <Pagina>
-      {testa}
-      <p className="v-lead v-measure" style={{ marginTop: "var(--s-5)" }}>
-        Questa pagina è per chi tiene il sito. Entra con il tuo account per vederla.
-      </p>
-      <div className="v-actions" style={{ marginTop: "var(--s-6)" }}>
-        <Link className="v-btn v-btn--accent" href="/accedi">Entra</Link>
-      </div>
-    </Pagina>
-  );
+  /* Non amministratore, o non collegato: la pagina non esiste. Stessa risposta per
+     tutti, cosi' non si capisce nemmeno che ci sia qualcosa da cercare. */
+  if (!accountAttivo || (pronto && !utente) || stato === "vietato" || stato === "errore") notFound();
 
-  if (stato === "vietato") return (
-    <Pagina>
-      {testa}
-      <p className="v-lead v-measure" style={{ marginTop: "var(--s-5)" }}>
-        Il tuo account non è fra gli amministratori, e il database non risponde a nessun altro.
-        Non c&apos;è niente da vedere qui.
-      </p>
-      <div className="v-actions" style={{ marginTop: "var(--s-6)" }}>
-        <Link className="v-btn v-btn--quiet" href="/">Torna alla home</Link>
-      </div>
-    </Pagina>
-  );
+  /* Finche' la sessione e la risposta del database non ci sono, niente: meglio una
+     pagina vuota per un istante che un lampo di gestionale a chi non deve vederlo. */
+  if (!pronto || stato === "attendo") return <Pagina>{null}</Pagina>;
 
-  if (stato === "errore") return (
-    <Pagina>
-      {testa}
-      <p className="v-note" style={{ marginTop: "var(--s-5)" }}>
-        I numeri non sono arrivati. Se la funzione <code>metriche_gestione</code> non è ancora
-        installata, la trovi in <code>db/006_gestione.sql</code>: le istruzioni sono in{" "}
-        <code>docs/gestione.md</code>.
-      </p>
-    </Pagina>
-  );
-
-  if (!m) return <Pagina>{testa}<p className="v-lead" style={{ marginTop: "var(--s-5)" }}>Un momento…</p></Pagina>;
+  if (!m) return <Pagina>{null}</Pagina>;
 
   const picco = Math.max(1, ...m.settimane.map((s) => s.n));
   const perAccount = m.stime.conAccount ? m.stime.totale / m.stime.conAccount : 0;

@@ -4,6 +4,13 @@
 zone più valutate, otto settimane di andamento. Non è linkata da nessuna parte e non
 finisce nei motori di ricerca: ci si arriva scrivendo l'indirizzo.
 
+**Per chiunque altro la pagina non esiste.** Chi non è amministratore — compreso chi non è
+collegato, e chiunque provi l'indirizzo a caso — riceve un 404, non un «non hai accesso»:
+quello direbbe comunque che qui c'è qualcosa. Quindi: prima `/accedi`, poi `/gestione`.
+
+Se sei amministratore e vedi 404, in ordine di probabilità: non sei collegato con quell'account,
+la funzione `metriche_gestione` non è ancora installata, oppure la sessione è scaduta.
+
 ## Perché non serve nessuna chiave nuova
 
 La pagina non ha un endpoint privilegiato dietro. Chiama una sola funzione del database,

@@ -65,3 +65,9 @@ valore centrale.
 | File | Origine | Stato |
 |---|---|---|
 | `2026-09-05-vendite-fz.csv` | 201 vendite (da 300 annunci: 90 affitti e 8 duplicati esclusi) raccolte da Francesco il 5/9/2026 facendo cercare gli annunci a un'IA con navigazione, con classe energetica dichiarata e URL di fonte; convertite in questo formato con zona OMI risolta dal civico (147) o dalla via (42) o dal quartiere (12). | **Verificato a campione**: 12 righe riaperte a mano, prezzi e metri confermati in 12/12 (2 da copia indicizzata), 2 correzioni di stato applicate. Due casi atipici veri e tenuti: micro-suite da 21 m² a 380.000 €, loft su tre livelli. Il segmento "Lusso" (77 righe: etichetta del portale, non categoria catastale) è sistematicamente sottostimato dal modello a zone (+14% in mediana, dispersione 19%) e va letto a parte. **È il lotto su cui è stata fatta la taratura del 5/9/2026.** |
+
+## Da dove vengono i lotti
+
+Gli export come sono usciti dalla raccolta stanno in `grezzi/`, con il loro README: è lì che si
+guarda quando un campo non torna, ed è lì che aspettano i 100 annunci nuovi che non sono ancora
+un lotto (candidati al campione di verifica indipendente).

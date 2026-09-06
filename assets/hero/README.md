@@ -16,3 +16,5 @@ cartella sta fuori da `public/`. Le copie per il sito stanno in `public/hero/`, 
 `scripts/ottimizza-hero.py (Pillow: `pip install pillow pillow-avif-plugin`)`.
 
 `brief-originale.txt` è la richiesta con cui sono state integrate, tenuta per memoria.
+
+Le fotografie precedenti della home stanno in `archivio/`.

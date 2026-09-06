@@ -216,6 +216,10 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 .v-hero__foto {
   position: absolute; top: 0; right: 0; bottom: 0; z-index: 0;
   width: 60%; height: 100%;
+  /* un'anteprima da 144 byte del cortile, sfocata, sotto le fotografie: nel mezzo
+     secondo prima che la prima immagine arrivi non c'e' un buco di carta */
+  background-image: url("data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAABQBQCdASogABUAPt1gqEyopaQiMAgBEBuJYwCdOUFUQBRXsaZ0U5dtRNXpj7XRDH+iggAA/tlZ6jtMR2OuQqrKtonTw7+ey7KBk7lArIHxkV4cPigA6bx5bcx+6E6Vtbs3poQkBjULU6IfddjqjUT/KqtfyLXcZA4Um/AA");
+  background-size: cover; background-position: 56% 50%;
   /* La dissolvenza e' una maschera, non un velo sopra: la carta resta carta.
      Due gradienti intersecati: da sinistra, perche' il testo stia sul panna;
      un filo dall'alto, perche' la barra di navigazione si legga sulla foto. */
@@ -249,6 +253,7 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
   }
   /* sul telefono il cortile si guarda intero: nessun ritaglio verso destra */
   .v-hero__scatto img { object-position: 50% 55%; }
+  .v-hero__foto { background-position: 50% 55%; }
 }
 
 /* ---------- campo indirizzo ---------- */

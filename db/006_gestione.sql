@@ -68,18 +68,19 @@ begin
       ) t
     ), '[]'::jsonb),
 
-    -- otto settimane di stime salvate: serve la direzione, non il decimale
+    -- otto settimane di stime salvate: serve la direzione, non il decimale.
+    -- Il raggruppamento e la colonna devono essere la *stessa* espressione: se una
+    -- delle due porta un cast in piu' ( ::date ), Postgres non le riconosce uguali
+    -- e rifiuta la query con 42803. Qui si raggruppa una volta sola, in una CTE.
     'settimane', coalesce((
-      select jsonb_agg(riga order by giorno) from (
-        select date_trunc('week', creata_il)::date as giorno,
-               jsonb_build_object(
-                 'dal', to_char(date_trunc('week', creata_il), 'YYYY-MM-DD'),
-                 'n', count(*)
-               ) as riga
+      select jsonb_agg(jsonb_build_object('dal', to_char(inizio, 'YYYY-MM-DD'), 'n', quante)
+                       order by inizio)
+      from (
+        select date_trunc('week', creata_il) as inizio, count(*) as quante
         from public.stime
         where creata_il > date_trunc('week', now()) - interval '7 weeks'
-        group by 1 order by 1
-      ) t
+        group by date_trunc('week', creata_il)
+      ) s
     ), '[]'::jsonb)
   ) into esito;
 

@@ -60,7 +60,15 @@ export default function Gestione() {
     const sb = supabase();
     if (!sb) { setStato("errore"); return; }
     sb.rpc("metriche_gestione").then(({ data, error }) => {
-      if (error) { setStato(error.code === "42501" || /non autorizzato/i.test(error.message) ? "vietato" : "errore"); return; }
+      if (error) {
+        const vietato = error.code === "42501" || /non autorizzato/i.test(error.message);
+        // La pagina risponde 404 in ogni caso: non deve dire a nessuno che esiste. Ma un
+        // errore tecnico (funzione non installata, query sbagliata) non e' un rifiuto, e
+        // senza una traccia diventa impossibile da distinguere. La lasciamo in console.
+        if (!vietato) console.warn(`GESTIONE ${error.code || "?"}: ${error.message}`);
+        setStato(vietato ? "vietato" : "errore");
+        return;
+      }
       setM(data as Metriche); setStato("ok");
     });
   }, [pronto, utente]);

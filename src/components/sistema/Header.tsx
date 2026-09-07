@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useSessione } from "@/lib/sessione";
+import { useAmministratore } from "@/lib/amministratore";
 import Logo from "./Logo";
 
 /**
@@ -18,6 +19,7 @@ import Logo from "./Logo";
 export default function Header() {
   const qui = usePathname();
   const { utente, profilo, accountAttivo } = useSessione();
+  const amministratore = useAmministratore(utente?.id);
   const [posato, setPosato] = useState(false);
   const [aperto, setAperto] = useState(false);
   const pannello = useRef<HTMLDivElement>(null);
@@ -52,6 +54,9 @@ export default function Header() {
       <Link href="/valuta" className={attivo("/valuta")}>Valuta</Link>
       <Link href="/quartieri" className={attivo("/quartieri")}>Quartieri</Link>
       <Link href="/stime" className={attivo("/stime")}>Le mie stime</Link>
+      {/* Compare solo a chi il database riconosce come amministratore: per tutti gli
+          altri questa voce non esiste, come la pagina a cui porta. */}
+      {amministratore && <Link href="/gestione" className={attivo("/gestione")}>Gestione</Link>}
       <Link href="/accedi" className={`v-nav__cta ${attivo("/accedi")}`} aria-current={attivo("/accedi") ? "page" : undefined}>{etichettaAccount}</Link>
     </>
   );

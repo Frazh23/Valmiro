@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Header from "@/components/sistema/Header";
 import { supabase, accountAttivo } from "@/lib/supabase";
 import { useSessione, esci } from "@/lib/sessione";
+import { useAmministratore } from "@/lib/amministratore";
 
 type Tipo = "privato" | "agenzia";
 type Modo = "entra" | "registrati" | "recupera" | "nuova";
@@ -36,6 +37,7 @@ function traduci(m: string) {
 
 function Pagina() {
   const { utente, profilo, pronto } = useSessione();
+  const amministratore = useAmministratore(utente?.id);
   const params = useSearchParams();
   const [modo, setModo] = useState<Modo>("entra");
   const [tipo, setTipo] = useState<Tipo>("privato");
@@ -137,6 +139,7 @@ function Pagina() {
         </dl>
         <div className="v-actions">
           <Link className="v-btn v-btn--accent" href="/stime">Le mie stime</Link>
+          {amministratore && <Link className="v-btn v-btn--bare" href="/gestione">Statistiche del sito</Link>}
           <button className="v-btn v-btn--bare" onClick={() => cambia("nuova")}>Cambia password</button>
           <span className="v-spacer" />
           <button className="v-btn v-btn--quiet" onClick={esci}>Esci</button>

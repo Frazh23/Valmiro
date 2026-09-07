@@ -56,3 +56,18 @@ Non ci sono, e la pagina lo dice:
   come un tasso di conversione.
 - **Vendite e abbonamenti**, che non esistono. Quando esisteranno, questa è la pagina
   dove aggiungerli: si estende `metriche_gestione()` e si aggiunge un blocco.
+
+## Il bottone dentro il sito
+
+Da `007_amministratore.sql` esiste anche `sono_amministratore()`: risponde **solo su chi
+la chiama**, true o false, mai un elenco. Serve al sito per far comparire la voce
+«Gestione» nella barra in alto e il bottone «Statistiche del sito» nella pagina
+dell'account soltanto a chi il pannello puo' aprirlo davvero.
+
+Il controllo vero resta dove stava: e' `metriche_gestione()` a rifiutare, e la pagina a
+rispondere 404. Chi forzasse il valore nel proprio browser vedrebbe comparire un bottone
+e riceverebbe comunque un 404. La risposta resta in `sessionStorage` per non richiederla
+a ogni pagina; se la memoria non c'e', si richiede e basta.
+
+Per installarlo: apri `db/007_amministratore.sql`, incolla nell'editor SQL di Supabase,
+Run. Si puo' rieseguire senza rischi.

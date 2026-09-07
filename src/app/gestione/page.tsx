@@ -92,6 +92,7 @@ export default function Gestione() {
 
   const picco = Math.max(1, ...m.settimane.map((s) => s.n));
   const perAccount = m.stime.conAccount ? m.stime.totale / m.stime.conAccount : 0;
+  const senzaIntento = Math.max(0, m.stime.totale - m.stime.compro - m.stime.vendo);
 
   return (
     <Pagina>
@@ -112,7 +113,16 @@ export default function Gestione() {
         <Dato etichetta="In tutto" valore={num(m.stime.totale)} nota={`da ${num(m.stime.conAccount)} account${m.stime.conAccount ? ` · ${num(perAccount, 1)} a testa` : ""}`} />
         <Dato etichetta="Ultimi 30 giorni" valore={num(m.stime.ultimi30)} />
         <Dato etichetta="Ultimi 7 giorni" valore={num(m.stime.ultimi7)} />
-        <Dato etichetta="Chi compra" valore={num(m.stime.compro)} nota={`${num(m.stime.vendo)} chi vende`} />
+        <Dato
+          etichetta="Chi compra"
+          valore={num(m.stime.compro)}
+          nota={
+            // Le stime salvate prima che il modulo chiedesse l'intento non ce l'hanno:
+            // dirlo evita di leggere «0 chi vende» come un fatto sul mercato.
+            `${num(m.stime.vendo)} chi vende` +
+            (senzaIntento > 0 ? ` · ${num(senzaIntento)} senza intento registrato` : "")
+          }
+        />
         <Dato etichetta="Con il prezzo dell&apos;annuncio" valore={num(m.stime.conPrezzo)} nota="il confronto vero" />
         <Dato etichetta="Valore mediano" valore={m.stime.valoreMediano ? `${eur(m.stime.valoreMediano)} €` : "—"} nota={m.stime.mqMediani ? `${num(m.stime.mqMediani)} mq mediani` : undefined} />
       </div>

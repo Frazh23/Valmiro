@@ -71,3 +71,64 @@ a ogni pagina; se la memoria non c'e', si richiede e basta.
 
 Per installarlo: apri `db/007_amministratore.sql`, incolla nell'editor SQL di Supabase,
 Run. Si puo' rieseguire senza rischi.
+
+
+## Visite con consenso (implementazione settembre 2026)
+
+La sezione «Visite al sito» usa `metriche_traffico(p_dal,p_al)` e mantiene invariato
+il rapporto di account/stime. Entrambe le letture controllano l'appartenenza alla
+tabella `amministratori`; la lista verificata prima dell'intervento contiene solo
+l'account di Francesco. La nuova funzione espone esclusivamente aggregati, mai gli
+identificatori delle visite. Logout, cambio identità, ritorno alla scheda e controllo
+ogni 60 secondi invalidano i dati mostrati. La revoca remota è verificata alla lettura
+successiva (entro 60 secondi nella scheda attiva).
+
+Il codice iniziale coincideva con la produzione Vercel: `277dd88`.
+Il lavoro è nel ramo `codex/private-traffic`, separato dalla copia principale.
+
+### Raccolta
+
+`POST /api/visite` accetta soltanto evento UUID, visitatore UUID, sessione UUID,
+pagina ammessa, categoria provenienza, formato dispositivo e `consenso:true`.
+La richiesta è limitata a 1 KB e all'origine APP_ORIGIN; nessun valore libero, URL
+completo, IP, email, account o dato di stima entra nel database analytics.
+La provenienza è ridotta nel browser a diretto/non disponibile, Google, Bing,
+social o altri siti. Il dispositivo è una categoria indicativa basata sulla larghezza.
+Il database mantiene fonte e dispositivo iniziali della sessione e deduplica per UUID
+dell'evento. Limiti condivisi: 600 eventi/minuto totali e 30 per visitatore.
+Le statistiche restano stime, soggette a bot, blocchi e rifiuti: l'origine non prova
+l'identità del mittente. Il rifiuto non invia eventi; la revoca elimina gli identificatori
+locali e interrompe la raccolta. Un identificatore non è riutilizzato dopo 90 giorni.
+La scelta di consenso/rifiuto scade dopo 180 giorni. Nessun collegamento con l'account.
+
+### Attivazione e spegnimento
+
+1. Applicare `supabase/migrations/20260907140308_private_traffic.sql`.
+2. Eseguire `db/traffico-retention.sql` e verificare il job in `cron.job`.
+   La pulizia è oraria, con un margine di un'ora per non superare i 90 giorni.
+3. Configurare **solo lato server** in Vercel `APP_ORIGIN=https://valmiro.it`,
+   `SUPABASE_SERVICE_ROLE_KEY` del progetto corretto e `TRAFFICO_ENABLED=true`.
+   La chiave privilegiata non va mai in un nome NEXT_PUBLIC, nel repository o nei log.
+   Non attivare questi flag per un'anteprima collegata al database di produzione.
+4. Pubblicare il frontend con questi valori; il flag del consenso è passato dal server.
+5. Attivare la raccolta nel database soltanto quando il frontend è verificato:
+   `update private.traffico_stato set attivo=true,iniziato=coalesce(iniziato,now()) where id;`
+6. Fare una visita di prova con consenso e verificarne l'arrivo, mantenendola distinta
+   dalle visite storiche (non importate). Verificare subito anche rifiuto e revoca.
+
+Per spegnere immediatamente: `update private.traffico_stato set attivo=false where id;`.
+Poi impostare `TRAFFICO_ENABLED=false` e ricostruire. Il job di retention deve rimanere
+attivo anche con raccolta spenta. Non azzerare `iniziato`: serve a distinguere lo storico
+reale dai giorni in cui non esisteva raccolta.
+
+### Verifiche
+
+`npm run typecheck`, `npm test`, `npm run build`.
+Test SQL isolato: `PGLITE_MODULE_PATH=/percorso/pglite node tests/traffico-db.mjs`.
+Coprono accessi negati, revoca admin, assenza di dati privati nel rapporto, deduplica,
+visitatori distinti tra giorni, fonte di sessione, periodi invalidi e cancellazione.
+I test HTTP coprono origine, consenso, dimensioni, guasti e non esposizione del segreto.
+La verifica visiva è ancora da completare: il browser dell'assistente ha negato
+l'accesso all'anteprima locale perché il controllo della policy non era disponibile.
+La raccolta nel database è stata predisposta **spenta**; non va dichiarata operativa
+senza verifica dei valori Vercel e della visita di prova.

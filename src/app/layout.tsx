@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ConsensoStatistiche from "@/components/sistema/ConsensoStatistiche";
 import type { Metadata } from "next";
 /* Fraunces, variabile, con tutti gli assi (peso, ottico, SOFT, WONK): e' il
    marchio e i titoli. Il file sta nel repo tramite npm: la build gira senza
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="it">
       <body>
         {children}
+        <ConsensoStatistiche attivo={process.env.TRAFFICO_ENABLED === "true"} />
         {/* Compare solo quando i termini sono davvero pubblicati e il gestore e' configurato:
             finche' /termini risponde 404, un link non deve esistere. Vedi docs/termini-pubblicazione.md. */}
         {process.env.TERMINI_PUBBLICATI === "true" && process.env.GESTORE_NOME && process.env.GESTORE_INDIRIZZO && process.env.GESTORE_EMAIL && (

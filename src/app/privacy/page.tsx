@@ -51,7 +51,7 @@ export default function Privacy() {
           </p>
           <p>
             Le stime che salvi con l&apos;account — indirizzo, caratteristiche e risultato — restano
-            tue: le vedi solo tu, e puoi cancellarle una per una quando vuoi. Non confluiscono nei contatori di utilizzo del sito.
+            tue: le vedi solo tu, e puoi cancellarle una per una quando vuoi. Nel gestionale riservato al titolare compaiono soltanto statistiche aggregate delle stime salvate, senza indirizzi o email.
           </p>
           <p>
             L&apos;email serve a farti entrare, a confermare l&apos;iscrizione e a mandarti il link
@@ -65,7 +65,13 @@ export default function Privacy() {
             per far funzionare Valmiro, secondo gli accordi di servizio e trattamento applicabili. Non usiamo pubblicità.
           </p>
 
-          <h2>Statistiche e diagnostica</h2>
+          <h2>Statistiche delle visite, solo se acconsenti</h2>
+          <p>Puoi scegliere liberamente se consentire la misurazione delle visite. Il rifiuto non limita il servizio. Puoi cambiare scelta o revocarla in qualsiasi momento dal pulsante “Preferenze privacy” in fondo alla pagina, quando la raccolta è attiva.</p>
+          <p>La base della raccolta è il tuo consenso. Con l’accettazione conserviamo nel browser un identificatore casuale per un massimo di 90 giorni e un identificatore di sessione, rinnovato dopo 30 minuti di inattività. La scelta di consenso o rifiuto rimane per sei mesi. Non colleghiamo questi identificatori all’account o alle stime e non usiamo fingerprinting.</p>
+          <p>Registriamo la pagina pubblica visitata, l’ora, il tipo di dispositivo e una categoria di provenienza (per esempio Google o social). Escludiamo pagine personali e amministrative, parametri degli URL, indirizzi degli immobili, email e IP dai dati analytics. I dati sono trattati sull’infrastruttura Vercel e Supabase già usata da Valmiro e cancellati automaticamente entro 90 giorni. I rapporti aggregati sono riservati all’amministratore.</p>
+          <p>La revoca interrompe i nuovi invii e cancella gli identificatori dal browser; i dati già raccolti scadono secondo il termine indicato. La revoca non pregiudica la liceità del trattamento precedente. Puoi esercitare i tuoi diritti contattandoci all’indirizzo sotto.</p>
+          <p>{process.env.TRAFFICO_ENABLED === "true" ? "La raccolta delle visite con consenso è attiva." : "La raccolta delle visite è attualmente disattivata."}</p>
+          <h2>Diagnostica aggregata</h2>
           <p>{process.env.TELEMETRIA_ENABLED === "true"
             ? "Sono attivi contatori giornalieri aggregati dei passaggi e degli errori: tipo di evento, intento comprare/vendere, formato mobile/desktop, componente e versione del sito. Non conserviamo in questi contatori indirizzi, annunci, email, identificativi utente o IP. Non usiamo cookie analitici, fingerprint o registrazioni delle sessioni. I contatori sono conservati per 90 giorni e non misurano utenti unici."
             : "I contatori di utilizzo e diagnostica aggregata sono predisposti ma non attivi."}</p>

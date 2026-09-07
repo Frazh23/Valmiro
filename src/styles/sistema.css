@@ -772,3 +772,24 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 .v-settimana__n { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
 .v-settimana__data { color: var(--ink-ghost); }
 @media (max-width: 560px) { .v-settimana__data { display: none; } }
+
+/* Statistiche riservate e scelta privacy. */
+.v-traffico{margin-top:var(--s-8)}
+.v-traffico-filtri{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin:24px 0}
+.v-traffico-filtri label{display:grid;gap:5px;font-size:14px}
+.v-traffico-filtri button,.v-traffico-filtri input,.v-consenso button,.v-preferenze button{font:inherit;border:1px solid var(--line,#d9d1c4);border-radius:6px;padding:9px 12px;background:transparent;color:inherit;cursor:pointer}
+.v-traffico-filtri button[aria-pressed=true]{background:#1b7162;color:white}
+.v-traffico-filtri>div{display:flex;gap:6px}
+.v-traffico-grafico{height:150px;display:flex;gap:3px;margin:32px 0 44px;align-items:flex-end}
+.v-traffico-grafico>div{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;position:relative;min-width:0}
+.v-traffico-grafico span{display:block;background:#237568;min-height:1px;border-radius:3px 3px 0 0}
+.v-traffico-grafico small{position:absolute;top:100%;font-size:9px;padding-top:6px}
+.v-traffico-tabelle{display:grid;gap:28px;margin:24px 0}
+.v-traffico-tabelle table{width:100%;border-collapse:collapse;text-align:left;font-size:14px}
+.v-traffico-tabelle caption{text-align:left;font-weight:600;font-size:18px;margin-bottom:12px}
+.v-traffico-tabelle th,.v-traffico-tabelle td{padding:10px 0;border-bottom:1px solid var(--line,#d9d1c4);font-weight:400}
+.v-traffico-tabelle td,.v-traffico-tabelle thead th:last-child{text-align:right}
+.v-preferenze{text-align:center;padding:20px;font-size:13px}
+.v-consenso{position:fixed;bottom:16px;left:16px;right:16px;max-width:600px;z-index:100;background:#f5f0e7;color:#1d211d;border:1px solid #d9d1c4;border-radius:12px;padding:24px;box-shadow:0 5px 30px #0002;max-height:85vh;overflow:auto}
+.v-consenso p{font-size:14px;line-height:1.5;margin:12px 0}.v-consenso>div{display:flex;flex-wrap:wrap;gap:10px}.v-consenso button{flex:1;white-space:nowrap}
+@media(max-width:600px){.v-consenso{padding:18px}.v-traffico-grafico small{font-size:8px}.v-traffico-filtri input{max-width:145px}}

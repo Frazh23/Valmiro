@@ -1,0 +1,38 @@
+import {createRequire} from 'node:module';
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const {PGlite}=createRequire(import.meta.url)(process.env.PGLITE_MODULE_PATH||'@electric-sql/pglite');
+const db=new PGlite();
+const admin='7ce52315-6a5a-4738-8994-406014b050a4',other='99999999-9999-4999-8999-999999999999';
+await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$; create table public.amministratori(utente uuid); insert into public.amministratori values('${admin}');`);
+await db.exec(readFileSync(new URL('../supabase/migrations/20260907140308_private_traffic.sql',import.meta.url),'utf8'));
+const range="(now() at time zone 'Europe/Rome')::date-1,(now() at time zone 'Europe/Rome')::date";
+for(const role of ['anon','authenticated']){
+ await db.exec(`set role ${role}`);
+ await assert.rejects(()=>db.query('select * from private.visite'),/permission denied/);
+ await assert.rejects(()=>db.query(`select public.registra_visita(gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),'/','google','telefono')`),/permission denied/);
+ await assert.rejects(()=>db.query(`select public.metriche_traffico(${range})`),/permission denied|non autorizzato/);
+ await db.exec('reset role');
+}
+await db.exec(`update private.traffico_stato set attivo=true,iniziato=now();`);
+const visitor='11111111-1111-4111-8111-111111111111',session='22222222-2222-4222-8222-222222222222',event='33333333-3333-4333-8333-333333333333';
+await db.exec('set role service_role');
+await db.query(`select public.registra_visita('${event}','${visitor}','${session}','/','google','telefono')`);
+await db.query(`select public.registra_visita('${event}','${visitor}','${session}','/','google','telefono')`);
+await db.query(`select public.registra_visita(gen_random_uuid(),'${visitor}','${session}','/valuta','social','computer')`);
+await assert.rejects(()=>db.query(`select public.registra_visita(gen_random_uuid(),'${visitor}','${session}','/gestione','google','telefono')`),/misura non valida/);
+await db.exec('reset role');
+await db.query(`insert into private.visite values(gen_random_uuid(),'${visitor}',gen_random_uuid(),now()-interval '1 day','/','diretto','computer')`);
+await db.exec(`set role authenticated;set request.jwt.claim.sub='${admin}'`);
+let r=(await db.query(`select public.metriche_traffico(${range}) r`)).rows[0].r;
+assert.equal(r.visitatori,1);assert.equal(r.sessioni,2);assert.equal(r.pagineViste,3);assert.equal(r.fonti.find(f=>f.fonte==='google').n,1);assert.ok(!JSON.stringify(r).includes(visitor));
+await assert.rejects(()=>db.query(`select public.metriche_traffico(current_date-100,current_date)`),/periodo non valido/);
+await db.exec(`set request.jwt.claim.sub='${other}'`);
+await assert.rejects(()=>db.query(`select public.metriche_traffico(${range})`),/non autorizzato/);
+await db.exec(`reset role;delete from public.amministratori;set role authenticated;set request.jwt.claim.sub='${admin}'`);
+await assert.rejects(()=>db.query(`select public.metriche_traffico(${range})`),/non autorizzato/);
+await db.exec('reset role');
+await db.query(`insert into private.visite values(gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),now()-interval '91 days','/','diretto','computer')`);
+await db.exec("delete from private.visite where ricevuto<=now()-interval '90 days'");
+assert.equal((await db.query('select count(*) n from private.visite')).rows[0].n,3);
+await db.close();console.log('Traffico SQL: accesso, revoca, deduplica, distinti, fonti e retention OK');

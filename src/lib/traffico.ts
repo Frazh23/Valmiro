@@ -1,7 +1,7 @@
 export const GIORNI = 90;
 export const DURATA_VISITATORE = GIORNI * 86400000;
 export const DURATA_SESSIONE = 30 * 60000;
-export const PAGINE: Record<string, string> = {'/':'Home','/valuta':'Valutazione','/quartieri':'Quartieri','/metodo':'Metodo','/privacy':'Privacy','/termini':'Termini'};
+export const PAGINE: Record<string, string> = {'/':'Home','/valuta':'Valutazione','/quartieri':'Quartieri','/metodo':'Metodo','/privacy':'Privacy','/termini':'Termini','/en':'English','/fr':'Français'};
 export const FONTI = ['diretto','google','bing','social','altro'] as const;
 export type Fonte = typeof FONTI[number];
 export type Dispositivo = 'telefono' | 'tablet' | 'computer';

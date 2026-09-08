@@ -797,3 +797,19 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
  /* Con molti giorni le date sotto le barre si toccherebbero: se ne mostra una ogni cinque. */
  .v-traffico-grafico--fitto small{display:none}
  .v-traffico-grafico--fitto small[data-chiave]{display:block}}
+
+/* Il cambio lingua, in fondo alla pagina: piccolo, sotto il piede, come le
+   preferenze privacy. Chi lo cerca lo trova; a chi e' gia' nella lingua giusta
+   non toglie niente. */
+.v-lingue { text-align: center; padding: 0 20px 20px; font-size: 13px; color: var(--ink-ghost); }
+.v-lingue a { color: var(--ink-soft); }
+.v-lingue b { font-weight: 600; color: var(--ink-soft); }
+.v-lingue i { font-style: normal; color: var(--ink-ghost); }
+
+/* Il glossario dei campi del modulo, sulle pagine in inglese e in francese:
+   una parola italiana e la sua spiegazione. Non e' .v-facts, che e' fatta per
+   valori brevi e grossi: qui le definizioni sono frasi. */
+.v-glossario { display: grid; gap: var(--s-4); margin: var(--s-5) 0 0; }
+.v-glossario > div { display: grid; gap: 2px; }
+.v-glossario dt { font-weight: 600; color: var(--ink); }
+.v-glossario dd { margin: 0; color: var(--ink-soft); }

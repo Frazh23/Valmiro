@@ -20,6 +20,11 @@ export const metadata: Metadata = {
  * che fa fede, e la pagina lo dice.
  */
 export default function English() {
+  /* «2025 · 2° semestre» va detto in inglese, non lasciato a meta': si legge il
+     dato dal motore e si compone la frase qui. */
+  const [anno, sem] = SEMESTRE.split(" · ");
+  const periodo = `${sem.startsWith("1") ? "the first" : "the second"} half of ${anno}`;
+
   return (
     <div className="v-page" lang="en">
       <Header />
@@ -39,7 +44,7 @@ export default function English() {
             <b>Agenzia delle Entrate</b> (the Revenue Agency) publishes, through its property market observatory
             (<i>Osservatorio del Mercato Immobiliare</i>, OMI), a range of euros per square metre for every one of
             Milan&apos;s 42 homogeneous zones, for each type of property and for two states of repair. Valmiro starts
-            from those figures — currently {SEMESTRE.replace("2° semestre", "second half")} — and applies stated
+            from those figures — currently {periodo} — and applies stated
             coefficients for floor, lift, condition, balconies and the rest. Zone boundaries and the register of
             street numbers come from the City of Milan.
           </p>

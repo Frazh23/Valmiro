@@ -17,6 +17,10 @@ export const metadata: Metadata = {
  * senso tecnico diverso in Francia e in Italia, e vanno dette per bene.
  */
 export default function Francais() {
+  /* «2025 · 2° semestre» dit en français, pas laissé à moitié. */
+  const [anno, sem] = SEMESTRE.split(" · ");
+  const periodo = `${sem.startsWith("1") ? "le premier" : "le second"} semestre ${anno}`;
+
   return (
     <div className="v-page" lang="fr">
       <Header />
@@ -36,7 +40,7 @@ export default function Francais() {
             Deux fois par an, l&apos;<b>Agenzia delle Entrate</b> (l&apos;administration fiscale) publie, par son
             observatoire du marché immobilier (<i>Osservatorio del Mercato Immobiliare</i>, OMI), une fourchette
             d&apos;euros par mètre carré pour chacune des 42 zones homogènes de Milan, par type de bien et pour deux
-            états d&apos;entretien. Valmiro part de ces chiffres — actuellement le {SEMESTRE.replace("2° semestre", "second semestre")} —
+            états d&apos;entretien. Valmiro part de ces chiffres — actuellement {periodo} —
             et applique des coefficients déclarés&nbsp;: étage, ascenseur, état, balcons, et ainsi de suite. Les
             contours des zones et le répertoire des numéros de rue viennent de la Ville de Milan.
           </p>

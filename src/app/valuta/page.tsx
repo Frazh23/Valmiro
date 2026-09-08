@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -160,21 +160,35 @@ function Valuta() {
 
   /* ?stima=<id>: si riapre una stima salvata con i suoi dati e il suo risultato, senza
      ricalcolare niente. Il ricalcolo e' un gesto esplicito, e crea una stima nuova. Le stime
-     dell'account arrivano quando la sessione e' pronta: per questo l'effetto ascolta `utente`. */
+     dell'account arrivano quando la sessione e' pronta: per questo l'effetto ascolta `utente`.
+
+     Il segno che una stima e' gia' stata aperta sta qui, in `caricata`, e non nello stato
+     `riaperta`: quello lo spegne chi preme «Modifica i dati» o «Ricalcola», e finche' era
+     lui a fare da guardia l'effetto ripartiva subito e riportava la pagina al risultato
+     salvato — i due bottoni non facevano niente. L'indirizzo nella barra resta, cosi' un
+     ricaricamento riapre ancora la stima; e' dentro la pagina che non si torna indietro. */
+  const caricata = useRef<string | null>(null);
+  const inCorso = useRef(false);
   useEffect(() => {
     const idStima = params.get("stima");
-    if (!idStima || riaperta) return;
+    if (!idStima || caricata.current === idStima || inCorso.current) return;
+    inCorso.current = true;
     (async () => {
-      let s: StimaSalvata | undefined = leggiStime().find((x) => x.id === idStima);
-      if (!s && utente) s = (await leggiStimeAccount()).find((x) => x.id === idStima);
-      if (!s) { if (!pronto) return; setAvviso("Questa stima non è più disponibile su questo dispositivo: forse era salvata in un altro browser o è stata eliminata."); setVista("dove"); return; }
-      const it = params.get("i");
-      setI({ ...INPUT_INIZIALE, ...s.input, provenienza: s.input.provenienza, versioneProvenienza: s.input.versioneProvenienza, intento: s.input.intento ?? (it === "vendo" ? "vendo" : "compro") });
-      setIndirizzo(s.indirizzo); setFonte("anagrafe");
-      setEsito({ stima: s.stima }); setUltimoSalvato(JSON.stringify({ ...INPUT_INIZIALE, ...s.input }));
-      setRiaperta(s.creataIl); setVista("risultato");
+      try {
+        let s: StimaSalvata | undefined = leggiStime().find((x) => x.id === idStima);
+        if (!s && utente) s = (await leggiStimeAccount()).find((x) => x.id === idStima);
+        /* Sessione non ancora pronta: puo' darsi che la stima sia dell'account e non sia
+           ancora arrivata. Non si segna niente, cosi' l'effetto ritenta. */
+        if (!s) { if (!pronto) return; caricata.current = idStima; setAvviso("Questa stima non è più disponibile su questo dispositivo: forse era salvata in un altro browser o è stata eliminata."); setVista("dove"); return; }
+        caricata.current = idStima;
+        const it = params.get("i");
+        setI({ ...INPUT_INIZIALE, ...s.input, provenienza: s.input.provenienza, versioneProvenienza: s.input.versioneProvenienza, intento: s.input.intento ?? (it === "vendo" ? "vendo" : "compro") });
+        setIndirizzo(s.indirizzo); setFonte("anagrafe");
+        setEsito({ stima: s.stima }); setUltimoSalvato(JSON.stringify({ ...INPUT_INIZIALE, ...s.input }));
+        setRiaperta(s.creataIl); setVista("risultato");
+      } finally { inCorso.current = false; }
     })();
-  }, [params, utente, pronto, riaperta]);
+  }, [params, utente, pronto]);
 
   /* Cambiare intento non cancella niente: indirizzo e caratteristiche restano. */
   function scegliIntento(it: Intento) {

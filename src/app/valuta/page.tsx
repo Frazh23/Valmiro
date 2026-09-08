@@ -20,7 +20,7 @@ const Mappa = dynamic(() => import("@/components/Mappa"), {
 });
 import { eur, num } from "@/lib/formato";
 import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
-import { scala, PIANO_NON_VALUTABILE } from "@/lib/engine";
+import { scala, PARAMETRI, PIANO_NON_VALUTABILE } from "@/lib/engine";
 import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
 import { rendita, andamento } from "@/lib/affitto";
 import { leggiAnnuncio, type Letto } from "@/lib/annuncio";
@@ -298,7 +298,15 @@ function Valuta() {
     }
   }
 
-  /* Una sola frase di mercato, costruita sui numeri gia' calcolati. */
+  /* Una sola frase di mercato, costruita sui numeri gia' calcolati.
+
+     Attenzione a chi la scrive: lo scarto dal punto medio OMI non viene tutto dalla
+     casa. Il motore moltiplica la base per una correzione di fascia tarata sugli
+     annunci (1,05 in semicentro, 1,02 in centro, 1 altrove), e quella e' dentro il
+     valore ma non dentro la mediana con cui lo confrontiamo. Dire «sono piano, stato e
+     caratteristiche» a un appartamento del semicentro con tutti i valori predefiniti
+     era falso: i suoi coefficienti valgono 1, e il 5% era per intero la correzione.
+     Qui le due cause si separano, e ognuna prende quello che le spetta. */
   const insight = useMemo(() => {
     /* in una simulazione di piano non si giudica la posizione nella zona: il piano vero non e' quotato */
     if (!esito || !i.zona || esito.stima.simulazione || esito.stima.ipotesi?.length) return null;
@@ -306,11 +314,32 @@ function Valuta() {
     const mediana = s.mediaN * INDICE_ISTAT;
     const scarto = (esito.stima.euroMq - mediana) / mediana;
     const f = ZONE[i.zona].f;
+    const nome = FASCIA_NOME[f]?.toLowerCase();
+    const fattore = PARAMETRI.livello[f] ?? 1;
+    const dellaFascia = fattore - 1;
+    const dellaCasa = esito.stima.euroMq / (mediana * fattore) - 1;
+    const testa = (verso: string, quanto: number) => (
+      <>Vale <b>il {num(quanto * 100)}% in {verso}</b> del punto medio dell&apos;intervallo OMI di zona ({eur(mediana)} €/mq, stato normale)</>
+    );
+
     if (Math.abs(scarto) < 0.04)
       return <>È <b>in linea con il punto medio dell&apos;intervallo OMI</b> della zona: {eur(mediana)} €/mq per un immobile in stato normale.</>;
-    return scarto > 0
-      ? <>Vale <b>il {num(scarto * 100)}% in più</b> del punto medio dell&apos;intervallo OMI di zona ({eur(mediana)} €/mq, stato normale): sono piano, stato e caratteristiche a spingerla verso l&apos;alto della forbice {FASCIA_NOME[f]?.toLowerCase()}.</>
-      : <>Vale <b>il {num(Math.abs(scarto) * 100)}% in meno</b> del punto medio dell&apos;intervallo OMI di zona ({eur(mediana)} €/mq, stato normale): è lo spazio che una ristrutturazione può recuperare.</>;
+
+    if (scarto < 0)
+      return <>{testa("meno", Math.abs(scarto))}: è lo spazio che una ristrutturazione può recuperare.</>;
+
+    /* fascia senza correzione (periferia, suburbana): lo scarto e' tutto della casa */
+    if (dellaFascia < 0.005)
+      return <>{testa("più", scarto)}: sono piano, stato e caratteristiche a spingerla verso l&apos;alto della forbice {nome}.</>;
+
+    /* la casa e' in media: quello che si vede e' solo la correzione di fascia */
+    if (Math.abs(dellaCasa) < 0.02)
+      return <>{testa("più", scarto)}: è la correzione di fascia che il motore applica a tutto il {nome}, tarata sugli annunci. Le caratteristiche di questa casa non la spostano dalla media della zona.</>;
+
+    if (dellaCasa > 0)
+      return <>{testa("più", scarto)}: {num(dellaFascia * 100)} punti sono la correzione di fascia che il motore applica a tutto il {nome}, tarata sugli annunci; il resto viene da piano, stato e caratteristiche.</>;
+
+    return <>{testa("più", scarto)}: è la correzione di fascia che il motore applica a tutto il {nome} ({num(dellaFascia * 100)} punti, tarata sugli annunci). Piano, stato e caratteristiche, da soli, la terrebbero sotto la media della zona.</>;
   }, [esito, i.zona, i.tipo]);
 
   const pertinenzeDaChiedere = i.superficie === "calpestabile" || i.pertinenzeIncluse === false;

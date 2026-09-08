@@ -180,6 +180,32 @@ export default function RenovationSelector({
                   <span className="v-factor__v">{eur(p.costoNetto)} €</span>
                 </div>
               </div>
+
+              {/* Il conto che decide, e che finora bisognava fare a mente: il valore in
+                  piu' sta da una parte della pagina e il costo dall'altra. Non si stampa
+                  un guadagno secco, perche' sarebbe falsa precisione: il valore atteso ha
+                  un intervallo largo decine di migliaia di euro, e una differenza piu'
+                  piccola di quell'intervallo non e' un guadagno, e' rumore. Si dice il
+                  verso, e si dice quando non e' distinguibile da zero. */}
+              {delta > 0 && (
+                <p className="v-note v-measure" style={{ marginTop: "var(--s-4)" }}>
+                  <b>Vale la spesa?</b>{" "}
+                  {delta < p.costoNetto ? (
+                    <>Anche a fine detrazione i lavori costano più di quanto aggiungano al valore:
+                    {" "}{eur(p.costoNetto)} € contro {eur(delta)} €. Ha senso se ci vuoi vivere, non come investimento.</>
+                  ) : delta < p.costo ? (
+                    <>Pagati subito, i lavori costano più di quanto aggiungano al valore ({eur(p.costo)} € contro {eur(delta)} €).
+                    {" "}Il conto si gira contando la detrazione, che porta la spesa a {eur(p.costoNetto)} € in {p.rate} anni.</>
+                  ) : delta - p.costo < (p.valoreDopoMax - p.valoreDopoMin) / 2 ? (
+                    <>Il valore in più ({eur(delta)} €) e la spesa ({eur(p.costo)} €) si somigliano: sulla carta si ripaga, ma la
+                    {" "}differenza è più piccola dell&apos;incertezza della stima, quindi non è un guadagno su cui contare.
+                    {" "}Quello che si può contare è la detrazione: {eur(p.detrazione)} € in {p.rate} anni.</>
+                  ) : (
+                    <>Il valore in più ({eur(delta)} €) supera la spesa anche pagandola tutta subito ({eur(p.costo)} €), e la
+                    {" "}differenza è più grande dell&apos;incertezza della stima. È il caso raro in cui i lavori si ripagano da soli.</>
+                  )}
+                </p>
+              )}
               <p className="v-small v-measure" style={{ marginTop: "var(--s-3)" }}>
                 I {eur(p.costo)} € vanno pagati subito, per intero. La detrazione torna in {p.rate} rate sull&apos;Irpef: spetta al
                 {primaCasa ? " 50% perché è l'abitazione principale" : " 36% perché non è l'abitazione principale"}, entro 96.000 € di spesa, e

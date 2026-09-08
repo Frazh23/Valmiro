@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Header from "@/components/sistema/Header";
 import Logo from "@/components/sistema/Logo";
 import ZoneHistory from "@/components/sistema/ZoneHistory";
@@ -46,6 +46,10 @@ export async function generateMetadata({ params }: { params: Promise<{ zona: str
   const alto = t.z.civ.OTTIMO?.[1] ?? f?.[1] ?? 0;
   const nome = nomeBreve(t.z.d);
   return {
+    /* Un contenuto, un indirizzo. Senza questo, /quartieri/C18 e
+       /quartieri/c18 sarebbero per un motore di ricerca due pagine gemelle che
+       si fanno concorrenza da sole. */
+    alternates: { canonical: `https://valmiro.it/quartieri/${t.id.toLowerCase()}` },
     title: `Prezzi delle case a ${nome} (zona ${t.id}) · Valmiro`,
     description:
       `Quotazioni ufficiali OMI ${SEMESTRE} per la zona ${t.id} di Milano — ${t.z.d}: ` +
@@ -71,6 +75,10 @@ export default async function Zona({ params }: { params: Promise<{ zona: string 
   const { zona } = await params;
   const t = trova(zona);
   if (!t) notFound();
+  /* Chi scrive la zona in maiuscolo arriva lo stesso, ma con un rimbalzo
+     permanente sull'indirizzo buono: cosi' esiste una pagina sola, e chi
+     l'avesse collegata in maiuscolo non perde il collegamento. */
+  if (zona !== t.id.toLowerCase()) permanentRedirect(`/quartieri/${t.id.toLowerCase()}`);
   const { id, z } = t;
   const nome = nomeBreve(z.d);
   const fascia = FASCIA_NOME[z.f];

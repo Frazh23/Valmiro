@@ -197,9 +197,9 @@ export default function RenovationSelector({
                     <>Pagati subito, i lavori costano più di quanto aggiungano al valore ({eur(p.costo)} € contro {eur(delta)} €).
                     {" "}Il conto si gira contando la detrazione, che porta la spesa a {eur(p.costoNetto)} € in {p.rate} anni.</>
                   ) : delta - p.costo < (p.valoreDopoMax - p.valoreDopoMin) / 2 ? (
-                    <>Il valore in più ({eur(delta)} €) e la spesa ({eur(p.costo)} €) si somigliano: sulla carta si ripaga, ma la
-                    {" "}differenza è più piccola dell&apos;incertezza della stima, quindi non è un guadagno su cui contare.
-                    {" "}Quello che si può contare è la detrazione: {eur(p.detrazione)} € in {p.rate} anni.</>
+                    <>Il valore in più ({eur(delta)} €) supera la spesa ({eur(p.costo)} €), ma di meno di quanto sia incerta la
+                    {" "}stima: sulla carta si ripaga, e però non è un guadagno su cui contare. Quello che si può contare è la
+                    {" "}detrazione, {eur(p.detrazione)} € recuperati in {p.rate} anni.</>
                   ) : (
                     <>Il valore in più ({eur(delta)} €) supera la spesa anche pagandola tutta subito ({eur(p.costo)} €), e la
                     {" "}differenza è più grande dell&apos;incertezza della stima. È il caso raro in cui i lavori si ripagano da soli.</>

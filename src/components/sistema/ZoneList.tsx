@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { eur } from "@/lib/formato";
 
 export type RigaZona = { id: string; nome: string; fascia: string; min: number; max: number };
@@ -31,7 +32,7 @@ export default function ZoneList({ righe }: { righe: RigaZona[] }) {
 
       <div className="v-factors" style={{ maxWidth: "none", marginTop: "var(--s-6)" }}>
         {visibili.map((r) => (
-          <div className="v-factor" key={r.id}>
+          <Link className="v-factor" key={r.id} href={`/quartieri/${r.id.toLowerCase()}`} style={{ textDecoration: "none" }}>
             <span className="v-factor__n">
               <b style={{ color: "var(--ink)", fontWeight: 550 }}>{r.nome}</b>
               <small style={{ display: "block", color: "var(--ink-faint)", fontSize: "var(--t-small)" }}>
@@ -39,7 +40,7 @@ export default function ZoneList({ righe }: { righe: RigaZona[] }) {
               </small>
             </span>
             <span className="v-factor__v">{eur(r.min)} – {eur(r.max)} €/mq</span>
-          </div>
+          </Link>
         ))}
         {visibili.length === 0 && <p className="v-body" style={{ padding: "var(--s-5) 0" }}>Nessuna zona corrisponde a «{q}». Prova con il nome del quartiere o il codice, come C15.</p>}
       </div>

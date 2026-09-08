@@ -16,8 +16,18 @@ import Logo from "./Logo";
  * pannello sotto la barra. Niente overflow nascosto: quello che non ci sta, si
  * apre.
  */
+/* Le voci del menu nelle tre lingue. Sulle pagine /en e /fr la barra parla la
+   lingua della pagina: le destinazioni restano quelle italiane — l'etichetta dice
+   dove si va, non finge che dietro ci sia un sito tradotto. */
+const VOCI = {
+  it: { valuta: "Valuta", quartieri: "Quartieri", stime: "Le mie stime", gestione: "Gestione", menu: "Menu", nav: "Principale", account: "Account", accedi: "Accedi", area: "Area personale", agenzia: "Agenzia" },
+  en: { valuta: "Value a home", quartieri: "Districts", stime: "My estimates", gestione: "Admin", menu: "Menu", nav: "Main", account: "Account", accedi: "Sign in", area: "Your account", agenzia: "Agency" },
+  fr: { valuta: "Estimer", quartieri: "Quartiers", stime: "Mes estimations", gestione: "Gestion", menu: "Menu", nav: "Principal", account: "Compte", accedi: "Se connecter", area: "Espace personnel", agenzia: "Agence" },
+} as const;
+
 export default function Header() {
   const qui = usePathname();
+  const t = VOCI[qui === "/en" ? "en" : qui === "/fr" ? "fr" : "it"];
   const { utente, profilo, accountAttivo } = useSessione();
   const amministratore = useAmministratore(utente?.id);
   const [posato, setPosato] = useState(false);
@@ -43,20 +53,20 @@ export default function Header() {
   const attivo = (p: string) => (qui === p || qui?.startsWith(p + "/") ? "on" : "");
   const etichettaAccount = utente
     ? profilo?.tipo === "agenzia"
-      ? profilo.ragione_sociale || "Agenzia"
-      : "Account"
+      ? profilo.ragione_sociale || t.agenzia
+      : t.account
     : accountAttivo
-      ? "Accedi"
-      : "Area personale";
+      ? t.accedi
+      : t.area;
 
   const voci = (
     <>
-      <Link href="/valuta" className={attivo("/valuta")}>Valuta</Link>
-      <Link href="/quartieri" className={attivo("/quartieri")}>Quartieri</Link>
-      <Link href="/stime" className={attivo("/stime")}>Le mie stime</Link>
+      <Link href="/valuta" className={attivo("/valuta")}>{t.valuta}</Link>
+      <Link href="/quartieri" className={attivo("/quartieri")}>{t.quartieri}</Link>
+      <Link href="/stime" className={attivo("/stime")}>{t.stime}</Link>
       {/* Compare solo a chi il database riconosce come amministratore: per tutti gli
           altri questa voce non esiste, come la pagina a cui porta. */}
-      {amministratore && <Link href="/gestione" className={attivo("/gestione")}>Gestione</Link>}
+      {amministratore && <Link href="/gestione" className={attivo("/gestione")}>{t.gestione}</Link>}
       <Link href="/accedi" className={`v-nav__cta ${attivo("/accedi")}`} aria-current={attivo("/accedi") ? "page" : undefined}>{etichettaAccount}</Link>
     </>
   );
@@ -65,17 +75,17 @@ export default function Header() {
     <header className={`v-header${posato || aperto ? " v-header--solid" : ""}`} ref={pannello}>
       <div className="v-wrap v-header__in">
         <Logo />
-        <nav className="v-nav v-nav--wide" aria-label="Principale">{voci}</nav>
-        <nav className="v-nav v-nav--compact" aria-label="Principale">
-          <Link href="/valuta" className={attivo("/valuta")}>Valuta</Link>
+        <nav className="v-nav v-nav--wide" aria-label={t.nav}>{voci}</nav>
+        <nav className="v-nav v-nav--compact" aria-label={t.nav}>
+          <Link href="/valuta" className={attivo("/valuta")}>{t.valuta}</Link>
           <button type="button" className="v-nav__menu" aria-expanded={aperto} aria-controls="v-menu" onClick={() => setAperto((a) => !a)}>
             <span aria-hidden="true" className="v-nav__burger" />
-            Menu
+            {t.menu}
           </button>
         </nav>
       </div>
       <div id="v-menu" className="v-menu" hidden={!aperto}>
-        <nav className="v-wrap v-menu__in" aria-label="Menu">{voci}</nav>
+        <nav className="v-wrap v-menu__in" aria-label={t.menu}>{voci}</nav>
       </div>
     </header>
   );

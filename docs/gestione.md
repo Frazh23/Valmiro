@@ -155,13 +155,22 @@ Con una visita vera dal browser, partendo da database vuoto (0 eventi nel giorno
   rispondono 42501. `registra_visita` è negata **anche all'amministratore**: solo il
   ruolo di servizio può scrivere. Periodo invertito, oltre 90 giorni o nel futuro: 22023.
 
-Non verificati sul sito pubblicato, e perché: il rifiuto a un **account ordinario**
-(servirebbe un secondo account, e non ne creo per conto di altri), l'azzeramento allo
-**scollegamento** e la **revoca dei privilegi** (toccano l'unico amministratore di
-produzione), l'**esecuzione effettiva del job** di cancellazione e i **limiti di frequenza**
-(600 al minuto in tutto, 30 per visitatore: provarli dal vivo significherebbe scrivere
-trenta visite finte nei conteggi veri). Restano coperti dal test SQL isolato, che qui non
-è stato rieseguito perché pglite non è installabile in questo ambiente.
+- **Job di cancellazione**: eseguito davvero, cinque esecuzioni orarie `succeeded` fra le
+  07:00 e le 11:00 UTC, ognuna `DELETE 0` — nessun dato aveva ancora 90 giorni.
+
+Provati da Francesco lo stesso giorno, perché richiedono un secondo account o la revoca
+dell'unico amministratore di produzione:
+
+- **Account ordinario**: `/gestione` risponde 404.
+- **Scollegamento**: i dati mostrati spariscono.
+- **Revoca dei privilegi**: cancellata la riga da `amministratori`, la pagina diventa 404
+  **da sola entro un minuto**, senza ricaricarla: è il ricontrollo periodico che se ne
+  accorge. Rimessa la riga, l'accesso torna.
+
+Resta coperto solo dal codice e dal test SQL isolato un punto: i **limiti di frequenza**
+(600 al minuto in tutto, 30 per visitatore). Provarli dal vivo significherebbe scrivere
+trenta visite finte nei conteggi veri. Il test isolato (`tests/traffico-db.mjs`) non è
+stato rieseguito qui perché pglite non è installabile in questo ambiente.
 
 ### Due correzioni dopo la verifica dell'8 settembre
 

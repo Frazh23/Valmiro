@@ -117,3 +117,49 @@ compravendita, che oggi non abbiamo.
 (compressione 0,90, livello 1,06): li ha ritrovati a 0,85 e 1,09. L'esperimento sui
 comparabili al civico (`npm run comparabili`) è leave-one-out: ogni annuncio è escluso dal
 proprio insieme di vicini, insieme ai suoi duplicati.
+
+## Quanto tiene l'intervallo (8 settembre 2026)
+
+`npm run copertura` misura una cosa che nessuno aveva ancora misurato: **quante volte il
+prezzo osservato cade dentro l'intervallo che la pagina mostra**. Il confronto è fatto
+sulla banda centrata su `pubblica` (il prezzo di pubblicazione stimato), perché la
+grandezza osservata negli annunci è un prezzo chiesto, non un valore.
+
+Sui 201 annunci di taratura, con il codice dell'8 settembre:
+
+| | dentro l'intervallo | larghezza media |
+|---|---|---|
+| **Tutti** | **45%** | ± 13,4% |
+| fascia B (centro) | 42% | ± 17,0% |
+| fascia C (semicentro) | 45% | ± 12,7% |
+| fascia D (periferia) | 44% | ± 11,8% |
+| civili | 47% | ± 11,0% |
+| signorili | 43% | ± 17,8% |
+| affidabilità «Media» | 43% | ± 9,3% |
+| affidabilità «Bassa» | 46% | ± 14,7% |
+
+Chi resta fuori esce da entrambe le parti (63 sopra, 47 sotto): è un problema di
+**larghezza**, non di centro. Per coprire l'80% degli annunci l'intervallo dovrebbe essere
+circa **due volte** quello attuale (sigma × 2,07); per l'esatto 68% di una banda a un
+sigma, × 1,69.
+
+### Come leggerlo, senza esagerare in nessuna delle due direzioni
+
+Una parte dello scarto **non è errore del modello**: il prezzo chiesto da un singolo
+venditore non è il valore di mercato, e nessun modello può indovinare di quanto quel
+venditore ha deciso di sparare alto. L'intervallo che mostriamo è l'incertezza del modello
+a dati noti, non la dispersione dei prezzi chiesti.
+
+Detto questo, chi legge «Intervallo indicativo del modello 483.000 – 592.000 €» capisce
+«il prezzo starà lì dentro» — e ci sta dentro meno di una volta su due. Le strade sono
+due, e vanno prese in quest'ordine:
+
+1. **Dire meglio che cos'è.** Costa una frase e si può fare subito.
+2. **Allargarlo.** Ma i moltiplicatori qui sopra vengono dal campione su cui il motore è
+   già tarato: applicarli adesso vorrebbe dire promettere una copertura misurata su se
+   stessa. Si confermano sul primo lotto di verifica indipendente (`docs/verifica.md`),
+   e in quel momento diventa anche il numero da pubblicare.
+
+**Nota di priorità.** Se un giorno la stima si vende, questo è il numero che si vende: non
+il valore centrale, ma un intervallo di cui ci si possa fidare. Oggi non lo è ancora, e
+sarebbe grave scoprirlo dopo aver incassato.

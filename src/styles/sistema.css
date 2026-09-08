@@ -730,6 +730,25 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 .v-reno__nq { display: grid; gap: var(--s-2); margin-top: var(--s-5); padding: var(--s-4) var(--s-5); background: var(--surface-2); border-radius: var(--r-md); }
 .v-reno__intento { margin-top: var(--s-7); padding-top: var(--s-5); border-top: 1px solid var(--line-strong); }
 .v-fonti { display: grid; gap: var(--s-4); margin-top: var(--s-7); }
+
+/* Le note di metodo, una tendina per voce.
+   Erano sei blocchi di prosa fitta in fila: veri, utili a chi li cerca,
+   ingombranti per tutti gli altri. Qui restano tutti, dietro il loro titolo.
+   Non entrano qui le avvertenze che riguardano la singola casa (simulazione,
+   dati non confermati) ne' il disclaimer: quelli stanno sempre aperti. */
+.v-tendine { display: grid; max-width: var(--measure); margin-top: var(--s-3); border-top: 1px solid var(--line); }
+.v-tendine__voce { border-bottom: 1px solid var(--line); }
+.v-tendine__voce > summary {
+  list-style: none; cursor: pointer; padding: 14px 0;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  font-size: var(--t-small); font-weight: 550; color: var(--ink-soft);
+}
+.v-tendine__voce > summary::-webkit-details-marker { display: none; }
+.v-tendine__voce > summary::after { content: "\FF0B"; color: var(--ink-ghost); font-size: var(--t-body); line-height: 1; }
+.v-tendine__voce[open] > summary { color: var(--ink); }
+.v-tendine__voce[open] > summary::after { content: "\FF0D"; }
+.v-tendine__voce > *:not(summary) { padding-bottom: var(--s-5); }
+@media (hover: hover) { .v-tendine__voce > summary:hover { color: var(--ink); } }
 @media (max-width: 620px) {
   .v-intervento__testa { flex-wrap: wrap; gap: var(--s-2) var(--s-3); }
   .v-intervento__nome { flex-basis: 100%; }

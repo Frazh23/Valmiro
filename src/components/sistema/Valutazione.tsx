@@ -842,6 +842,9 @@ function Risultato({
     </p>
   ) : null;
   const boxAParte = !!input.boxSeparato?.incluso && stima.valoreBox > 0;
+  /* Le avvertenze che riguardano questa casa: se non ce n'e' nessuna il
+     riquadro non esiste, invece di lasciare un vuoto sopra le tendine. */
+  const avvertenzeCasa = !!(simulazione || ipotesi || (stima.noteDati && stima.noteDati.length) || boxAParte);
 
   return (
     <>
@@ -1075,34 +1078,16 @@ function Risultato({
             <button className="v-btn v-btn--quiet" onClick={onModifica}>Modifica i dati</button>
             <Link className="v-btn v-btn--bare" href="/metodo">Come calcoliamo la stima</Link>
           </div>
+          {/* Le avvertenze che riguardano *questa* casa restano aperte: una cosa
+              che cambia la lettura del numero non si nasconde dietro un clic.
+              Le note di metodo, che sono sempre le stesse, stanno nella tendina. */}
+          {avvertenzeCasa && (
           <div className="v-fonti">
-            <p className="v-small v-measure">
-              <b>Valore.</b> Quotazioni OMI {stima.semestre} della zona {input.zona} (fornitura diretta dell&apos;Agenzia delle
-              Entrate), aggiornate con l&apos;indice Istat dei prezzi delle abitazioni, con coefficienti dichiarati per piano,
-              ascensore, classe, luce e pertinenze. Superficie commerciale secondo il DPR 138/1998, allegato C. La stessa casa vale
-              lo stesso per chi compra e per chi vende.
-            </p>
-            <p className="v-small v-measure">
-              <b>Taratura, e cosa misura.</b> Il motore è stato tarato il 5 settembre 2026 su 201 annunci di vendita a Milano,
-              raccolti dai portali con una ricerca assistita e verificati a campione (12 riletti a mano: prezzi e metri confermati
-              in tutti, due stati corretti). La variabile di confronto è il <b>prezzo richiesto</b> nell&apos;annuncio contro il prezzo
-              di pubblicazione stimato; la metrica è il logaritmo del rapporto. Rimisurato sul codice di oggi (7 settembre 2026):
-              scarto mediano +1,9%, dispersione (MAD) 13,7%, 35% degli annunci entro ±10% e 63% entro ±20%; sulle sole tipologie
-              civili, fuori dal segmento di pregio, MAD 11,6% e 44% entro ±10%. Sono numeri sul campione di taratura
-              stesso: <b>un campione di verifica indipendente non c&apos;è ancora</b> (previsto con l&apos;API di Idealista). E i prezzi
-              richiesti non sono prezzi di compravendita: la taratura dice quanto le stime somigliano a ciò che i venditori chiedono,
-              non quanto a ciò che gli acquirenti pagano. Il metodo per esteso: <Link href="/metodo" className="v-link">Come calcoliamo la stima</Link>.
-            </p>
             {simulazione && (
               <p className="v-small v-measure">
                 <b>Simulazione.</b> Il piano dichiarato è «{simulazione.pianoDichiarato}», per cui il modello attuale non dispone di un
                 trattamento validato. Tutti i numeri di questa pagina — valore, lavori, affitti — ipotizzano un piano terra su richiesta
                 esplicita e non valgono per il piano vero; non sono un tetto e non danno un giudizio sul prezzo. La stima è salvata con questa avvertenza.
-              </p>
-            )}
-            {stima.noteDati && stima.noteDati.length > 0 && (
-              <p className="v-small v-measure">
-                <b>Dati al predefinito.</b> {stima.noteDati.join("; ")}. Non cambiano il valore, ma non sono dati della casa.
               </p>
             )}
             {ipotesi && (
@@ -1111,9 +1096,11 @@ function Risultato({
                 Sono ipotesi, non fatti della casa; la provenienza di ogni dato (annuncio, utente, predefinito, «non lo so») è salvata con la stima.
               </p>
             )}
-            <p className="v-small v-measure">
-              <b>Validazione.</b> Protocollo predisposto; validazione indipendente non ancora eseguita (<Link href="/metodo#verifica" className="v-link">il protocollo</Link>).
-            </p>
+            {stima.noteDati && stima.noteDati.length > 0 && (
+              <p className="v-small v-measure">
+                <b>Dati al predefinito.</b> {stima.noteDati.join("; ")}. Non cambiano il valore, ma non sono dati della casa.
+              </p>
+            )}
             {boxAParte && (
               <p className="v-small v-measure">
                 <b>Box a parte.</b> L&apos;annuncio vende il box separatamente e lo hai incluso: il suo valore ({eur(stima.valoreBox)} €) è tenuto
@@ -1121,22 +1108,67 @@ function Risultato({
                 Il confronto sul totale c&apos;è solo se anche il prezzo del box è noto.
               </p>
             )}
-            <p className="v-small v-measure">
-              <b>Prezzi.</b> Il prezzo richiesto è un&apos;intenzione, non un valore. Il prezzo di pubblicazione possibile è il valore
-              centrale più il 6%, una convenzione del motore che la taratura ha allineato in mediana ai prezzi richiesti degli
-              annunci. L&apos;intervallo per un&apos;offerta è la metà bassa dell&apos;intervallo di stima. Nessuna di queste è una
-              percentuale di trattativa misurata su compravendite.
-            </p>
-            <p className="v-small v-measure">
-              <b>Lavori.</b> Costi medi di fascia per Milano, IVA esclusa, da prezzari e guide 2026; IVA 10% sui lavori con la regola
-              dei beni significativi; spese tecniche 10% con cassa e IVA 22%; detrazione 50%/36% entro 96.000 € in dieci rate
-              (legge di bilancio 2026). Il valore dopo i lavori dipende dallo stato raggiunto, non dalla spesa; la classe
-              energetica non viene stimata.
-            </p>
-            <p className="v-small v-measure">
-              <b>Affitti.</b> Canoni OMI {stima.semestre}; cedolare 21%, un mese di sfitto; IMU e straordinarie escluse. L&apos;affitto
-              breve è uno scenario con ipotesi di settore, non un dato.
-            </p>
+          </div>
+          )}
+
+          <p className="v-small" style={{ marginTop: "var(--s-6)", color: "var(--ink-faint)" }}>
+            Da dove vengono i numeri, voce per voce
+          </p>
+          <div className="v-tendine">
+            <details className="v-tendine__voce">
+              <summary>Valore</summary>
+              <p className="v-small v-measure">
+                Quotazioni OMI {stima.semestre} della zona {input.zona} (fornitura diretta dell&apos;Agenzia delle
+                Entrate), aggiornate con l&apos;indice Istat dei prezzi delle abitazioni, con coefficienti dichiarati per piano,
+                ascensore, classe, luce e pertinenze. Superficie commerciale secondo il DPR 138/1998, allegato C. La stessa casa vale
+                lo stesso per chi compra e per chi vende.
+              </p>
+            </details>
+            <details className="v-tendine__voce">
+              <summary>Taratura, e cosa misura</summary>
+              <p className="v-small v-measure">
+                Il motore è stato tarato il 5 settembre 2026 su 201 annunci di vendita a Milano,
+                raccolti dai portali con una ricerca assistita e verificati a campione (12 riletti a mano: prezzi e metri confermati
+                in tutti, due stati corretti). La variabile di confronto è il <b>prezzo richiesto</b> nell&apos;annuncio contro il prezzo
+                di pubblicazione stimato; la metrica è il logaritmo del rapporto. Rimisurato sul codice di oggi (7 settembre 2026):
+                scarto mediano +1,9%, dispersione (MAD) 13,7%, 35% degli annunci entro ±10% e 63% entro ±20%; sulle sole tipologie
+                civili, fuori dal segmento di pregio, MAD 11,6% e 44% entro ±10%. Sono numeri sul campione di taratura
+                stesso: <b>un campione di verifica indipendente non c&apos;è ancora</b> (previsto con l&apos;API di Idealista). E i prezzi
+                richiesti non sono prezzi di compravendita: la taratura dice quanto le stime somigliano a ciò che i venditori chiedono,
+                non quanto a ciò che gli acquirenti pagano. Il metodo per esteso: <Link href="/metodo" className="v-link">Come calcoliamo la stima</Link>.
+              </p>
+            </details>
+            <details className="v-tendine__voce">
+              <summary>Validazione</summary>
+              <p className="v-small v-measure">
+                Protocollo predisposto; validazione indipendente non ancora eseguita (<Link href="/metodo#verifica" className="v-link">il protocollo</Link>).
+              </p>
+            </details>
+            <details className="v-tendine__voce">
+              <summary>Prezzi</summary>
+              <p className="v-small v-measure">
+                Il prezzo richiesto è un&apos;intenzione, non un valore. Il prezzo di pubblicazione possibile è il valore
+                centrale più il 6%, una convenzione del motore che la taratura ha allineato in mediana ai prezzi richiesti degli
+                annunci. L&apos;intervallo per un&apos;offerta è la metà bassa dell&apos;intervallo di stima. Nessuna di queste è una
+                percentuale di trattativa misurata su compravendite.
+              </p>
+            </details>
+            <details className="v-tendine__voce">
+              <summary>Lavori</summary>
+              <p className="v-small v-measure">
+                Costi medi di fascia per Milano, IVA esclusa, da prezzari e guide 2026; IVA 10% sui lavori con la regola
+                dei beni significativi; spese tecniche 10% con cassa e IVA 22%; detrazione 50%/36% entro 96.000 € in dieci rate
+                (legge di bilancio 2026). Il valore dopo i lavori dipende dallo stato raggiunto, non dalla spesa; la classe
+                energetica non viene stimata.
+              </p>
+            </details>
+            <details className="v-tendine__voce">
+              <summary>Affitti</summary>
+              <p className="v-small v-measure">
+                Canoni OMI {stima.semestre}; cedolare 21%, un mese di sfitto; IMU e straordinarie escluse. L&apos;affitto
+                breve è uno scenario con ipotesi di settore, non un dato.
+              </p>
+            </details>
           </div>
           <p className="v-disclaimer" style={{ marginTop: "var(--s-6)" }}>
             Stima automatica indicativa{etichettaScenario ? `, qui come ${etichettaScenario.toLowerCase()}` : ""}.

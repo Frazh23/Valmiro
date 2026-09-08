@@ -28,13 +28,20 @@ export default function HomeSearch() {
         <button type="button" className="v-scenario" aria-pressed={intento === "vendo"} onClick={() => setIntento("vendo")}>Voglio vendere</button>
       </div>
       <AddressSearch onScegli={vai} azione="Valuta ora" />
-      {intento === "compro" && (
-        <p className="v-hero__incolla">
-          Hai l&apos;annuncio davanti?{" "}
-          <Link href="/valuta?i=compro&incolla=1" className="v-link">Incolla il testo dell&apos;annuncio</Link>
-          {" "}e leggiamo noi indirizzo, metri, piano e prezzo.
-        </p>
-      )}
+      {/* La riga occupa il suo spazio sempre, anche quando non ha niente da dire.
+          Se comparisse e sparisse, la colonna cambierebbe altezza di una
+          sessantina di pixel, e con lei l'eroe e la fotografia che lo riempie:
+          a ogni clic su «comprare» o «vendere» la foto sembrerebbe cambiare
+          misura. Quando e' muta e' anche inerte — niente link da raggiungere
+          col tabulatore, niente da leggere per uno screen reader. */}
+      <p className="v-hero__incolla" aria-hidden={intento !== "compro"}
+         style={intento === "compro" ? undefined : { visibility: "hidden" }}>
+        Hai l&apos;annuncio davanti?{" "}
+        {intento === "compro"
+          ? <Link href="/valuta?i=compro&incolla=1" className="v-link">Incolla il testo dell&apos;annuncio</Link>
+          : <span className="v-link">Incolla il testo dell&apos;annuncio</span>}
+        {" "}e leggiamo noi indirizzo, metri, piano e prezzo.
+      </p>
     </>
   );
 }

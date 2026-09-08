@@ -60,8 +60,10 @@ export default function Gestione({raccoltaAttiva=false}:{raccoltaAttiva?:boolean
 
   useEffect(() => {
     let vivo = true;
-    setM(null); setProprietario(null); setStato("attendo");
-    if (!pronto || !utente) return;
+    // Si azzera solo quando manca la sessione. Un ricontrollo periodico non deve far
+    // sparire la pagina: se lo facesse, il componente delle visite verrebbe smontato
+    // e l'amministratore perderebbe ogni minuto il periodo che ha appena scelto.
+    if (!pronto || !utente) { setM(null); setProprietario(null); setStato("attendo"); return; }
     const sb = supabase();
     if (!sb) { setStato("errore"); return; }
     sb.rpc("metriche_gestione").then(({ data, error }) => {
@@ -81,12 +83,20 @@ export default function Gestione({raccoltaAttiva=false}:{raccoltaAttiva?:boolean
   }, [pronto, utente?.id, refresh]);
 
   useEffect(() => {
-    const aggiorna=()=>{setM(null);setProprietario(null);setStato("attendo");setRefresh(x=>x+1);};
+    /* Due cose diverse, che prima erano una sola.
+       Cambio di identita' (uscita, altro account): quello che e' a schermo va tolto
+       subito, prima ancora di sapere cosa dira' il database.
+       Ricontrollo periodico e ritorno sulla scheda: si richiede di nuovo il permesso,
+       ma senza svuotare la pagina. Se il permesso e' stato revocato la risposta
+       successiva porta comunque al 404; nel frattempo i numeri restano, e con loro i
+       filtri scelti. */
+    const azzera=()=>{setM(null);setProprietario(null);setStato("attendo");setRefresh(x=>x+1);};
+    const ricontrolla=()=>setRefresh(x=>x+1);
     const sb=supabase();
-    const sub=sb?.auth.onAuthStateChange((event)=>{if(event!=="INITIAL_SESSION")aggiorna();});
-    window.addEventListener("focus",aggiorna);
-    const timer=setInterval(aggiorna,60000);
-    return()=>{sub?.data.subscription.unsubscribe();clearInterval(timer);window.removeEventListener("focus",aggiorna);};
+    const sub=sb?.auth.onAuthStateChange((event)=>{if(event!=="INITIAL_SESSION")azzera();});
+    window.addEventListener("focus",ricontrolla);
+    const timer=setInterval(ricontrolla,60000);
+    return()=>{sub?.data.subscription.unsubscribe();clearInterval(timer);window.removeEventListener("focus",ricontrolla);};
   }, []);
 
   const testa = (

@@ -792,4 +792,7 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 .v-preferenze{text-align:center;padding:20px;font-size:13px}
 .v-consenso{position:fixed;bottom:16px;left:16px;right:16px;max-width:600px;z-index:100;background:#f5f0e7;color:#1d211d;border:1px solid #d9d1c4;border-radius:12px;padding:24px;box-shadow:0 5px 30px #0002;max-height:85vh;overflow:auto}
 .v-consenso p{font-size:14px;line-height:1.5;margin:12px 0}.v-consenso>div{display:flex;flex-wrap:wrap;gap:10px}.v-consenso button{flex:1;white-space:nowrap}
-@media(max-width:600px){.v-consenso{padding:18px}.v-traffico-grafico small{font-size:8px}.v-traffico-filtri input{max-width:145px}}
+@media(max-width:600px){.v-consenso{padding:18px}.v-traffico-grafico small{font-size:8px}.v-traffico-filtri input{max-width:145px}
+ /* Con molti giorni le date sotto le barre si toccherebbero: se ne mostra una ogni cinque. */
+ .v-traffico-grafico--fitto small{display:none}
+ .v-traffico-grafico--fitto small[data-chiave]{display:block}}

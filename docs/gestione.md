@@ -47,10 +47,9 @@ Ci sono i dati che il database ha davvero:
 
 Non ci sono, e la pagina lo dice:
 
-- **I visitatori.** Non li contiamo: niente analytics, niente cookie di misura. Per
-  contarli ci sono due strade, entrambe con un costo — i contatori nostri di
-  `docs/telemetria.md` (serve la chiave privilegiata sul server) oppure Vercel Web
-  Analytics (i numeri restano nel pannello Vercel, e sopra una soglia si paga).
+- **I visitatori che non hanno acconsentito.** Chi rifiuta, o non sceglie, non viene
+  misurato: la sezione «Visite al sito» descrive il traffico consentito, non tutte le
+  persone che arrivano. Come funziona la raccolta è più sotto.
 - **Le stime senza account**, che restano nel browser di chi le fa. I numeri del
   pannello sono una parte del traffico, non tutto: tenerlo a mente prima di leggerli
   come un tasso di conversione.
@@ -83,8 +82,9 @@ identificatori delle visite. Logout, cambio identità, ritorno alla scheda e con
 ogni 60 secondi invalidano i dati mostrati. La revoca remota è verificata alla lettura
 successiva (entro 60 secondi nella scheda attiva).
 
-Il codice iniziale coincideva con la produzione Vercel: `277dd88`.
-Il lavoro è nel ramo `codex/private-traffic`, separato dalla copia principale.
+In produzione da `9c3c73a` (8 settembre 2026). La raccolta nel database è **attiva**
+dalle 12:33:42 del giorno stesso; nessuno storico è stato importato, e il primo giorno
+misurato è quello.
 
 ### Raccolta
 
@@ -123,12 +123,57 @@ reale dai giorni in cui non esisteva raccolta.
 
 ### Verifiche
 
-`npm run typecheck`, `npm test`, `npm run build`.
+Prima di ogni consegna: `npm run typecheck`, `npm test`, `npm run build`.
 Test SQL isolato: `PGLITE_MODULE_PATH=/percorso/pglite node tests/traffico-db.mjs`.
-Coprono accessi negati, revoca admin, assenza di dati privati nel rapporto, deduplica,
-visitatori distinti tra giorni, fonte di sessione, periodi invalidi e cancellazione.
-I test HTTP coprono origine, consenso, dimensioni, guasti e non esposizione del segreto.
-La verifica visiva è ancora da completare: il browser dell'assistente ha negato
-l'accesso all'anteprima locale perché il controllo della policy non era disponibile.
-La raccolta nel database è stata predisposta **spenta**; non va dichiarata operativa
-senza verifica dei valori Vercel e della visita di prova.
+Copre accessi negati, revoca dell'amministratore, assenza di dati privati nel rapporto,
+deduplica, visitatori distinti tra giorni, fonte di sessione, periodi invalidi e
+cancellazione. I test HTTP coprono origine, consenso, dimensioni, guasti e non
+esposizione del segreto.
+
+#### Provato sul sito pubblicato, 8 settembre 2026
+
+Con una visita vera dal browser, partendo da database vuoto (0 eventi nel giorno):
+
+- **Prima della scelta**: nessun evento. **Dopo il rifiuto**: tre pagine pubbliche
+  visitate, ancora nessun evento e nessun identificatore nella memoria del browser.
+- **Dopo l'accettazione**: cinque pagine pubbliche → esattamente 5 pagine viste,
+  1 sessione, 1 visitatore. `/stime`, `/accedi` e `/gestione` non hanno prodotto nulla.
+- **Trenta minuti di inattività** (simulati spostando indietro l'ultimo accesso):
+  nuova sessione, stesso visitatore. **Novanta giorni** (simulati scadendo
+  l'identificatore): visitatore nuovo, mai riutilizzato, nuova scadenza a 90 giorni.
+- **Revoca**: identificatori cancellati, e due altre pagine pubbliche non hanno
+  aggiunto niente. In tutto 7 pagine viste, 3 sessioni, 2 visitatori: gli stessi
+  numeri che il pannello mostra.
+- **Filtri**: Oggi, 7 e 30 giorni corretti; intervallo 1–7 settembre → 0 e il messaggio
+  «Nessuna visita rilevata», che è anche la prova del confine di giornata italiano
+  (gli eventi delle 12:45 dell'8 restano fuori).
+- **Endpoint**: tipo di contenuto sbagliato o assente 415; JSON rotto, campo in più,
+  consenso mancante o falso, pagina non ammessa, pagina con parametri, uuid finto,
+  fonte inventata 400; corpo oltre 1 KB 413. Nessuna di queste richieste ha scritto.
+  Una richiesta da un'altra origine non ha scritto nulla.
+- **Permessi**: da anonimo, `metriche_traffico`, `metriche_gestione` e `registra_visita`
+  rispondono 42501. `registra_visita` è negata **anche all'amministratore**: solo il
+  ruolo di servizio può scrivere. Periodo invertito, oltre 90 giorni o nel futuro: 22023.
+
+Non verificati sul sito pubblicato, e perché: il rifiuto a un **account ordinario**
+(servirebbe un secondo account, e non ne creo per conto di altri), l'azzeramento allo
+**scollegamento** e la **revoca dei privilegi** (toccano l'unico amministratore di
+produzione), l'**esecuzione effettiva del job** di cancellazione e i **limiti di frequenza**
+(600 al minuto in tutto, 30 per visitatore: provarli dal vivo significherebbe scrivere
+trenta visite finte nei conteggi veri). Restano coperti dal test SQL isolato, che qui non
+è stato rieseguito perché pglite non è installabile in questo ambiente.
+
+### Due correzioni dopo la verifica dell'8 settembre
+
+**Il pannello si riazzerava da solo.** Il ricontrollo dei permessi — ogni 60 secondi e a
+ogni ritorno sulla scheda — svuotava i dati della pagina prima di richiederli. Svuotarli
+smontava il componente delle visite, che ripartiva dal periodo predefinito: bastava
+scegliere un intervallo e aspettare un minuto per vederlo tornare a «7 giorni». Ora il
+ricontrollo c'è ancora e ha la stessa forza (se il permesso è stato revocato, la risposta
+successiva porta al 404), ma non svuota niente: i numeri restano finché non arrivano
+quelli nuovi. L'azzeramento immediato resta dov'è utile, cioè al cambio di identità.
+
+**Le date sotto le barre si toccavano.** Con trenta giorni su uno schermo da 320 o 390 px
+ogni barra è larga 6–9 px e le etichette diventavano una fila di cifre attaccate. Sotto i
+600 px, e solo quando i giorni sono più di dieci, ne resta una ogni cinque più l'ultima:
+a 320 px si passa da zero spazio a 29 px fra un'etichetta e l'altra.

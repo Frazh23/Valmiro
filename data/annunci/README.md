@@ -71,3 +71,32 @@ Gli originali sono in `grezzi/`. I cosiddetti 100 nuovi NON sono una verifica: 7
 Nuove colonne supportate: `mq_balconi`, `mq_terrazzi`, `superficie` (commerciale/calpestabile), `pertinenze_incluse` (si/no), `box_incluso` (si/no). `balconi` resta un conteggio storico: non viene convertito in metri. `classe` accetta anche `nd`; nessuna D implicita. `box` viene incluso solo con `box_incluso=si`; i vecchi lotti senza questa prova vengono segnalati. Queste correzioni alla lettura possono cambiare i risultati delle analisi storiche, non i coefficienti del motore pubblico. I risultati di taratura preesistenti restano risultati del protocollo precedente.
 
 Ruoli, congelamento completo, manifest e regole per pubblicare numeri: `docs/verifica.md`.
+
+## Due raccolte diverse, che non vanno mescolate
+
+**I lotti** (i file qui in questa cartella) sono *fotografie*: un annuncio, un prezzo, un
+giorno. Servono a tarare e a verificare il motore, e per farlo vogliono **varietà** —
+zone diverse, stati diversi, tagli diversi. Si raccolgono con `npm run idealista`.
+
+**Le riletture** (`riletture/AAAA-MM-GG.csv`) sono *storie*: gli stessi annunci riletti
+ogni due settimane, finché spariscono. Servono a una cosa sola, ed è la più preziosa che
+abbiamo: sapere di quanto cala il prezzo chiesto prima che una casa esca dal mercato —
+cioè avvicinarsi al prezzo di chiusura, che in Italia non è pubblico. Si raccolgono con
+`npm run riletture`, si leggono con `npm run storie`.
+
+Vogliono l'esatto contrario: **costanza**. Sempre le stesse quattro aree, sempre lo stesso
+ordinamento, un passaggio ogni due settimane. Le aree sono congelate in
+`scripts/riletture.mjs` e **non si cambiano**: un annuncio conta come «uscito dal mercato»
+perché non lo rivediamo dove lo vedevamo prima, quindi se al passaggio dopo guardiamo
+altrove risultano spariti tutti e la misura non vale niente. Aggiungere un'area nuova si
+può, e la sua serie comincia da lì; spostare o togliere un'area esistente no.
+
+Perché aree piccole e non tutta Milano: con cinquanta annunci a chiamata, spargersi sulla
+città vuol dire non rivedere quasi mai lo stesso annuncio. Poche aree coperte a fondo
+chiudono storie vere. Profondità, non ampiezza.
+
+**Come leggere quello che ne esce.** «Sparito» non vuol dire «venduto»: un annuncio esce
+anche se ritirato, scaduto o ripubblicato da un'altra agenzia. E i giorni contano dalla
+prima volta che *noi* l'abbiamo visto, non da quando è stato pubblicato. Il ribasso che
+`npm run storie` misura è quindi una stima **per difetto** dello sconto reale, e va
+chiamata con quel nome ovunque compaia.

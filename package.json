@@ -10,6 +10,8 @@
     "test": "node --test tests/*.test.mjs",
     "ingest": "node scripts/ingest-omi.mjs",
     "ingest-civici": "node scripts/ingest-civici.mjs",
+    "riletture": "node scripts/riletture.mjs",
+    "storie": "node scripts/storie.mjs",
     "copertura": "node scripts/copertura.mjs",
     "calibra": "node scripts/calibra.mjs",
     "idealista": "node scripts/idealista.mjs",

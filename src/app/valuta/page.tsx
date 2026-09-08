@@ -1,6 +1,8 @@
 import Link from "next/link";
+import Header from "@/components/sistema/Header";
+import Logo from "@/components/sistema/Logo";
 import Valutazione from "@/components/sistema/Valutazione";
-import { ZONE, SEMESTRE, INDICE_ISTAT } from "@/lib/data";
+import { ZONE, SEMESTRE, FONTE, INDICE_ISTAT } from "@/lib/data";
 import { eur } from "@/lib/formato";
 
 /**
@@ -29,8 +31,13 @@ export default function Pagina() {
     .map((z) => ({ id: z, nome: nomeBreve(ZONE[z].d), da: ((ZONE[z].civ.NORMALE || ZONE[z].civ.OTTIMO)?.[0] ?? 0) * INDICE_ISTAT }));
 
   return (
-    <Valutazione
-      coda={
+    <div className="v-page">
+      <Header />
+      <main className="v-fill">
+        <Valutazione />
+
+        {/* Da qui in giu' e' reso dal server, e quindi esiste nell'HTML: sta
+            fuori dal confine di Suspense dello strumento apposta. */}
         <section className="v-wrap v-section v-narrow" style={{ borderTop: "1px solid var(--line)" }}>
           <h2 className="v-h3">In breve, come funziona</h2>
           <p className="v-body v-measure">
@@ -77,7 +84,14 @@ export default function Pagina() {
             <Link href="/quartieri" className="v-link">Tutte le {Object.keys(ZONE).length} zone di Milano</Link>
           </p>
         </section>
-      }
-    />
+      </main>
+
+      <footer className="v-footer">
+        <div className="v-wrap v-footer__in">
+          <Logo link={false} size="sm" />
+          <p className="v-micro">{FONTE}. Le stime sono indicative e non costituiscono perizia.</p>
+        </div>
+      </footer>
+    </div>
   );
 }

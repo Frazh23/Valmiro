@@ -3,7 +3,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import Header from "@/components/sistema/Header";
 import AddressSearch from "@/components/sistema/AddressSearch";
 import ValuationReveal from "@/components/sistema/ValuationReveal";
 import NumeroAnimato from "@/components/sistema/NumeroAnimato";
@@ -19,7 +18,7 @@ const Mappa = dynamic(() => import("@/components/Mappa"), {
   loading: () => <p className="v-small">Carico la mappa…</p>,
 });
 import { eur, num } from "@/lib/formato";
-import { ZONE, FONTE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
+import { ZONE, FASCIA_NOME, INDICE_ISTAT } from "@/lib/data";
 import { scala, PARAMETRI, PIANO_NON_VALUTABILE } from "@/lib/engine";
 import { CATEGORIE, tipoDaCategoria, type Categoria } from "@/lib/catasto";
 import { rendita, andamento } from "@/lib/affitto";
@@ -33,7 +32,6 @@ import RentalYield from "@/components/sistema/RentalYield";
 import ZoneHistory from "@/components/sistema/ZoneHistory";
 import ShortRent from "@/components/sistema/ShortRent";
 import { salvaStima, salvaStimaAccount, leggiStime, leggiStimeAccount, type StimaSalvata } from "@/lib/storage";
-import Logo from "@/components/sistema/Logo";
 import { useSessione } from "@/lib/sessione";
 import { FONTI, PIANI_NON_QUOTATI, type FonteIndirizzo, type Input, type Intento, type PianoNonQuotato, type Scelta, type Stato, type Stima, type Tipo } from "@/lib/types";
 
@@ -87,26 +85,26 @@ const numero = (v: string) => (v === "" ? 0 : Number(v));
 type Esito = { stima: Stima };
 
 /**
- * Lo strumento di valutazione. Vive qui, e non piu' in app/valuta/page.tsx,
- * per una ragione sola: e' un componente client — legge i parametri
- * dell'indirizzo e tiene lo stato del modulo — e una pagina client non manda
- * al browser nessun contenuto gia' scritto. A Google, la pagina piu'
- * importante del sito arrivava con ventisette parole dentro.
+ * Lo strumento di valutazione: solo la parte interattiva, senza la struttura
+ * della pagina.
  *
- * Ora la pagina e' un componente server che rende del testo vero e lo passa
- * qui come `coda`: React lo ha gia' reso lato server, questo componente lo
- * mette in fondo al `main` e basta. Lo strumento resta interattivo, il testo
- * resta nell'HTML.
+ * La struttura — `v-page`, header, `main`, footer — sta in
+ * `app/valuta/page.tsx`, che e' un componente server. Non e' una questione di
+ * gusto: questo componente legge i parametri dell'indirizzo con
+ * `useSearchParams`, e Next rende quel sottoalbero soltanto nel browser. Tutto
+ * cio' che finisce dentro il confine di Suspense, testo compreso, non arriva
+ * mai nell'HTML — e la pagina piu' importante del sito arrivava a Google con
+ * ventisette parole. Il testo che deve essere letto sta fuori di qui.
  */
-export default function Valutazione({ coda }: { coda?: React.ReactNode }) {
+export default function Valutazione() {
   return (
-    <Suspense fallback={<div className="v-page"><Header /></div>}>
-      <Valuta coda={coda} />
+    <Suspense fallback={null}>
+      <Valuta />
     </Suspense>
   );
 }
 
-function Valuta({ coda }: { coda?: React.ReactNode }) {
+function Valuta() {
   const params = useSearchParams();
   const { utente, pronto } = useSessione();
 
@@ -388,9 +386,7 @@ function Valuta({ coda }: { coda?: React.ReactNode }) {
   );
 
   return (
-    <div className="v-page">
-      <Header />
-
+    <>
       {vista === "calcolo" && (
         <ValuationReveal
           indirizzo={indirizzo}
@@ -400,8 +396,7 @@ function Valuta({ coda }: { coda?: React.ReactNode }) {
         />
       )}
 
-      <main className="v-fill">
-        {/* ---------------------------------------------------- INTENTO */}
+      {/* ---------------------------------------------------- INTENTO */}
         {vista === "intento" && (
           <section className="v-wrap v-section">
             <div className="v-form">
@@ -796,16 +791,7 @@ function Valuta({ coda }: { coda?: React.ReactNode }) {
             onRicalcola={() => { setRiaperta(null); setUltimoSalvato(null); setVista("calcolo"); }}
           />
         )}
-        {coda}
-      </main>
-
-      <footer className="v-footer">
-        <div className="v-wrap v-footer__in">
-          <Logo link={false} size="sm" />
-          <p className="v-micro">{FONTE}. Le stime sono indicative e non costituiscono perizia.</p>
-        </div>
-      </footer>
-    </div>
+    </>
   );
 }
 

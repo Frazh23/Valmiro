@@ -12,6 +12,7 @@
     "ingest-civici": "node scripts/ingest-civici.mjs",
     "riletture": "node scripts/riletture.mjs",
     "storie": "node scripts/storie.mjs",
+    "canoni": "node scripts/canoni.mjs",
     "copertura": "node scripts/copertura.mjs",
     "calibra": "node scripts/calibra.mjs",
     "idealista": "node scripts/idealista.mjs",

@@ -32,6 +32,9 @@ import { impronta, sha } from "./verifica-lib.mjs";
 const RADICE = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const verifica = process.argv.includes("--verifica");
+/* Gli affitti sono un mercato diverso, non una variante: file a parte, comando a
+   parte, e l'archivio si rifiuta di misurarli insieme alle vendite. */
+const affitti = process.argv.includes("--affitti");
 const raccoltaInizio = new Date().toISOString();
 const modello = impronta(RADICE);
 if (verifica && !existsSync(join(RADICE, `data/annunci/congelamenti/${modello.hash}.json`))) throw new Error("Prima della raccolta serve il congelamento completo del modello corrente");
@@ -69,10 +72,10 @@ async function token() {
   return (await r.json()).access_token;
 }
 
-async function cerca(tok, centro) {
+async function cerca(tok, centro, pagina = 1) {
   const p = new URLSearchParams({
     center: centro, distance: "3500", country: "it", locale: "it",
-    operation: "sale", propertyType: "homes", maxItems: "50", numPage: "1",
+    operation: affitti ? "rent" : "sale", propertyType: "homes", maxItems: "50", numPage: String(pagina),
     order: "publicationDate", sort: "desc",
   });
   const r = await fetch("https://api.idealista.com/3.5/it/search", {
@@ -108,7 +111,15 @@ function piano(x) {
 const classe = (x) => (x.energyCertification?.[0] || "").toUpperCase().match(/[A-G]/)?.[0] || "nd";
 
 // ------------------------------------------------------------ esecuzione
-const CENTRI = { centro: "45.4642,9.1900", nord: "45.5000,9.1800", sud: "45.4350,9.2000" };
+const CENTRI = affitti
+  ? {
+      /* Per gli affitti serve un lotto grande e distribuito: sei punti e piu'
+         pagine ciascuno. Il piano gratuito regge (una dozzina di chiamate). */
+      centro: "45.4642,9.1900", nord: "45.5000,9.1800", sud: "45.4350,9.2000",
+      est: "45.4800,9.2300", ovest: "45.4650,9.1300", nordest: "45.4950,9.2200",
+    }
+  : { centro: "45.4642,9.1900", nord: "45.5000,9.1800", sud: "45.4350,9.2000" };
+const PAGINE = affitti ? 2 : 1;
 const tok = await token();
 /* `rif` e' il codice dell'annuncio sul portale: con `fonte` identifica la casa anche se ripubblicata (docs/verifica.md) */
 const righe = ["id;fonte;data;indirizzo;zona;tipo;mq;stato;piano;ascensore;classe;balconi;cantina;box;epoca;affaccio;metro;prezzo_richiesto;prezzo_venduto;note;rif;box_incluso"];
@@ -117,14 +128,18 @@ const visti = new Set();
 let fuori = 0;
 
 for (const [nome, centro] of Object.entries(CENTRI)) {
-  const lista = await cerca(tok, centro);
+ let presi = 0;
+ for (let pagina = 1; pagina <= PAGINE; pagina++) {
+  const lista = await cerca(tok, centro, pagina);
+  if (!lista.length) break;
   for (const x of lista) {
     if (visti.has(x.propertyCode)) continue;
     visti.add(x.propertyCode);
     if (x.municipality && !/^milano$/i.test(x.municipality)) { fuori++; continue; }
     const zona = zonaDelPunto(x.longitude, x.latitude);
     if (!zona) { fuori++; continue; }
-    if (!(x.size > 20) || !(x.price > 50000)) continue;
+    /* un canone mensile e un prezzo di vendita non hanno la stessa soglia */
+    if (!(x.size > 20) || !(x.price > (affitti ? 200 : 50000))) continue;
     const note = [
       `idealista ${x.propertyCode}`, x.status ? `status=${x.status}` : "", x.floor != null ? `floor=${x.floor}` : "",
       x.rooms ? `${x.rooms} locali` : "", x.hasLift == null ? "ascensore sconosciuto" : "",
@@ -135,14 +150,17 @@ for (const [nome, centro] of Object.entries(CENTRI)) {
       x.hasLift == null ? "" : x.hasLift ? "si" : "no", classe(x), "", "", x.parkingSpace?.hasParkingSpace && x.parkingSpace?.isParkingSpaceIncludedInPrice ? "box" : "nessuno",
       "", "", "", Math.round(x.price), "", note.replace(/;/g, ","), String(x.propertyCode), x.parkingSpace?.isParkingSpaceIncludedInPrice ? "si" : "no",
     ].join(";"));
+    presi++;
   }
-  console.log(`${nome}: ${lista.length} annunci ricevuti`);
+ }
+ console.log(`${nome}: ${presi} annunci`);
 }
 
 const RUOLO = verifica ? "-verifica" : "";
-const out = join(RADICE, `data/annunci/${oggi}-idealista${RUOLO}-${Date.now()}.csv`);
+const MERCATO = affitti ? "-affitti" : "";
+const out = join(RADICE, `data/annunci/${oggi}${MERCATO}-idealista${RUOLO}-${Date.now()}.csv`);
 writeFileSync(out, righe.join("\n"), {flag:"wx"});
-writeFileSync(out.replace(/\.csv$/, ".meta.json"), JSON.stringify({ruolo:verifica?"verifica":"taratura",modelloHash:modello.hash,csvHash:sha(readFileSync(out)),raccoltaInizio,fonte:"Idealista API",metodoRaccolta:"API autorizzata; campionamento geografico; copertura da verificare"},null,2), {flag:"wx"});
+writeFileSync(out.replace(/\.csv$/, ".meta.json"), JSON.stringify({ruolo:verifica?"verifica":"taratura",mercato:affitti?"affitto":"vendita",modelloHash:modello.hash,csvHash:sha(readFileSync(out)),raccoltaInizio,fonte:"Idealista API",metodoRaccolta:"API autorizzata; campionamento geografico; copertura da verificare"},null,2), {flag:"wx"});
 console.log(`\n${righe.length - 1} annunci di Milano scritti in ${out} (${fuori} fuori Milano o senza zona OMI, scartati)`);
 console.log("Rileggili prima di usarli: lo stato 'abit'/'otti' e' dedotto dal testo, il tipo e' sempre 'civ'.");
-console.log(RUOLO ? "Poi: npm run verifica  (misura soltanto; il modello deve essere gia' congelato)" : `Poi: npm run calibra ${out.replace(RADICE + "/", "")}`);
+console.log(affitti ? `Poi: npm run canoni ${out.replace(RADICE + "/", "")}` : RUOLO ? "Poi: npm run verifica  (misura soltanto; il modello deve essere gia' congelato)" : `Poi: npm run calibra ${out.replace(RADICE + "/", "")}`);

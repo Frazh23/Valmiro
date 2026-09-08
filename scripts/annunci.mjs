@@ -49,6 +49,27 @@ export function parseCsv(text, delimiter = ";") {
 export function leggiFile(percorso) {
   return parseCsv(readFileSync(percorso, "utf8")).map(r => ({ ...r, lotto: basename(percorso, ".csv") }));
 }
+/**
+ * Vendite o affitti.
+ *
+ * Il README chiedeva da sempre che gli affitti stessero in file col nome
+ * giusto, ma niente lo faceva rispettare: un lotto di canoni mensili sarebbe
+ * entrato nella taratura delle vendite come se fossero prezzi di case, e un
+ * bilocale da 1.200 euro al mese avrebbe pesato come un bilocale da 1.200 euro.
+ * La calibrazione si sarebbe rotta in silenzio, che e' il modo peggiore.
+ * Adesso il mercato si legge dal nome del file, e dal manifest se c'e'.
+ */
+export function mercatoLotto(percorso) {
+  const manifest = percorso.replace(/\.csv$/, ".meta.json");
+  const byName = /affitt/i.test(basename(percorso));
+  if (!existsSync(manifest)) return byName ? "affitto" : "vendita";
+  const m = JSON.parse(readFileSync(manifest, "utf8"));
+  const dichiarato = m.mercato || (byName ? "affitto" : "vendita");
+  if (!["vendita", "affitto"].includes(dichiarato)) throw new Error(`Mercato sconosciuto in ${basename(manifest)}: ${dichiarato}`);
+  if (byName && dichiarato !== "affitto") throw new Error(`Il nome di ${basename(percorso)} dice affitti, il manifest dice ${dichiarato}`);
+  return dichiarato;
+}
+
 export function ruoloLotto(percorso) {
   const manifest = percorso.replace(/\.csv$/, ".meta.json");
   const byName = /-verifica(?:[.-]|$)/.test(basename(percorso));
@@ -68,7 +89,7 @@ export function chiaveAnnuncio(r) {
  * @param {string} [percorso]  un file CSV; se manca, tutto l'archivio
  * @returns {{ annunci: object[], lotti: string[], duplicati: number, scartati: number }}
  */
-export function caricaAnnunci(percorso, { ruolo = "taratura" } = {}) {
+export function caricaAnnunci(percorso, { ruolo = "taratura", mercato = "vendita" } = {}) {
   let file;
   if (percorso) {
     if (!existsSync(percorso)) throw new Error(`manca ${percorso}`);
@@ -81,7 +102,9 @@ export function caricaAnnunci(percorso, { ruolo = "taratura" } = {}) {
 
   if (percorso && statSync(percorso).isFile() && ruoloLotto(percorso) !== ruolo)
     throw new Error(`Lotto ${ruoloLotto(percorso)} non ammesso per ${ruolo}`);
-  file = file.filter(f => ruoloLotto(f) === ruolo);
+  if (percorso && statSync(percorso).isFile() && mercatoLotto(percorso) !== mercato)
+    throw new Error(`Lotto di ${mercatoLotto(percorso)}: non si misura insieme a ${mercato}. Gli affitti hanno il loro comando.`);
+  file = file.filter((f) => ruoloLotto(f) === ruolo && mercatoLotto(f) === mercato);
   const visti = new Map();
   let duplicati = 0, scartati = 0;
   for (const f of file) {
@@ -96,7 +119,7 @@ export function caricaAnnunci(percorso, { ruolo = "taratura" } = {}) {
       visti.set(k, r);
     }
   }
-  return { annunci: [...visti.values()], lotti: file.map((f) => basename(f)), duplicati, scartati };
+  return { annunci: [...visti.values()], lotti: file.map((f) => basename(f)), duplicati, scartati, mercato };
 }
 
 /** Conversione corrente; i buchi restano espliciti nel rapporto. */

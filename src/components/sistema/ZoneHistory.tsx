@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 import { eur, num, pct } from "@/lib/formato";
 import { annoDi, semestreBreve, type Andamento } from "@/lib/affitto";
 
@@ -9,7 +10,25 @@ import { annoDi, semestreBreve, type Andamento } from "@/lib/affitto";
  * secondi se la zona e' salita, e di quanto.
  */
 export default function ZoneHistory({ a, zona }: { a: Andamento; zona: string }) {
-  const W = 640, H = 220, PX = 8, PT = 28, PB = 30;
+  /* Il disegno usa i pixel veri del contenitore, non un riquadro fisso poi stirato:
+     cosi' la linea occupa tutta la larghezza come la fascia di quotazioni qui sopra, e
+     le scritte restano della stessa misura su ogni schermo invece di ingigantirsi sul
+     desktop e sparire sul telefono. L'altezza la fissa il CSS, quindi la pagina non
+     sobbalza fra la prima resa e la misura. */
+  const box = useRef<HTMLDivElement>(null);
+  const [larghezza, setLarghezza] = useState(0);
+  useEffect(() => {
+    const e = box.current;
+    if (!e || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([v]) => setLarghezza(Math.round(v.contentRect.width)));
+    ro.observe(e);
+    return () => ro.disconnect();
+  }, []);
+
+  const W = larghezza || 640;
+  const stretto = W < 560;
+  const H = stretto ? 200 : 260;
+  const PX = 8, PT = 28, PB = 30;
   const p = a.punti;
   const min = Math.min(...p.map((x) => x.prezzo)), max = Math.max(...p.map((x) => x.prezzo));
   const span = max - min || 1;
@@ -29,7 +48,9 @@ export default function ZoneHistory({ a, zona }: { a: Andamento; zona: string })
 
   /* un'etichetta per anno, sul primo semestre: la serie parte dal secondo del
      2014, e scrivere "2014" a filo con "2015" farebbe solo una macchia */
-  const anni = p.map((x, i) => ({ i, anno: annoDi(x.s), sem: x.s.slice(5) })).filter((x) => x.sem === "1");
+  const anni = p.map((x, i) => ({ i, anno: annoDi(x.s), sem: x.s.slice(5) })).filter((x) => x.sem === "1")
+    /* su schermo stretto un anno su due: attaccati non si leggerebbero */
+    .filter((_, k) => !stretto || k % 2 === 0);
   const primo = p[0], ultimo = p[p.length - 1];
   const su = a.variazione >= 0;
 
@@ -44,7 +65,7 @@ export default function ZoneHistory({ a, zona }: { a: Andamento; zona: string })
   }
 
   return (
-    <div className="v-history">
+    <div className="v-history" ref={box}>
       <p className="v-history__lead">
         <b className={su ? "pos" : "neg"}>{su ? "+" : "−"}{pct(Math.abs(a.variazione))}</b> dal {semestreBreve(a.dal)}
         {a.variazione2anni !== null && (

@@ -664,12 +664,13 @@ a.v-logo:hover .v-logo__simbolo { color: var(--accent-ink); }
 .v-facts--tight { margin-top: var(--s-6); }
 
 /* ---------- la zona dal 2014 ---------- */
-.v-history { max-width: 640px; }
+.v-history { /* larga quanto la fascia di quotazioni: il disegno si misura da solo */ }
 .v-history__lead { font-size: var(--t-body-lg); color: var(--ink-soft); margin: 0 0 var(--s-4); }
 .v-history__lead b { font-family: var(--font-editorial); font-variation-settings: var(--voce-editorial); font-weight: 600; font-size: var(--t-h2); letter-spacing: var(--track-serif); margin-right: var(--s-2); }
 .v-history__lead b.pos { color: var(--pos); }
 .v-history__lead b.neg { color: var(--neg); }
-.v-history__svg { display: block; width: 100%; height: auto; overflow: visible; }
+.v-history__svg { display: block; width: 100%; height: 260px; overflow: visible; }
+@media (max-width: 560px) { .v-history__svg { height: 200px; } }
 .v-history__lbl { font-size: 12px; fill: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .v-history__lbl--strong { fill: var(--ink); font-weight: 600; }
 .v-history__anno { font-size: 11px; fill: var(--ink-ghost); letter-spacing: .04em; }

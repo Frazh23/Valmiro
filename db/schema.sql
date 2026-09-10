@@ -67,3 +67,24 @@ where q.semestre = (select max(semestre) from omi_quotazioni);
 
 -- La query che conta: da un punto alla sua zona e alle sue quotazioni.
 -- select * from omi_corrente where ST_Contains(geom, ST_SetSRID(ST_Point(9.19, 45.4642), 4326));
+
+-- Permessi. Su Supabase una tabella dello schema public senza RLS non e' «senza
+-- regole»: e' aperta a chiunque abbia l'indirizzo del progetto, perche' la chiave
+-- pubblicabile sta nel browser. Queste tre tabelle non le legge nessuno dal sito
+-- (l'app lavora sui file in data/) e le scrive solo scripts/load-postgis.mjs, che
+-- si collega come proprietario e non passa da qui: quindi si chiudono e basta,
+-- senza policy. `stime` ha le sue regole in db/002_account.sql.
+-- Su un Postgres normale i ruoli anon/authenticated non esistono: si salta.
+alter table omi_zone       enable row level security;
+alter table omi_quotazioni enable row level security;
+alter table ingest_log     enable row level security;
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on omi_zone, omi_quotazioni, ingest_log, omi_corrente from public, anon, authenticated;
+    begin
+      alter view omi_corrente set (security_invoker = on);
+    exception when others then null;
+    end;
+  end if;
+end $$;

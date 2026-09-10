@@ -45,3 +45,40 @@ begin
     raise notice 'assente, saltata: public.omi_corrente';
   end if;
 end $$;
+
+-- ESEGUITA il 10 settembre 2026 sul progetto vero, dal SQL Editor: «Success».
+-- Gli errori del Security Advisor sono passati da 5 a 1. Verifica con
+-- `db/verifica-rls.sql`: omi_zone, omi_quotazioni, ingest_log hanno RLS accesa e
+-- anon non legge piu' niente; omi_corrente idem. `profili` e `stime` risultano
+-- leggibili da anon ed e' giusto cosi': il permesso c'e', ma le policy per
+-- utente non restituiscono nessuna riga a chi non ha fatto l'accesso.
+--
+-- Quello che resta, e perche' non si tocca:
+--
+-- `public.spatial_ref_sys` (l'unico errore rimasto) e le viste
+-- `geometry_columns` / `geography_columns` appartengono all'estensione PostGIS,
+-- non a noi: `alter table ... enable row level security` risponde
+-- «42501: must be owner of table spatial_ref_sys», e la revoca dei permessi
+-- passa senza effetto per lo stesso motivo. Dentro ci sono le definizioni
+-- pubbliche dei sistemi di coordinate (EPSG) e i nomi delle colonne
+-- geometriche: nessun dato di nessuno. Stessa radice per gli avvisi su
+-- `st_estimatedextent` e «Extension in Public».
+--
+-- La soluzione vera sarebbe togliere PostGIS dallo schema public, ma PostGIS
+-- non e' rilocabile (`alter extension ... set schema` fallisce) e disinstallarlo
+-- vorrebbe dire eliminare le colonne `omi_zone.geom` e `stime.punto` — cioe'
+-- cancellare le coordinate delle stime gia' salvate. Non si fa per silenziare
+-- un avviso. Da riconsiderare solo se un giorno si decide che PostGIS qui non
+-- serve davvero (oggi l'app non lo usa: legge i file in data/).
+--
+-- `crea_profilo()` risulta «eseguibile senza accesso». E' la funzione trigger
+-- che crea il profilo quando nasce un utente: PostgREST non espone le funzioni
+-- che ritornano `trigger`, quindi non e' raggiungibile dall'API. Revocare
+-- l'EXECUTE sarebbe innocuo in teoria (il permesso si controlla quando il
+-- trigger viene creato, non a ogni riga), ma tocca la registrazione degli
+-- utenti e non ho modo di provarla senza creare un account vero: lasciata
+-- com'e', consapevolmente.
+--
+-- `metriche_gestione()` e `sono_amministratore()` sono segnalate perche' un
+-- utente autenticato puo' chiamarle. E' voluto: sono `security definer` proprio
+-- per rispondere «no» a chi non e' amministratore senza esporre la tabella.
